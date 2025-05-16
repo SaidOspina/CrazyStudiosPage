@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planes y Precios - Crazy Studios</title>
+    <link rel="stylesheet" href="../css/styleIndex.css">
+    <link rel="stylesheet" href="../css/planes.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header/Navigation -->
+    <header>
+        <div class="logo">
+            <a href="../index.html">
+                <img src="../img/logo.png" alt="Crazy Studios Logo">
+            </a>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="../index.html">INICIO</a></li>
+                <li><a href="servicios.html">SERVICIOS</a></li>
+                <li><a href="planes.html" class="active">PLANES</a></li>
+                <li><a href="contacto.html">CONTACTO</a></li>
+                <li><a href="nosotros.html">NOSOTROS</a></li>
+            </ul>
+            <div class="auth-buttons">
+                <a href="../login.html" class="login-btn">INICIAR SESIÓN</a>
+                <a href="../register.html" class="register-btn">REGISTRO</a>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Page Banner -->
+    <section class="page-banner">
+        <div class="banner-content">
+            <h1>PLANES Y PRECIOS</h1>
+            <p>Soluciones digitales a medida para cada tipo de negocio y presupuesto</p>
+        </div>
+    </section>
+    
+    <!-- Intro Section -->
+    <section class="intro-section">
+        <div class="container">
+            <div class="intro-text animate-fade-up">
+                <p>En Crazy Studios ofrecemos planes diseñados para adaptarse a las necesidades específicas de cada negocio, desde emprendedores hasta grandes empresas. Todos nuestros planes incluyen atención personalizada y soporte continuo.</p>
+                <p>Además, si ninguno de nuestros planes estándar se ajusta perfectamente a tus necesidades, ofrecemos un <strong>Plan Personalizado</strong> donde diseñamos una solución a medida para tu proyecto.</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Plans Section -->
+    <section class="plans-section">
+        <div class="container">
+            <div class="plans-tabs animate-fade-up">
+                <button class="plan-tab active" data-plan="monthly">Mensual</button>
+                <button class="plan-tab" data-plan="yearly">Anual (20% descuento)</button>
+            </div>
+            
+            <div class="plans-grid">
+                <div class="plan-card animate-fade-up">
+                    <div class="plan-header">
+                        <h3 class="plan-name">Plan Básico</h3>
+                        <p class="plan-description">Ideal para emprendedores y pequeños negocios que inician su presencia digital</p>
+                        <div class="monthly-price plan-price">$199<span>/mes</span></div>
+                        <div class="yearly-price plan-price" style="display: none;">$1,910<span>/año</span></div>
+                        <p class="plan-billing">Sin compromiso de permanencia</p>
+                    </div>
+                    <div class="plan-content">
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Gestión de 2 redes sociales</li>
+                            <li><i class="fas fa-check"></i> 8 publicaciones mensuales</li>
+                            <li><i class="fas fa-check"></i> Diseño básico de publicaciones</li>
+                            <li><i class="fas fa-check"></i> Interacción con la comunidad</li>
+                            <li><i class="fas fa-check"></i> Reporte mensual básico</li>
+                            <li><i class="fas fa-check"></i> Soporte por email</li>
+                            <li class="not-included"><i class="fas fa-times"></i> Estrategia de contenidos</li>
+                            <li class="not-included"><i class="fas fa-times"></i> Campañas publicitarias</li>
+                            <li class="not-included"><i class="fas fa-times"></i> Desarrollo web</li>
+                        </ul>
+                        <a href="#" class="plan-btn">Seleccionar Plan</a>
+                    </div>
+                </div>
+                
+                <div class="plan-card featured animate-fade-up">
+                    <div class="featured-badge">Recomendado</div>
+                    <div class="plan-header">
+                        <h3 class="plan-name">Plan Premium</h3>
+                        <p class="plan-description">Perfecto para negocios establecidos que buscan potenciar su presencia digital</p>
+                        <div class="monthly-price plan-price">$499<span>/mes</span></div>
+                        <div class="yearly-price plan-price" style="display: none;">$4,790<span>/año</span></div>
+                        <p class="plan-billing">Sin compromiso de permanencia</p>
+                    </div>
+                    <div class="plan-content">
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Gestión de 4 redes sociales</li>
+                            <li><i class="fas fa-check"></i> 20 publicaciones mensuales</li>
+                            <li><i class="fas fa-check"></i> Diseño profesional de publicaciones</li>
+                            <li><i class="fas fa-check"></i> Gestión activa de comunidad</li>
+                            <li><i class="fas fa-check"></i> Estrategia de contenidos</li>
+                            <li><i class="fas fa-check"></i> Reporte semanal detallado</li>
+                            <li><i class="fas fa-check"></i> Campaña publicitaria básica (1 red)</li>
+                            <li><i class="fas fa-check"></i> Landing page simple</li>
+                            <li><i class="fas fa-check"></i> Soporte prioritario 24/7</li>
+                        </ul>
+                        <a href="#" class="plan-btn">Seleccionar Plan</a>
+                    </div>
+                </div>
+                
+                <div class="plan-card animate-fade-up">
+                    <div class="plan-header">
+                        <h3 class="plan-name">Plan Empresarial</h3>
+                        <p class="plan-description">Solución completa para empresas que requieren una estrategia digital integral</p>
+                        <div class="monthly-price plan-price">$999<span>/mes</span></div>
+                        <div class="yearly-price plan-price" style="display: none;">$9,590<span>/año</span></div>
+                        <p class="plan-billing">Sin compromiso de permanencia</p>
+                    </div>
+                    <div class="plan-content">
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Gestión de todas las redes sociales</li>
+                            <li><i class="fas fa-check"></i> Publicaciones ilimitadas</li>
+                            <li><i class="fas fa-check"></i> Diseño premium de contenidos</li>
+                            <li><i class="fas fa-check"></i> Community management avanzado</li>
+                            <li><i class="fas fa-check"></i> Estrategia de contenidos personalizada</li>
+                            <li><i class="fas fa-check"></i> Campañas publicitarias en múltiples plataformas</li>
+                            <li><i class="fas fa-check"></i> Desarrollo web completo</li>
+                            <li><i class="fas fa-check"></i> SEO y analítica avanzada</li>
+                            <li><i class="fas fa-check"></i> Ejecutivo de cuenta dedicado</li>
+                            <li><i class="fas fa-check"></i> Reportes personalizados</li>
+                        </ul>
+                        <a href="#" class="plan-btn">Seleccionar Plan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Custom Plan Section -->
+    <section class="custom-plan-section">
+        <div class="container">
+            <div class="custom-plan-content animate-fade-up">
+                <h2 class="custom-plan-title">Plan Personalizado</h2>
+                <p class="custom-plan-description">¿Necesitas una solución a medida? Nuestro Plan Personalizado se adapta perfectamente a las necesidades específicas de tu negocio. Agendemos una reunión donde podamos conocer tus objetivos y diseñar juntos la estrategia digital ideal para ti.</p>
+                <a href="#" class="custom-plan-btn open-modal">Agendar Consulta Gratuita</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <h2 class="faq-title">Preguntas Frecuentes</h2>
+            
+            <div class="faqs">
+                <div class="faq-item animate-fade-up">
+                    <div class="faq-question">
+                        <h3>¿Puedo cambiar de plan en cualquier momento?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            <p>Sí, puedes actualizar o cambiar tu plan en cualquier momento. Si actualizas a un plan superior durante tu ciclo de facturación actual, solo pagarás la diferencia proporcional. Si cambias a un plan inferior, el cambio se hará efectivo en tu próximo ciclo de facturación.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item animate-fade-up">
+                    <div class="faq-question">
+                        <h3>¿Cuál es el periodo mínimo de contratación?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            <p>No exigimos un periodo mínimo de permanencia en ninguno de nuestros planes. Puedes cancelar tu suscripción en cualquier momento. Sin embargo, para ver resultados significativos en marketing digital, recomendamos un periodo mínimo de 3 meses.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item animate-fade-up">
+                    <div class="faq-question">
+                        <h3>¿Qué métodos de pago aceptan?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            <p>Aceptamos tarjetas de crédito/débito (Visa, Mastercard, American Express), transferencias bancarias y PayPal. Para los planes anuales, también ofrecemos la opción de pago fraccionado.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item animate-fade-up">
+                    <div class="faq-question">
+                        <h3>¿Ofrecen soporte técnico con todos los planes?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            <p>Sí, todos nuestros planes incluyen soporte técnico. La diferencia está en el nivel de prioridad y los canales disponibles. El Plan Básico incluye soporte por email con tiempo de respuesta de 24-48 horas. Los planes Premium y Empresarial incluyen soporte prioritario 24/7 por email, chat y teléfono.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item animate-fade-up">
+                    <div class="faq-question">
+                        <h3>¿Puedo solicitar modificaciones en los servicios incluidos?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            <p>Los planes estándar tienen servicios predefinidos, pero siempre estamos abiertos a adaptar los servicios según tus necesidades específicas. Si necesitas una configuración diferente, te recomendamos nuestro Plan Personalizado, donde diseñamos una solución completamente a medida.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item animate-fade-up">
+                    <div class="faq-question">
+                        <h3>¿Cómo agendo una consulta para el Plan Personalizado?</h3>
+                        <div class="faq-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">
+                            <p>Puedes agendar una consulta gratuita haciendo clic en el botón "Agendar Consulta Gratuita" en la sección del Plan Personalizado. Te llevará a un formulario donde podrás seleccionar la fecha y hora que más te convenga para la reunión con uno de nuestros asesores.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2 class="cta-title">¿Listo para impulsar tu presencia digital?</h2>
+            <p class="cta-description">Elige el plan que mejor se adapte a tus necesidades y comienza a ver resultados en tu estrategia digital.</p>
+            <a href="contacto.html" class="cta-btn">Contáctanos</a>
+        </div>
+    </section>
+    
+    <!-- Modal for Appointment -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal"><i class="fas fa-times"></i></span>
+            <h2 class="modal-title">Agenda tu Consulta Gratuita</h2>
+            
+            <form id="appointmentForm" class="appointment-form">
+                <div class="form-group">
+                    <label for="name">Nombre Completo*</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Correo Electrónico*</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Teléfono*</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="company">Nombre de la Empresa</label>
+                    <input type="text" id="company" name="company">
+                </div>
+                
+                <div class="form-group">
+                    <label for="needs">Describe brevemente tus necesidades*</label>
+                    <textarea id="needs" name="needs" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Selecciona una fecha y hora para la consulta*</label>
+                    
+                    <div class="calendar-container">
+                        <div id="calendar" class="calendar">
+                            <div class="calendar-header">
+                                <div class="calendar-nav">
+                                    <button type="button" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                                    <span id="currentMonth" class="current-month">Mayo 2025</span>
+                                    <button type="button" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                            <div id="calendarGrid" class="calendar-grid">
+                                <!-- Calendar will be rendered here by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div id="timeSlots" class="time-slots">
+                            <!-- Time slots will be rendered here by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="appointmentDate" name="appointmentDate" required>
+                    <input type="hidden" id="appointmentTime" name="appointmentTime" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">Agendar Consulta</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-about">
+                <div class="footer-logo">
+                    <img src="../img/logo.png" alt="Crazy Studios Logo">
+                </div>
+                <p>Somos especialistas en marketing digital y desarrollo web, comprometidos con el éxito de nuestros clientes en el mundo digital.</p>
+                <div class="social-icons">
+                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <ul>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Sobre Nosotros</a></li>
+                    <li><a href="servicios.html">Servicios</a></li>
+                    <li><a href="planes.html">Planes</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-links">
+                <h3>Servicios</h3>
+                <ul>
+                    <li><a href="servicios.html#marketing">Marketing Digital</a></li>
+                    <li><a href="servicios.html#social">Redes Sociales</a></li>
+                    <li><a href="servicios.html#web">Desarrollo Web</a></li>
+                    <li><a href="servicios.html#analytics">Analítica</a></li>
+                    <li><a href="servicios.html#advertising">Publicidad</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-links">
+                <h3>Soporte</h3>
+                <ul>
+                    <li><a href="#">Preguntas Frecuentes</a></li>
+                    <li><a href="#">Términos y Condiciones</a></li>
+                    <li><a href="#">Política de Privacidad</a></li>
+                    <li><a href="#">Centro de Ayuda</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>&copy; 2025 Crazy Studios. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="../js/planes.js"></script>
+</body>
+</html>

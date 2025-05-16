@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Crazy Studios</title>
+    <link rel="stylesheet" href="../css/styleIndex.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="../img/logo.png" alt="Crazy Studios">
+                    <span>Crazy Studios</span>
+                </div>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-title">Panel</div>
+                <ul>
+                    <li class="menu-item" data-tooltip="Dashboard">
+                        <a href="index.html" class="menu-link active">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tooltip="Proyectos">
+                        <a href="projects.html" class="menu-link">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Mis Proyectos</span>
+                            <span class="menu-badge">4</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tooltip="Mensajes">
+                        <a href="messages.html" class="menu-link">
+                            <i class="fas fa-envelope"></i>
+                            <span>Mensajes</span>
+                            <span class="menu-badge">2</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="menu-title">Servicios</div>
+                <ul>
+                    <li class="menu-item" data-tooltip="Marketing Digital">
+                        <a href="services-marketing.html" class="menu-link">
+                            <i class="fas fa-bullhorn"></i>
+                            <span>Marketing Digital</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tooltip="Desarrollo Web">
+                        <a href="services-development.html" class="menu-link">
+                            <i class="fas fa-laptop-code"></i>
+                            <span>Desarrollo Web</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tooltip="Redes Sociales">
+                        <a href="services-social.html" class="menu-link">
+                            <i class="fas fa-hashtag"></i>
+                            <span>Redes Sociales</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tooltip="Diseño Gráfico">
+                        <a href="services-design.html" class="menu-link">
+                            <i class="fas fa-palette"></i>
+                            <span>Diseño Gráfico</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="menu-title">Mi Cuenta</div>
+                <ul>
+                    <li class="menu-item" data-tooltip="Perfil">
+                        <a href="profile.html" class="menu-link">
+                            <i class="fas fa-user"></i>
+                            <span>Mi Perfil</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tooltip="Facturación">
+                        <a href="billing.html" class="menu-link">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Facturación</span>
+                        </a>
+                    </li>
+                    <li class="menu-item" data-tooltip="Configuración">
+                        <a href="settings.html" class="menu-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Configuración</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <img src="/api/placeholder/40/40" alt="Usuario">
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">Juan Pérez</div>
+                        <div class="user-role">Cliente</div>
+                    </div>
+                </div>
+                
+                <div class="user-menu">
+                    <button class="user-menu-toggle">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="user-menu-dropdown">
+                        <a href="profile.html" class="user-menu-item">
+                            <i class="fas fa-user"></i>
+                            Mi Perfil
+                        </a>
+                        <a href="#" class="user-menu-item">
+                            <i class="fas fa-moon"></i>
+                            Modo Oscuro
+                        </a>
+                        <a href="../index.html" class="user-menu-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Cerrar Sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle d-md-none">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Dashboard</h1>
+                </div>
+                
+                <div class="header-right">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="search-input" placeholder="Buscar...">
+                    </div>
+                    
+                    <div class="header-actions">
+                        <div class="header-action">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge">3</span>
+                        </div>
+                        <div class="header-action">
+                            <i class="fas fa-envelope"></i>
+                            <span class="badge">2</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-wrapper">
+                <!-- Stats Cards -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">4</div>
+                            <div class="stat-label">Proyectos Activos</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 25% vs mes anterior
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">7</div>
+                            <div class="stat-label">Proyectos Completados</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 10% vs mes anterior
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">2</div>
+                            <div class="stat-label">Proyectos Pendientes</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-arrow-down"></i> 5% vs mes anterior
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">$3,240</div>
+                            <div class="stat-label">Facturado (Último Mes)</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i> 18% vs mes anterior
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <!-- Project Progress -->
+                    <div class="col-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Progreso de Proyectos</h2>
+                                <div class="card-actions">
+                                    <button class="card-action">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="statsChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Project Distribution -->
+                    <div class="col-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Distribución de Proyectos</h2>
+                                <div class="card-actions">
+                                    <button class="card-action">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="projectsChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Projects -->
+                    <div class="col-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Proyectos Recientes</h2>
+                                <div class="card-actions">
+                                    <a href="projects.html" class="btn btn-sm btn-outline">Ver Todos</a>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <ul class="projects-list">
+                                    <li class="project-item">
+                                        <div class="project-logo">
+                                            <i class="fas fa-laptop-code"></i>
+                                        </div>
+                                        <div class="project-info">
+                                            <div class="project-name">Tienda Online - Fashion Store</div>
+                                            <div class="project-details">
+                                                <span><i class="far fa-calendar-alt"></i> Inicio: 15/04/2025</span>
+                                                <span><i class="far fa-calendar-check"></i> Entrega: 30/06/2025</span>
+                                            </div>
+                                        </div>
+                                        <div class="project-status status-in-progress">En Progreso</div>
+                                        <div class="project-actions">
+                                            <a href="project-detail.html" class="project-action">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                    
+                                    <li class="project-item">
+                                        <div class="project-logo">
+                                            <i class="fas fa-bullhorn"></i>
+                                        </div>
+                                        <div class="project-info">
+                                            <div class="project-name">Campaña Marketing - Restaurante Gourmet</div>
+                                            <div class="project-details">
+                                                <span><i class="far fa-calendar-alt"></i> Inicio: 01/03/2025</span>
+                                                <span><i class="far fa-calendar-check"></i> Entrega: 01/06/2025</span>
+                                            </div>
+                                        </div>
+                                        <div class="project-status status-in-progress">En Progreso</div>
+                                        <div class="project-actions">
+                                            <a href="project-detail.html" class="project-action">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                    
+                                    <li class="project-item">
+                                        <div class="project-logo">
+                                            <i class="fas fa-palette"></i>
+                                        </div>
+                                        <div class="project-info">
+                                            <div class="project-name">Diseño de Logo - Tech Startup</div>
+                                            <div class="project-details">
+                                                <span><i class="far fa-calendar-alt"></i> Inicio: 10/04/2025</span>
+                                                <span><i class="far fa-calendar-check"></i> Entrega: 25/04/2025</span>
+                                            </div>
+                                        </div>
+                                        <div class="project-status status-completed">Completado</div>
+                                        <div class="project-actions">
+                                            <a href="project-detail.html" class="project-action">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                    
+                                    <li class="project-item">
+                                        <div class="project-logo">
+                                            <i class="fas fa-hashtag"></i>
+                                        </div>
+                                        <div class="project-info">
+                                            <div class="project-name">Gestión de Redes Sociales - Boutique</div>
+                                            <div class="project-details">
+                                                <span><i class="far fa-calendar-alt"></i> Inicio: 01/05/2025</span>
+                                                <span><i class="far fa-calendar-check"></i> Entrega: Mensual</span>
+                                            </div>
+                                        </div>
+                                        <div class="project-status status-pending">Pendiente</div>
+                                        <div class="project-actions">
+                                            <a href="project-detail.html" class="project-action">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Messages -->
+                    <div class="col-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Mensajes Recientes</h2>
+                                <div class="card-actions">
+                                    <a href="messages.html" class="btn btn-sm btn-outline">Ver Todos</a>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <ul class="projects-list">
+                                    <li class="project-item">
+                                        <div class="project-logo">
+                                            <img src="/api/placeholder/40/40" alt="Usuario">
+                                        </div>
+                                        <div class="project-info">
+                                            <div class="project-name">Alejandra Méndez</div>
+                                            <div class="project-details">
+                                                <span>Actualización sobre el diseño del logo...</span>
+                                            </div>
+                                        </div>
+                                        <div class="project-details">
+                                            <span><i class="far fa-clock"></i> 2h</span>
+                                        </div>
+                                    </li>
+                                    
+                                    <li class="project-item">
+                                        <div class="project-logo">
+                                            <img src="/api/placeholder/40/40" alt="Usuario">
+                                        </div>
+                                        <div class="project-info">
+                                            <div class="project-name">Carlos Ramírez</div>
+                                            <div class="project-details">
+                                                <span>Hemos actualizado la propuesta para...</span>
+                                            </div>
+                                        </div>
+                                        <div class="project-details">
+                                            <span><i class="far fa-clock"></i> 1d</span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Project Progress -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Progreso de Proyectos</h2>
+                            </div>
+                            <div class="card-body">
+                                <div>
+                                    <div class="progress-label">
+                                        <span>Tienda Online - Fashion Store</span>
+                                        <span>45%</span>
+                                    </div>
+                                    <div class="progress-wrapper">
+                                        <div class="progress-bar">
+                                            <div class="progress-value green" style="width: 45%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="progress-label">
+                                        <span>Campaña Marketing - Restaurante</span>
+                                        <span>60%</span>
+                                    </div>
+                                    <div class="progress-wrapper">
+                                        <div class="progress-bar">
+                                            <div class="progress-value blue" style="width: 60%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="progress-label">
+                                        <span>Diseño de Logo - Tech Startup</span>
+                                        <span>100%</span>
+                                    </div>
+                                    <div class="progress-wrapper">
+                                        <div class="progress-bar">
+                                            <div class="progress-value purple" style="width: 100%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="progress-label">
+                                        <span>Gestión de Redes - Boutique</span>
+                                        <span>0%</span>
+                                    </div>
+                                    <div class="progress-wrapper">
+                                        <div class="progress-bar">
+                                            <div class="progress-value orange" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Actividad Reciente</h2>
+                                <div class="card-actions">
+                                    <button class="card-action">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table class="table data-table" id="activityTable">
+                                        <thead>
+                                            <tr>
+                                                <th data-sort>Proyecto</th>
+                                                <th data-sort>Actividad</th>
+                                                <th data-sort>Responsable</th>
+                                                <th data-sort>Fecha</th>
+                                                <th data-sort>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Tienda Online - Fashion Store</td>
+                                                <td>Actualización de diseño de página principal</td>
+                                                <td>David Torres</td>
+                                                <td>14/05/2025</td>
+                                                <td><span class="project-status status-completed">Completado</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Campaña Marketing - Restaurante</td>
+                                                <td>Creación de anuncios para Facebook</td>
+                                                <td>Alejandra Méndez</td>
+                                                <td>12/05/2025</td>
+                                                <td><span class="project-status status-in-progress">En Progreso</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Diseño de Logo - Tech Startup</td>
+                                                <td>Entrega final y archivos fuente</td>
+                                                <td>Natalia Rojas</td>
+                                                <td>10/05/2025</td>
+                                                <td><span class="project-status status-completed">Completado</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Tienda Online - Fashion Store</td>
+                                                <td>Implementación de pasarela de pagos</td>
+                                                <td>David Torres</td>
+                                                <td>08/05/2025</td>
+                                                <td><span class="project-status status-pending">Pendiente</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Campaña Marketing - Restaurante</td>
+                                                <td>Análisis de competencia</td>
+                                                <td>Carlos Ramírez</td>
+                                                <td>05/05/2025</td>
+                                                <td><span class="project-status status-completed">Completado</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../js/dashboard.js"></script>
+</body>
+</html>

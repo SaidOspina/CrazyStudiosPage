@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador - Crazy Studios</title>
+    <link rel="stylesheet" href="../css/styleIndex.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="admin-dashboard">
+    <!-- Header/Navigation -->
+    <header>
+        <div class="logo">
+            <img src="../img/logo.png" alt="Crazy Studios Logo">
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="../index.html">INICIO</a></li>
+                <li><a href="servicios.html">SERVICIOS</a></li>
+                <li><a href="planes.html">PLANES</a></li>
+                <li><a href="contacto.html">CONTACTO</a></li>
+                <li><a href="nosotros.html">NOSOTROS</a></li>
+            </ul>
+            <div class="auth-buttons">
+                <a href="#" class="user-menu admin-menu">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="admin-name">Administrador</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Admin dropdown menu -->
+    <div class="user-dropdown" id="admin-dropdown">
+        <ul>
+            <li><a href="dashboardAdministrador.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="#" id="admin-profile-link"><i class="fas fa-user-shield"></i> Mi Perfil</a></li>
+            <li><a href="#" id="admin-logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+        </ul>
+    </div>
+    
+    <!-- Dashboard Content -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li class="active" data-section="overview"><i class="fas fa-home"></i> Panel General</li>
+                <li data-section="clients"><i class="fas fa-users"></i> Clientes</li>
+                <li data-section="projects"><i class="fas fa-project-diagram"></i> Proyectos</li>
+                <li data-section="appointments"><i class="far fa-calendar-alt"></i> Citas</li>
+                <li data-section="messages"><i class="far fa-envelope"></i> Mensajes</li>
+                <li data-section="reports"><i class="fas fa-chart-bar"></i> Informes</li>
+                <li data-section="settings"><i class="fas fa-cog"></i> Configuración</li>
+            </ul>
+        </aside>
+        
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-content">
+            <!-- Welcome Bar -->
+            <div class="welcome-bar">
+                <div>
+                    <h1>Bienvenido, <span id="welcome-admin-name">Administrador</span></h1>
+                    <p id="current-date">Jueves, 15 de mayo de 2025</p>
+                </div>
+                <div class="quick-actions">
+                    <div class="dropdown">
+                        <button class="primary-btn">
+                            <i class="fas fa-plus"></i> Crear Nuevo <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="#" id="create-client"><i class="fas fa-user-plus"></i> Cliente</a>
+                            <a href="#" id="create-project"><i class="fas fa-folder-plus"></i> Proyecto</a>
+                            <a href="#" id="create-appointment"><i class="far fa-calendar-plus"></i> Cita</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Overview Section -->
+            <section id="overview" class="dashboard-section active">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon clients-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Clientes</h3>
+                            <p class="stat-number" id="clients-count">207</p>
+                            <p class="stat-description">Clientes activos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon projects-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Proyectos</h3>
+                            <p class="stat-number" id="projects-count">43</p>
+                            <p class="stat-description">Proyectos en curso</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon appointments-icon">
+                            <i class="far fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Citas</h3>
+                            <p class="stat-number" id="appointments-count">15</p>
+                            <p class="stat-description">Citas pendientes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon messages-icon">
+                            <i class="far fa-envelope"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Mensajes</h3>
+                            <p class="stat-number" id="messages-count">8</p>
+                            <p class="stat-description">Sin responder</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Charts -->
+                <div class="dashboard-charts">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Proyectos por Estado</h3>
+                        <div class="chart-container" id="projects-status-chart">
+                            <canvas></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3 class="chart-title">Registro de Clientes</h3>
+                        <div class="chart-container" id="clients-register-chart">
+                            <canvas></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="recent-activity-container">
+                    <div class="section-header">
+                        <h2>Actividad Reciente</h2>
+                        <a href="#" class="view-all">Ver todo <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="activity-details">
+                                <p class="activity-text"><strong>Nuevo cliente registrado:</strong> Laura Martínez</p>
+                                <p class="activity-time">Hace 2 horas</p>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-folder-plus"></i>
+                            </div>
+                            <div class="activity-details">
+                                <p class="activity-text"><strong>Nuevo proyecto creado:</strong> Rediseño Web Restaurante Gourmet</p>
+                                <p class="activity-time">Hace 3 horas</p>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="activity-details">
+                                <p class="activity-text"><strong>Proyecto actualizado:</strong> E-commerce Fashion Store - Estado: Desarrollo Medio</p>
+                                <p class="activity-time">Hace 4 horas</p>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="far fa-calendar-check"></i>
+                            </div>
+                            <div class="activity-details">
+                                <p class="activity-text"><strong>Cita confirmada con:</strong> Carlos Rodríguez - Plan personalizado</p>
+                                <p class="activity-time">Hace 5 horas</p>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-comment-dots"></i>
+                            </div>
+                            <div class="activity-details">
+                                <p class="activity-text"><strong>Nuevo mensaje de:</strong> Ana González - Consulta sobre redes sociales</p>
+                                <p class="activity-time">Hace 6 horas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Clients Section -->
+    <section id="clients" class="dashboard-section">
+        <div class="section-header">
+            <h2>Gestión de Clientes</h2>
+            <button class="primary-btn" id="new-client-btn">
+                <i class="fas fa-user-plus"></i> Añadir Cliente
+            </button>
+        </div>
+        
+        <!-- Clients Filter -->
+        <div class="clients-filter">
+            <div class="filter-group search-group">
+                <input type="text" id="client-search" placeholder="Buscar cliente...">
+                <button id="client-search-btn"><i class="fas fa-search"></i></button>
+            </div>
+            
+            <div class="filter-group">
+                <select id="client-filter-projects">
+                    <option value="all">Todos los clientes</option>
+                    <option value="with-projects">Con proyectos</option>
+                    <option value="without-projects">Sin proyectos</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <select id="client-filter-date">
+                    <option value="all">Todas las fechas</option>
+                    <option value="this-month">Este mes</option>
+                    <option value="last-month">Mes pasado</option>
+                    <option value="this-year">Este año</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Clients Table -->
+        <div class="table-responsive">
+            <table class="data-table" id="clients-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th>Empresa</th>
+                        <th>Documento</th>
+                        <th>Proyectos</th>
+                        <th>Fecha Registro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Client rows will be loaded dynamically -->
+                    <tr>
+                        <td>Juan Pérez</td>
+                        <td>juan.perez@email.com</td>
+                        <td>+57 300 123 4567</td>
+                        <td>Empresa ABC</td>
+                        <td>CC: 1234567890</td>
+                        <td><span class="badge">3</span></td>
+                        <td>10/04/2025</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>María López</td>
+                        <td>maria.lopez@email.com</td>
+                        <td>+57 310 987 6543</td>
+                        <td>Empresa XYZ</td>
+                        <td>CC: 0987654321</td>
+                        <td><span class="badge">2</span></td>
+                        <td>15/04/2025</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Carlos Rodríguez</td>
+                        <td>carlos.rodriguez@email.com</td>
+                        <td>+57 320 456 7890</td>
+                        <td>Tech Innovate</td>
+                        <td>CC: 5678901234</td>
+                        <td><span class="badge">1</span></td>
+                        <td>05/05/2025</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Ana González</td>
+                        <td>ana.gonzalez@email.com</td>
+                        <td>+57 315 789 0123</td>
+                        <td>Boutique La Moda</td>
+                        <td>CC: 9012345678</td>
+                        <td><span class="badge">0</span></td>
+                        <td>12/05/2025</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination" id="clients-pagination">
+            <button class="page-btn prev-btn" disabled><i class="fas fa-chevron-left"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <span class="page-ellipsis">...</span>
+            <button class="page-btn">10</button>
+            <button class="page-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </section>
+    <!-- Projects Section -->
+    <section id="projects" class="dashboard-section">
+        <div class="section-header">
+            <h2>Gestión de Proyectos</h2>
+            <button class="primary-btn" id="new-project-btn">
+                <i class="fas fa-folder-plus"></i> Añadir Proyecto
+            </button>
+        </div>
+        
+        <!-- Projects Filter -->
+        <div class="projects-filter">
+            <div class="filter-group search-group">
+                <input type="text" id="project-search" placeholder="Buscar proyecto...">
+                <button id="project-search-btn"><i class="fas fa-search"></i></button>
+            </div>
+            
+            <div class="filter-group">
+                <select id="project-filter-status">
+                    <option value="all">Todos los estados</option>
+                    <option value="cotizacion">Cotización</option>
+                    <option value="pago procesado">Pago Procesado</option>
+                    <option value="iniciado">Iniciado</option>
+                    <option value="desarrollo inicial">Desarrollo Inicial</option>
+                    <option value="desarrollo medio">Desarrollo Medio</option>
+                    <option value="finalizado">Finalizado</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <select id="project-filter-category">
+                    <option value="all">Todas las categorías</option>
+                    <option value="web-development">Desarrollo Web</option>
+                    <option value="ecommerce">Tienda Online</option>
+                    <option value="marketing-digital">Marketing Digital</option>
+                    <option value="social-media">Redes Sociales</option>
+                    <option value="seo">SEO</option>
+                    <option value="branding">Branding</option>
+                    <option value="design">Diseño Gráfico</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <select id="project-filter-date">
+                    <option value="all">Todas las fechas</option>
+                    <option value="this-month">Este mes</option>
+                    <option value="last-month">Mes pasado</option>
+                    <option value="this-year">Este año</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Project Cards -->
+        <div class="project-cards">
+            <!-- Project cards will be loaded dynamically -->
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-category">Desarrollo Web</span>
+                    <span class="project-status" data-status="desarrollo medio">Desarrollo Medio</span>
+                </div>
+                <h3 class="project-title">E-commerce Fashion Store</h3>
+                <p class="project-client"><i class="fas fa-user"></i> Juan Pérez - Empresa ABC</p>
+                <div class="project-progress">
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 65%;"></div>
+                    </div>
+                    <span class="progress-text">65%</span>
+                </div>
+                <div class="project-dates">
+                    <p><i class="far fa-calendar-alt"></i> Inicio: 15/03/2025</p>
+                    <p><i class="fas fa-calendar-check"></i> Estimado: 15/06/2025</p>
+                </div>
+                <div class="project-actions">
+                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-category">Marketing Digital</span>
+                    <span class="project-status" data-status="iniciado">Iniciado</span>
+                </div>
+                <h3 class="project-title">Campaña Digital Restaurante Gourmet</h3>
+                <p class="project-client"><i class="fas fa-user"></i> María López - Empresa XYZ</p>
+                <div class="project-progress">
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 25%;"></div>
+                    </div>
+                    <span class="progress-text">25%</span>
+                </div>
+                <div class="project-dates">
+                    <p><i class="far fa-calendar-alt"></i> Inicio: 01/05/2025</p>
+                    <p><i class="fas fa-calendar-check"></i> Estimado: 01/07/2025</p>
+                </div>
+                <div class="project-actions">
+                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-category">Diseño Gráfico</span>
+                    <span class="project-status" data-status="cotizacion">Cotización</span>
+                </div>
+                <h3 class="project-title">Rebranding Completo Startup</h3>
+                <p class="project-client"><i class="fas fa-user"></i> Carlos Rodríguez - Tech Innovate</p>
+                <div class="project-progress">
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 5%;"></div>
+                    </div>
+                    <span class="progress-text">5%</span>
+                </div>
+                <div class="project-dates">
+                    <p><i class="far fa-calendar-alt"></i> Solicitud: 10/05/2025</p>
+                    <p><i class="fas fa-calendar-check"></i> Por definir</p>
+                </div>
+                <div class="project-actions">
+                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-category">SEO</span>
+                    <span class="project-status" data-status="finalizado">Finalizado</span>
+                </div>
+                <h3 class="project-title">Optimización SEO Clínica Dental</h3>
+                <p class="project-client"><i class="fas fa-user"></i> Alejandro Herrera - Dental Care</p>
+                <div class="project-progress">
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 100%;"></div>
+                    </div>
+                    <span class="progress-text">100%</span>
+                </div>
+                <div class="project-dates">
+                    <p><i class="far fa-calendar-alt"></i> Inicio: 10/01/2025</p>
+                    <p><i class="fas fa-calendar-check"></i> Finalizado: 20/04/2025</p>
+                </div>
+                <div class="project-actions">
+                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-category">Redes Sociales</span>
+                    <span class="project-status" data-status="desarrollo inicial">Desarrollo Inicial</span>
+                </div>
+                <h3 class="project-title">Gestión Instagram Boutique Moda</h3>
+                <p class="project-client"><i class="fas fa-user"></i> Ana González - Boutique La Moda</p>
+                <div class="project-progress">
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 15%;"></div>
+                    </div>
+                    <span class="progress-text">15%</span>
+                </div>
+                <div class="project-dates">
+                    <p><i class="far fa-calendar-alt"></i> Inicio: 05/05/2025</p>
+                    <p><i class="fas fa-calendar-check"></i> Estimado: 05/07/2025</p>
+                </div>
+                <div class="project-actions">
+                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-category">Desarrollo Web</span>
+                    <span class="project-status" data-status="pago procesado">Pago Procesado</span>
+                </div>
+                <h3 class="project-title">Portal Inmobiliario Premium</h3>
+                <p class="project-client"><i class="fas fa-user"></i> Roberto Sánchez - Inmobiliaria RS</p>
+                <div class="project-progress">
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 10%;"></div>
+                    </div>
+                    <span class="progress-text">10%</span>
+                </div>
+                <div class="project-dates">
+                    <p><i class="far fa-calendar-alt"></i> Contrato: 12/05/2025</p>
+                    <p><i class="fas fa-calendar-check"></i> Estimado: 12/08/2025</p>
+                </div>
+                <div class="project-actions">
+                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination" id="projects-pagination">
+            <button class="page-btn prev-btn" disabled><i class="fas fa-chevron-left"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        
+        <!-- Add Project Modal -->
+        <div class="modal" id="add-project-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Añadir Nuevo Proyecto</h2>
+                    <button class="close-btn" id="close-project-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-project-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project-name">Nombre del Proyecto</label>
+                                <input type="text" id="project-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="project-client">Cliente</label>
+                                <select id="project-client" required>
+                                    <option value="">Seleccionar cliente</option>
+                                    <!-- Client options will be loaded dynamically -->
+                                    <option value="1">Juan Pérez - Empresa ABC</option>
+                                    <option value="2">María López - Empresa XYZ</option>
+                                    <option value="3">Carlos Rodríguez - Tech Innovate</option>
+                                    <option value="4">Ana González - Boutique La Moda</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project-description">Descripción</label>
+                            <textarea id="project-description" required></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project-category">Categoría</label>
+                                <select id="project-category" required>
+                                    <option value="">Seleccionar categoría</option>
+                                    <option value="web-development">Desarrollo Web</option>
+                                    <option value="ecommerce">Tienda Online</option>
+                                    <option value="marketing-digital">Marketing Digital</option>
+                                    <option value="social-media">Redes Sociales</option>
+                                    <option value="seo">SEO</option>
+                                    <option value="branding">Branding</option>
+                                    <option value="design">Diseño Gráfico</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="project-status">Estado</label>
+                                <select id="project-status" required>
+                                    <option value="cotizacion">Cotización</option>
+                                    <option value="pago procesado">Pago Procesado</option>
+                                    <option value="iniciado">Iniciado</option>
+                                    <option value="desarrollo inicial">Desarrollo Inicial</option>
+                                    <option value="desarrollo medio">Desarrollo Medio</option>
+                                    <option value="finalizado">Finalizado</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project-start-date">Fecha de Inicio</label>
+                                <input type="date" id="project-start-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="project-end-date">Fecha Estimada de Finalización</label>
+                                <input type="date" id="project-end-date">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project-cost">Costo del Proyecto ($)</label>
+                                <input type="number" id="project-cost" min="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="project-progress">Progreso (%)</label>
+                                <input type="number" id="project-progress" min="0" max="100" value="0">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project-files">Archivos Adjuntos (opcional)</label>
+                            <input type="file" id="project-files" multiple>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="secondary-btn" id="cancel-project-btn">Cancelar</button>
+                            <button type="submit" class="primary-btn">Guardar Proyecto</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Appointments Section -->
+    <section id="appointments" class="dashboard-section">
+        <div class="section-header">
+            <h2>Gestión de Citas</h2>
+            <button class="primary-btn" id="new-appointment-btn">
+                <i class="far fa-calendar-plus"></i> Añadir Cita
+            </button>
+        </div>
+        
+        <!-- Calendar and List View Tabs -->
+        <div class="view-tabs">
+            <button class="view-tab active" data-view="calendar">
+                <i class="far fa-calendar-alt"></i> Vista Calendario
+            </button>
+            <button class="view-tab" data-view="list">
+                <i class="fas fa-list"></i> Vista Lista
+            </button>
+        </div>
+        
+        <!-- Calendar View -->
+        <div class="calendar-view active" id="appointments-calendar">
+            <div class="calendar-header">
+                <button class="calendar-nav-btn" id="prev-month-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h3 id="calendar-title">Mayo 2025</h3>
+                <button class="calendar-nav-btn" id="next-month-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <table class="calendar-table">
+                <thead>
+                    <tr>
+                        <th>Dom</th>
+                        <th>Lun</th>
+                        <th>Mar</th>
+                        <th>Mié</th>
+                        <th>Jue</th>
+                        <th>Vie</th>
+                        <th>Sáb</th>
+                    </tr>
+                </thead>
+                <tbody id="calendar-body">
+                    <!-- Calendar will be generated dynamically by JavaScript -->
+                    <tr>
+                        <td class="calendar-day other-month">27</td>
+                        <td class="calendar-day other-month">28</td>
+                        <td class="calendar-day other-month">29</td>
+                        <td class="calendar-day other-month">30</td>
+                        <td class="calendar-day">1
+                            <div class="day-appointments">
+                                <div class="day-appointment" data-type="consulta-general">2 citas</div>
+                            </div>
+                        </td>
+                        <td class="calendar-day">2</td>
+                        <td class="calendar-day">3</td>
+                    </tr>
+                    <tr>
+                        <td class="calendar-day">4</td>
+                        <td class="calendar-day">5
+                            <div class="day-appointments">
+                                <div class="day-appointment" data-type="seguimiento-proyecto">1 cita</div>
+                            </div>
+                        </td>
+                        <td class="calendar-day">6</td>
+                        <td class="calendar-day">7</td>
+                        <td class="calendar-day">8</td>
+                        <td class="calendar-day">9</td>
+                        <td class="calendar-day">10</td>
+                    </tr>
+                    <tr>
+                        <td class="calendar-day">11</td>
+                        <td class="calendar-day">12</td>
+                        <td class="calendar-day">13</td>
+                        <td class="calendar-day">14</td>
+                        <td class="calendar-day">15
+                            <div class="day-appointments">
+                                <div class="day-appointment" data-type="consulta-general">1 cita</div>
+                                <div class="day-appointment" data-type="plan-personalizado">1 cita</div>
+                            </div>
+                        </td>
+                        <td class="calendar-day current-day">16
+                            <div class="day-appointments">
+                                <div class="day-appointment" data-type="seguimiento-proyecto">1 cita</div>
+                            </div>
+                        </td>
+                        <td class="calendar-day">17
+                            <div class="day-appointments">
+                                <div class="day-appointment" data-type="consulta-general">1 cita</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="calendar-day">18</td>
+                        <td class="calendar-day">19</td>
+                        <td class="calendar-day">20
+                            <div class="day-appointments">
+                                <div class="day-appointment" data-type="seguimiento-proyecto">1 cita</div>
+                            </div>
+                        </td>
+                        <td class="calendar-day">21</td>
+                        <td class="calendar-day">22</td>
+                        <td class="calendar-day">23</td>
+                        <td class="calendar-day">24</td>
+                    </tr>
+                    <tr>
+                        <td class="calendar-day">25</td>
+                        <td class="calendar-day">26</td>
+                        <td class="calendar-day">27</td>
+                        <td class="calendar-day">28</td>
+                        <td class="calendar-day">29</td>
+                        <td class="calendar-day">30</td>
+                        <td class="calendar-day">31</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: var(--primary-color);"></span>
+                    <span>Consulta General</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: var(--secondary-color);"></span>
+                    <span>Plan Personalizado</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: #ff9800;"></span>
+                    <span>Seguimiento de Proyecto</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- List View -->
+        <div class="list-view" id="appointments-list-view">
+            <!-- Appointments Filter -->
+            <div class="appointments-filter">
+                <div class="filter-group search-group">
+                    <input type="text" id="appointment-search" placeholder="Buscar cita...">
+                    <button id="appointment-search-btn"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="appointment-filter-type">
+                        <option value="all">Todos los tipos</option>
+                        <option value="consulta-general">Consulta General</option>
+                        <option value="plan-personalizado">Plan Personalizado</option>
+                        <option value="seguimiento-proyecto">Seguimiento de Proyecto</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="appointment-filter-status">
+                        <option value="all">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="cancelada">Cancelada</option>
+                        <option value="completada">Completada</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <input type="date" id="appointment-date-filter">
+                </div>
+            </div>
+            
+            <!-- Appointments Table -->
+            <div class="table-responsive">
+                <table class="data-table" id="appointments-table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                            <th>Proyecto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Appointment rows will be loaded dynamically -->
+                        <tr>
+                            <td>Juan Pérez</td>
+                            <td>Seguimiento de Proyecto</td>
+                            <td>16/05/2025</td>
+                            <td>10:00 AM</td>
+                            <td><span class="status-badge confirmed">Confirmada</span></td>
+                            <td>E-commerce Fashion Store</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>María López</td>
+                            <td>Consulta General</td>
+                            <td>17/05/2025</td>
+                            <td>2:30 PM</td>
+                            <td><span class="status-badge pending">Pendiente</span></td>
+                            <td>-</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Carlos Rodríguez</td>
+                            <td>Plan Personalizado</td>
+                            <td>15/05/2025</td>
+                            <td>11:00 AM</td>
+                            <td><span class="status-badge completed">Completada</span></td>
+                            <td>-</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Ana González</td>
+                            <td>Consulta General</td>
+                            <td>15/05/2025</td>
+                            <td>9:30 AM</td>
+                            <td><span class="status-badge cancelled">Cancelada</span></td>
+                            <td>-</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view-btn" title="Ver detalles"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit-btn" title="Editar"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination" id="appointments-pagination">
+                <button class="page-btn prev-btn" disabled><i class="fas fa-chevron-left"></i></button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Appointment Modal -->
+    <div class="modal" id="add-appointment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agendar Cita</h2>
+                <button class="close-btn" id="close-appointment-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-appointment-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment-client">Cliente</label>
+                            <select id="appointment-client" required>
+                                <option value="">Seleccionar cliente</option>
+                                <!-- Client options will be loaded dynamically -->
+                                <option value="1">Juan Pérez - Empresa ABC</option>
+                                <option value="2">María López - Empresa XYZ</option>
+                                <option value="3">Carlos Rodríguez - Tech Innovate</option>
+                                <option value="4">Ana González - Boutique La Moda</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-type">Tipo de Cita</label>
+                            <select id="appointment-type" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="consulta-general">Consulta General</option>
+                                <option value="plan-personalizado">Plan Personalizado</option>
+                                <option value="seguimiento-proyecto">Seguimiento de Proyecto</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="project-select-container">
+                        <label for="appointment-project">Proyecto (solo para seguimiento)</label>
+                        <select id="appointment-project">
+                            <option value="">Seleccionar proyecto</option>
+                            <!-- Project options will be loaded dynamically based on selected client -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment-date">Fecha</label>
+                            <input type="date" id="appointment-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-time">Hora</label>
+                            <select id="appointment-time" required>
+                                <option value="">Seleccionar hora</option>
+                                <option value="09:00">09:00 AM</option>
+                                <option value="09:30">09:30 AM</option>
+                                <option value="10:00">10:00 AM</option>
+                                <option value="10:30">10:30 AM</option>
+                                <option value="11:00">11:00 AM</option>
+                                <option value="11:30">11:30 AM</option>
+                                <option value="12:00">12:00 PM</option>
+                                <option value="12:30">12:30 PM</option>
+                                <option value="14:00">02:00 PM</option>
+                                <option value="14:30">02:30 PM</option>
+                                <option value="15:00">03:00 PM</option>
+                                <option value="15:30">03:30 PM</option>
+                                <option value="16:00">04:00 PM</option>
+                                <option value="16:30">04:30 PM</option>
+                                <option value="17:00">05:00 PM</option>
+                                <option value="17:30">05:30 PM</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment-status">Estado</label>
+                            <select id="appointment-status" required>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="confirmada">Confirmada</option>
+                                <option value="cancelada">Cancelada</option>
+                                <option value="completada">Completada</option>
+                            </select>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="send-notification">
+                                <span class="checkmark"></span>
+                                Enviar notificación al cliente
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointment-notes">Notas (opcional)</label>
+                        <textarea id="appointment-notes"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="secondary-btn" id="cancel-appointment-btn">Cancelar</button>
+                        <button type="submit" class="primary-btn">Agendar Cita</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Messages Section -->
+    <section id="messages" class="dashboard-section">
+        <div class="section-header">
+            <h2>Mensajes</h2>
+            <button class="primary-btn" id="new-message-btn">
+                <i class="fas fa-envelope"></i> Nuevo Mensaje
+            </button>
+        </div>
+        
+        <div class="messages-container">
+            <!-- Messages sidebar -->
+            <div class="messages-sidebar">
+                <div class="messages-search">
+                    <input type="text" placeholder="Buscar mensajes...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="messages-tabs">
+                    <button class="message-tab active" data-tab="inbox">Bandeja de entrada</button>
+                    <button class="message-tab" data-tab="sent">Enviados</button>
+                    <button class="message-tab" data-tab="archived">Archivados</button>
+                </div>
+                
+                <div class="messages-list" id="messages-list">
+                    <!-- Message items will be loaded dynamically -->
+                    <div class="message-item unread active">
+                        <div class="message-sender">
+                            <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>Ana González</h4>
+                                <p class="message-time">Hace 2 horas</p>
+                            </div>
+                            <span class="unread-badge"></span>
+                        </div>
+                        <p class="message-subject">Consulta sobre redes sociales</p>
+                        <p class="message-preview">Buenos días, quisiera saber más información sobre sus servicios de gestión de redes sociales...</p>
+                    </div>
+                    
+                    <div class="message-item">
+                        <div class="message-sender">
+                            <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>Carlos Rodríguez</h4>
+                                <p class="message-time">Ayer</p>
+                            </div>
+                        </div>
+                        <p class="message-subject">Propuesta de proyecto</p>
+                        <p class="message-preview">Hola, estoy interesado en solicitar un presupuesto para el desarrollo de una página web corporativa...</p>
+                    </div>
+                    
+                    <div class="message-item unread">
+                        <div class="message-sender">
+                            <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>Laura Martínez</h4>
+                                <p class="message-time">Ayer</p>
+                            </div>
+                            <span class="unread-badge"></span>
+                        </div>
+                        <p class="message-subject">Consulta de precios</p>
+                        <p class="message-preview">Buenas tardes, me gustaría conocer los precios de sus servicios de desarrollo de aplicaciones móviles...</p>
+                    </div>
+                    
+                    <div class="message-item">
+                        <div class="message-sender">
+                            <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>Roberto Sánchez</h4>
+                                <p class="message-time">09/05/2025</p>
+                            </div>
+                        </div>
+                        <p class="message-subject">Cambios en proyecto inmobiliario</p>
+                        <p class="message-preview">Estimados, necesito hacer algunos cambios en el diseño del portal inmobiliario que estamos desarrollando...</p>
+                    </div>
+                    
+                    <div class="message-item">
+                        <div class="message-sender">
+                            <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                            <div class="sender-info">
+                                <h4>María López</h4>
+                                <p class="message-time">08/05/2025</p>
+                            </div>
+                        </div>
+                        <p class="message-subject">Actualización campaña digital</p>
+                        <p class="message-preview">Hola equipo, quisiera saber cómo va el progreso de la campaña digital para mi restaurante...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Message content -->
+            <div class="message-content">
+                <div class="message-header">
+                    <div class="message-details">
+                        <h3 class="message-content-subject">Consulta sobre redes sociales</h3>
+                        <div class="message-meta">
+                            <p class="message-content-from">De: Ana González &lt;ana.gonzalez@email.com&gt;</p>
+                            <p class="message-content-time">15 May 2025, 10:23 AM</p>
+                        </div>
+                    </div>
+                    <div class="message-actions">
+                        <button class="action-btn" title="Responder"><i class="fas fa-reply"></i></button>
+                        <button class="action-btn" title="Reenviar"><i class="fas fa-share"></i></button>
+                        <button class="action-btn" title="Marcar como leído"><i class="fas fa-envelope-open"></i></button>
+                        <button class="action-btn" title="Archivar"><i class="fas fa-archive"></i></button>
+                        <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                
+                <div class="message-body">
+                    <p>Buenos días,</p>
+                    <p>Quisiera saber más información sobre sus servicios de gestión de redes sociales. Tengo una boutique de moda y me gustaría mejorar mi presencia en Instagram y Facebook.</p>
+                    <p>¿Podrían decirme qué planes ofrecen y cuáles son sus tarifas?</p>
+                    <p>También me interesaría saber si pueden hacerse cargo de la creación de contenido o si debo proporcionárselo yo.</p>
+                    <p>Gracias de antemano por su atención.</p>
+                    <p>Saludos cordiales,</p>
+                    <p>Ana González<br>Boutique La Moda<br>Tel: +57 315 789 0123</p>
+                </div>
+                
+                <div class="reply-container">
+                    <div class="reply-header">
+                        <h4>Responder</h4>
+                    </div>
+                    <div class="reply-body">
+                        <textarea placeholder="Escribe tu respuesta aquí..."></textarea>
+                        <div class="reply-actions">
+                            <button class="secondary-btn">Descartar</button>
+                            <button class="primary-btn">Enviar Respuesta</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reports Section -->
+    <section id="reports" class="dashboard-section">
+        <div class="section-header">
+            <h2>Informes</h2>
+            <div class="report-actions">
+                <select id="report-type">
+                    <option value="clients">Clientes</option>
+                    <option value="projects">Proyectos</option>
+                    <option value="appointments">Citas</option>
+                    <option value="finances">Finanzas</option>
+                </select>
+                <button class="primary-btn" id="generate-report-btn">
+                    <i class="fas fa-file-export"></i> Generar Informe
+                </button>
+            </div>
+        </div>
+        
+        <div class="reports-container">
+            <!-- Report Filters -->
+            <div class="report-filters">
+                <div class="filter-group">
+                    <label for="report-date-range">Periodo</label>
+                    <select id="report-date-range">
+                        <option value="this-month">Este Mes</option>
+                        <option value="last-month">Mes Anterior</option>
+                        <option value="this-quarter">Este Trimestre</option>
+                        <option value="last-quarter">Trimestre Anterior</option>
+                        <option value="this-year">Este Año</option>
+                        <option value="last-year">Año Anterior</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group custom-date-range" style="display: none;">
+                    <label for="report-start-date">Desde</label>
+                    <input type="date" id="report-start-date">
+                </div>
+                
+                <div class="filter-group custom-date-range" style="display: none;">
+                    <label for="report-end-date">Hasta</label>
+                    <input type="date" id="report-end-date">
+                </div>
+                
+                <div class="filter-group">
+                    <button class="secondary-btn" id="apply-filters-btn">
+                        <i class="fas fa-filter"></i> Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Report Charts -->
+            <div class="report-charts">
+                <div class="report-card">
+                    <h3>Nuevos Clientes</h3>
+                    <div class="stat-number">24</div>
+                    <div class="stat-comparison">
+                        <span class="positive"><i class="fas fa-arrow-up"></i> 12%</span> vs mes anterior
+                    </div>
+                    <div class="chart-container" id="new-clients-chart">
+                        <canvas></canvas>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <h3>Proyectos Completados</h3>
+                    <div class="stat-number">18</div>
+                    <div class="stat-comparison">
+                        <span class="positive"><i class="fas fa-arrow-up"></i> 5%</span> vs mes anterior
+                    </div>
+                    <div class="chart-container" id="completed-projects-chart">
+                        <canvas></canvas>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <h3>Citas Programadas</h3>
+                    <div class="stat-number">42</div>
+                    <div class="stat-comparison">
+                        <span class="negative"><i class="fas fa-arrow-down"></i> 3%</span> vs mes anterior
+                    </div>
+                    <div class="chart-container" id="scheduled-appointments-chart">
+                        <canvas></canvas>
+                    </div>
+                </div>
+                
+                <div class="report-card">
+                    <h3>Ingresos Totales</h3>
+                    <div class="stat-number">$42,890</div>
+                    <div class="stat-comparison">
+                        <span class="positive"><i class="fas fa-arrow-up"></i> 18%</span> vs mes anterior
+                    </div>
+                    <div class="chart-container" id="total-revenue-chart">
+                        <canvas></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="report-details">
+                <div class="report-tabs">
+                    <button class="report-tab active" data-tab="summary">Resumen</button>
+                    <button class="report-tab" data-tab="details">Detalles</button>
+                    <button class="report-tab" data-tab="comparison">Comparativa</button>
+                </div>
+                
+                <div class="report-tab-content">
+                    <!-- Summary Tab -->
+                    <div class="tab-pane active" id="summary-tab">
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <h4>Top Categorías de Proyectos</h4>
+                                <div class="chart-container" id="project-categories-chart">
+                                    <canvas></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-card">
+                                <h4>Distribución de Proyectos por Estado</h4>
+                                <div class="chart-container" id="project-status-chart">
+                                    <canvas></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-tables">
+                            <div class="summary-table">
+                                <h4>Top Clientes por Ingresos</h4>
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Cliente</th>
+                                            <th>Proyectos</th>
+                                            <th>Ingresos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Juan Pérez - Empresa ABC</td>
+                                            <td>3</td>
+                                            <td>$12,500</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Roberto Sánchez - Inmobiliaria RS</td>
+                                            <td>1</td>
+                                            <td>$9,800</td>
+                                        </tr>
+                                        <tr>
+                                            <td>María López - Empresa XYZ</td>
+                                            <td>2</td>
+                                            <td>$7,350</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Carlos Rodríguez - Tech Innovate</td>
+                                            <td>1</td>
+                                            <td>$5,200</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Alejandro Herrera - Dental Care</td>
+                                            <td>1</td>
+                                            <td>$4,800</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="summary-table">
+                                <h4>Proyectos Recientes</h4>
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Proyecto</th>
+                                            <th>Cliente</th>
+                                            <th>Estado</th>
+                                            <th>Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Gestión Instagram Boutique Moda</td>
+                                            <td>Ana González</td>
+                                            <td><span class="status-badge" data-status="desarrollo inicial">Desarrollo Inicial</span></td>
+                                            <td>05/05/2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Campaña Digital Restaurante Gourmet</td>
+                                            <td>María López</td>
+                                            <td><span class="status-badge" data-status="iniciado">Iniciado</span></td>
+                                            <td>01/05/2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Portal Inmobiliario Premium</td>
+                                            <td>Roberto Sánchez</td>
+                                            <td><span class="status-badge" data-status="pago procesado">Pago Procesado</span></td>
+                                            <td>12/05/2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rebranding Completo Startup</td>
+                                            <td>Carlos Rodríguez</td>
+                                            <td><span class="status-badge" data-status="cotizacion">Cotización</span></td>
+                                            <td>10/05/2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td>E-commerce Fashion Store</td>
+                                            <td>Juan Pérez</td>
+                                            <td><span class="status-badge" data-status="desarrollo medio">Desarrollo Medio</span></td>
+                                            <td>15/03/2025</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Details Tab -->
+                    <div class="tab-pane" id="details-tab">
+                        <div class="details-filters">
+                            <div class="filter-group">
+                                <label for="details-category">Categoría</label>
+                                <select id="details-category">
+                                    <option value="all">Todas</option>
+                                    <option value="web-development">Desarrollo Web</option>
+                                    <option value="ecommerce">Tienda Online</option>
+                                    <option value="marketing-digital">Marketing Digital</option>
+                                    <option value="social-media">Redes Sociales</option>
+                                    <option value="seo">SEO</option>
+                                    <option value="branding">Branding</option>
+                                    <option value="design">Diseño Gráfico</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="details-status">Estado</label>
+                                <select id="details-status">
+                                    <option value="all">Todos</option>
+                                    <option value="cotizacion">Cotización</option>
+                                    <option value="pago procesado">Pago Procesado</option>
+                                    <option value="iniciado">Iniciado</option>
+                                    <option value="desarrollo inicial">Desarrollo Inicial</option>
+                                    <option value="desarrollo medio">Desarrollo Medio</option>
+                                    <option value="finalizado">Finalizado</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <button class="secondary-btn" id="apply-details-filters-btn">
+                                    <i class="fas fa-filter"></i> Aplicar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="details-table-container">
+                            <table class="data-table" id="details-table">
+                                <thead>
+                                    <tr>
+                                        <th>Proyecto</th>
+                                        <th>Cliente</th>
+                                        <th>Categoría</th>
+                                        <th>Estado</th>
+                                        <th>Inicio</th>
+                                        <th>Fin Estimado</th>
+                                        <th>Progreso</th>
+                                        <th>Ingresos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows will be loaded dynamically -->
+                                    <tr>
+                                        <td>E-commerce Fashion Store</td>
+                                        <td>Juan Pérez</td>
+                                        <td>Tienda Online</td>
+                                        <td><span class="status-badge" data-status="desarrollo medio">Desarrollo Medio</span></td>
+                                        <td>15/03/2025</td>
+                                        <td>15/06/2025</td>
+                                        <td>
+                                            <div class="progress-bar small">
+                                                <div class="progress" style="width: 65%;"></div>
+                                            </div>
+                                            <span>65%</span>
+                                        </td>
+                                        <td>$8,500</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Campaña Digital Restaurante Gourmet</td>
+                                        <td>María López</td>
+                                        <td>Marketing Digital</td>
+                                        <td><span class="status-badge" data-status="iniciado">Iniciado</span></td>
+                                        <td>01/05/2025</td>
+                                        <td>01/07/2025</td>
+                                        <td>
+                                            <div class="progress-bar small">
+                                                <div class="progress" style="width: 25%;"></div>
+                                            </div>
+                                            <span>25%</span>
+                                        </td>
+                                        <td>$3,200</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Rebranding Completo Startup</td>
+                                        <td>Carlos Rodríguez</td>
+                                        <td>Branding</td>
+                                        <td><span class="status-badge" data-status="cotizacion">Cotización</span></td>
+                                        <td>10/05/2025</td>
+                                        <td>-</td>
+                                        <td>
+                                            <div class="progress-bar small">
+                                                <div class="progress" style="width: 5%;"></div>
+                                            </div>
+                                            <span>5%</span>
+                                        </td>
+                                        <td>$0</td>
+                                    </tr>
+                                    <!-- More rows would go here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="export-actions">
+                            <button class="secondary-btn">
+                                <i class="fas fa-file-csv"></i> Exportar CSV
+                            </button>
+                            <button class="secondary-btn">
+                                <i class="fas fa-file-excel"></i> Exportar Excel
+                            </button>
+                            <button class="secondary-btn">
+                                <i class="fas fa-file-pdf"></i> Exportar PDF
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Comparison Tab -->
+                    <div class="tab-pane" id="comparison-tab">
+                        <div class="comparison-filters">
+                            <div class="filter-group">
+                                <label for="comparison-metric">Métrica</label>
+                                <select id="comparison-metric">
+                                    <option value="revenue">Ingresos</option>
+                                    <option value="clients">Clientes Nuevos</option>
+                                    <option value="projects">Proyectos</option>
+                                    <option value="appointments">Citas</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="comparison-period">Comparar con</label>
+                                <select id="comparison-period">
+                                    <option value="previous-period">Periodo Anterior</option>
+                                    <option value="same-period-last-year">Mismo Periodo Año Anterior</option>
+                                    <option value="custom">Personalizado</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <button class="secondary-btn" id="apply-comparison-btn">
+                                    <i class="fas fa-sync"></i> Actualizar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="comparison-chart-container">
+                            <h4>Comparativa: <span id="comparison-title">Ingresos vs Periodo Anterior</span></h4>
+                            <div class="chart-container" id="comparison-chart">
+                                <canvas></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="comparison-summary">
+                            <div class="summary-box">
+                                <h4>Resumen</h4>
+                                <p>En el periodo actual, los ingresos han aumentado un <strong class="positive">18%</strong> respecto al periodo anterior, pasando de <strong>$36,350</strong> a <strong>$42,890</strong>.</p>
+                                <p>Las categorías con mayor crecimiento han sido <strong>Marketing Digital</strong> (+32%) y <strong>Desarrollo Web</strong> (+24%).</p>
+                                <p>El número de proyectos ha aumentado un <strong class="positive">15%</strong>, mientras que el valor medio por proyecto ha crecido un <strong class="positive">3%</strong>.</p>
+                            </div>
+                            
+                            <div class="comparison-metrics">
+                                <div class="metric-card">
+                                    <h5>Periodo Actual</h5>
+                                    <div class="metric-value">$42,890</div>
+                                    <p>Mayo 2025</p>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <h5>Periodo Anterior</h5>
+                                    <div class="metric-value">$36,350</div>
+                                    <p>Abril 2025</p>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <h5>Variación</h5>
+                                    <div class="metric-value positive">+$6,540</div>
+                                    <p class="positive">+18%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Settings Section -->
+    <section id="settings" class="dashboard-section">
+        <div class="section-header">
+            <h2>Configuración</h2>
+        </div>
+        
+        <div class="settings-container">
+            <div class="settings-sidebar">
+                <ul class="settings-nav">
+                    <li class="active" data-setting="profile">Perfil de Administrador</li>
+                    <li data-setting="security">Seguridad</li>
+                    <li data-setting="notifications">Notificaciones</li>
+                    <li data-setting="company">Información de Empresa</li>
+                    <li data-setting="email">Plantillas de Email</li>
+                    <li data-setting="users">Gestión de Usuarios</li>
+                    <li data-setting="backup">Copias de Seguridad</li>
+                </ul>
+            </div>
+            
+            <div class="settings-content">
+                <!-- Profile Settings -->
+                <div class="settings-panel active" id="profile-settings">
+                    <h3>Perfil de Administrador</h3>
+                    
+                    <form id="profile-form">
+                        <div class="admin-profile-header">
+                            <div class="admin-avatar">
+                                <div class="avatar-container">
+                                    <img src="/api/placeholder/150/150" alt="Admin Avatar" id="admin-avatar-preview">
+                                    <div class="avatar-overlay">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                </div>
+                                <input type="file" id="admin-avatar-upload" accept="image/*" style="display: none;">
+                                <button type="button" class="secondary-btn" id="change-avatar-btn">Cambiar Avatar</button>
+                            </div>
+                            
+                            <div class="admin-info">
+                                <h4>Información del Administrador</h4>
+                                <p>Actualiza tu información personal y de contacto.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="admin-name">Nombre</label>
+                                <input type="text" id="admin-name" value="Administrador" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-lastname">Apellidos</label>
+                                <input type="text" id="admin-lastname" value="Principal" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="admin-email">Correo Electrónico</label>
+                                <input type="email" id="admin-email" value="admin@crazystudios.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-phone">Teléfono</label>
+                                <input type="tel" id="admin-phone" value="+57 300 123 4567">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin-position">Cargo</label>
+                            <input type="text" id="admin-position" value="Administrador Principal">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin-bio">Biografía</label>
+                            <textarea id="admin-bio" rows="4">Administrador principal de Crazy Studios. Especialista en marketing digital y desarrollo web con más de 10 años de experiencia en el sector.</textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="primary-btn">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Security Settings -->
+                <div class="settings-panel" id="security-settings">
+                    <h3>Seguridad</h3>
+                    
+                    <div class="settings-card">
+                        <h4>Cambiar Contraseña</h4>
+                        <form id="password-form">
+                            <div class="form-group">
+                                <label for="current-password">Contraseña Actual</label>
+                                <div class="password-field">
+                                    <input type="password" id="current-password" required>
+                                    <button type="button" class="password-toggle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="new-password">Nueva Contraseña</label>
+                                <div class="password-field">
+                                    <input type="password" id="new-password" required>
+                                    <button type="button" class="password-toggle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirm-password">Confirmar Contraseña</label>
+                                <div class="password-field">
+                                    <input type="password" id="confirm-password" required>
+                                    <button type="button" class="password-toggle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Actualizar Contraseña</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h4>Verificación en Dos Pasos</h4>
+                        <p>Añade una capa adicional de seguridad a tu cuenta.</p>
+                        
+                        <div class="switch-container">
+                            <label class="switch">
+                                <input type="checkbox" id="two-factor-auth">
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Activar verificación en dos pasos</span>
+                        </div>
+                        
+                        <div class="two-factor-options" style="display: none;">
+                            <div class="form-group">
+                                <label>Método de verificación</label>
+                                <div class="radio-group">
+                                    <label class="radio-container">
+                                        <input type="radio" name="two-factor-method" value="sms" checked>
+                                        <span class="radio-checkmark"></span>
+                                        SMS
+                                    </label>
+                                    <label class="radio-container">
+                                        <input type="radio" name="two-factor-method" value="email">
+                                        <span class="radio-checkmark"></span>
+                                        Correo electrónico
+                                    </label>
+                                    <label class="radio-container">
+                                        <input type="radio" name="two-factor-method" value="app">
+                                        <span class="radio-checkmark"></span>
+                                        Aplicación de autenticación
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="secondary-btn" id="setup-2fa-btn">Configurar</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h4>Historial de Sesiones</h4>
+                        <p>Revisa y administra tus sesiones activas.</p>
+                        
+                        <div class="sessions-list">
+                            <div class="session-item current">
+                                <div class="session-info">
+                                    <div class="device-icon">
+                                        <i class="fas fa-laptop"></i>
+                                    </div>
+                                    <div class="session-details">
+                                        <h5>Windows 11 - Chrome</h5>
+                                        <p>Cúcuta, Colombia - 190.158.xx.xx</p>
+                                        <p class="session-time">Sesión actual</p>
+                                    </div>
+                                </div>
+                                <div class="session-actions">
+                                    <span class="active-badge">Activa</span>
+                                </div>
+                            </div>
+                            
+                            <div class="session-item">
+                                <div class="session-info">
+                                    <div class="device-icon">
+                                        <i class="fas fa-mobile-alt"></i>
+                                    </div>
+                                    <div class="session-details">
+                                        <h5>Android - Chrome Mobile</h5>
+                                        <p>Cúcuta, Colombia - 190.158.xx.xx</p>
+                                        <p class="session-time">Hace 2 días</p>
+                                    </div>
+                                </div>
+                                <div class="session-actions">
+                                    <button class="action-btn delete-btn" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="secondary-btn danger-btn" id="logout-all-sessions-btn">Cerrar Todas las Sesiones</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notifications Settings -->
+                <div class="settings-panel" id="notifications-settings">
+                    <h3>Notificaciones</h3>
+                    
+                    <div class="settings-card">
+                        <h4>Configuración de Notificaciones</h4>
+                        <p>Administra las notificaciones que recibes.</p>
+                        
+                        <div class="notification-options">
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>Correo Electrónico</h5>
+                                    <p>Recibe notificaciones por correo electrónico</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="email-notifications" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>Notificaciones Push</h5>
+                                    <p>Recibe notificaciones en el navegador</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="push-notifications" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>SMS</h5>
+                                    <p>Recibe notificaciones por SMS</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="sms-notifications">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h4>Eventos de Notificación</h4>
+                        <p>Elige los eventos para los que quieres recibir notificaciones.</p>
+                        
+                        <div class="notification-options">
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>Nuevos Clientes</h5>
+                                    <p>Cuando un nuevo cliente se registra</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="new-client-notifications" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>Nuevos Proyectos</h5>
+                                    <p>Cuando se crea un nuevo proyecto</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="new-project-notifications" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>Citas</h5>
+                                    <p>Recordatorios de citas y nuevas solicitudes</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="appointment-notifications" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>Mensajes</h5>
+                                    <p>Cuando recibes un nuevo mensaje</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="message-notifications" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="notification-option">
+                                <div class="notification-info">
+                                    <h5>Pagos</h5>
+                                    <p>Notificaciones de pagos y facturación</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="payment-notifications" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="primary-btn" id="save-notifications-btn">Guardar Preferencias</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Company Settings -->
+                <div class="settings-panel" id="company-settings">
+                    <h3>Información de Empresa</h3>
+                    
+                    <form id="company-form">
+                        <div class="settings-card">
+                            <h4>Detalles de la Empresa</h4>
+                            
+                            <div class="company-logo">
+                                <div class="logo-container">
+                                    <img src="../img/logo.png" alt="Crazy Studios Logo" id="company-logo-preview">
+                                    <div class="logo-overlay">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                </div>
+                                <input type="file" id="company-logo-upload" accept="image/*" style="display: none;">
+                                <button type="button" class="secondary-btn" id="change-logo-btn">Cambiar Logo</button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="company-name">Nombre de la Empresa</label>
+                                <input type="text" id="company-name" value="Crazy Studios" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="company-email">Correo Electrónico</label>
+                                    <input type="email" id="company-email" value="info@crazystudios.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="company-phone">Teléfono</label>
+                                    <input type="tel" id="company-phone" value="+57 300 123 4567" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="company-address">Dirección</label>
+                                <textarea id="company-address" rows="2" required>Av. Principal #123, Cúcuta, Norte de Santander, Colombia</textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="company-website">Sitio Web</label>
+                                    <input type="url" id="company-website" value="https://www.crazystudios.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="company-tax-id">NIT/RUT</label>
+                                    <input type="text" id="company-tax-id" value="900.123.456-7">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h4>Redes Sociales</h4>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="company-facebook">Facebook</label>
+                                    <div class="input-icon">
+                                        <i class="fab fa-facebook-f"></i>
+                                        <input type="url" id="company-facebook" value="https://www.facebook.com/crazystudios">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="company-instagram">Instagram</label>
+                                    <div class="input-icon">
+                                        <i class="fab fa-instagram"></i>
+                                        <input type="url" id="company-instagram" value="https://www.instagram.com/crazystudios">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="company-twitter">Twitter</label>
+                                    <div class="input-icon">
+                                        <i class="fab fa-twitter"></i>
+                                        <input type="url" id="company-twitter" value="https://www.twitter.com/crazystudios">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="company-linkedin">LinkedIn</label>
+                                    <div class="input-icon">
+                                        <i class="fab fa-linkedin-in"></i>
+                                        <input type="url" id="company-linkedin" value="https://www.linkedin.com/company/crazystudios">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="primary-btn">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Email Templates Settings -->
+                <div class="settings-panel" id="email-settings">
+                    <h3>Plantillas de Email</h3>
+                    
+                    <div class="email-templates-tabs">
+                        <button class="template-tab active" data-template="welcome">Bienvenida</button>
+                        <button class="template-tab" data-template="appointment">Confirmación de Cita</button>
+                        <button class="template-tab" data-template="project">Avance de Proyecto</button>
+                        <button class="template-tab" data-template="invoice">Factura</button>
+                        <button class="template-tab" data-template="custom">Personalizado</button>
+                    </div>
+                    
+                    <div class="template-editor-container">
+                        <div class="template-editor">
+                            <div class="editor-toolbar">
+                                <button title="Negrita"><i class="fas fa-bold"></i></button>
+                                <button title="Cursiva"><i class="fas fa-italic"></i></button>
+                                <button title="Subrayado"><i class="fas fa-underline"></i></button>
+                                <div class="separator"></div>
+                                <button title="Alinear a la izquierda"><i class="fas fa-align-left"></i></button>
+                                <button title="Centrar"><i class="fas fa-align-center"></i></button>
+                                <button title="Alinear a la derecha"><i class="fas fa-align-right"></i></button>
+                                <div class="separator"></div>
+                                <button title="Insertar enlace"><i class="fas fa-link"></i></button>
+                                <button title="Insertar imagen"><i class="fas fa-image"></i></button>
+                                <div class="separator"></div>
+                                <button title="Variables"><i class="fas fa-code"></i></button>
+                            </div>
+                            <div class="editor-content" contenteditable="true">
+                                <h2>¡Bienvenido a Crazy Studios!</h2>
+                                <p>Estimado/a {{cliente_nombre}},</p>
+                                <p>¡Gracias por registrarte en Crazy Studios! Estamos encantados de tenerte como parte de nuestra comunidad.</p>
+                                <p>Con tu cuenta ahora puedes:</p>
+                                <ul>
+                                    <li>Solicitar proyectos de marketing digital y desarrollo web</li>
+                                    <li>Hacer seguimiento de tus proyectos activos</li>
+                                    <li>Agendar citas con nuestro equipo</li>
+                                    <li>Recibir actualizaciones sobre nuestros servicios</li>
+                                </ul>
+                                <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+                                <p>¡Esperamos poder ayudarte a impulsar tu negocio en el mundo digital!</p>
+                                <p>Saludos cordiales,</p>
+                                <p><strong>Equipo de Crazy Studios</strong><br>
+                                {{empresa_telefono}}<br>
+                                {{empresa_email}}<br>
+                                {{empresa_website}}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="template-preview">
+                            <h4>Vista Previa</h4>
+                            <div class="preview-container">
+                                <div class="email-preview">
+                                    <!-- Email preview will be shown here -->
+                                </div>
+                            </div>
+                            <div class="preview-actions">
+                                <button class="secondary-btn" id="preview-btn"><i class="fas fa-eye"></i> Actualizar Vista Previa</button>
+                                <button class="secondary-btn" id="test-email-btn"><i class="fas fa-paper-plane"></i> Enviar Prueba</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="template-variables">
+                        <h4>Variables Disponibles</h4>
+                        <div class="variables-list">
+                            <span class="variable-tag">{{cliente_nombre}}</span>
+                            <span class="variable-tag">{{cliente_email}}</span>
+                            <span class="variable-tag">{{cliente_telefono}}</span>
+                            <span class="variable-tag">{{proyecto_nombre}}</span>
+                            <span class="variable-tag">{{proyecto_estado}}</span>
+                            <span class="variable-tag">{{cita_fecha}}</span>
+                            <span class="variable-tag">{{cita_hora}}</span>
+                            <span class="variable-tag">{{empresa_nombre}}</span>
+                            <span class="variable-tag">{{empresa_email}}</span>
+                            <span class="variable-tag">{{empresa_telefono}}</span>
+                            <span class="variable-tag">{{empresa_website}}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="secondary-btn" id="reset-template-btn">Restaurar Predeterminado</button>
+                        <button class="primary-btn" id="save-template-btn">Guardar Plantilla</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- Modales Adicionales -->
+    <div class="modal" id="new-message-modal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2>Nuevo Mensaje</h2>
+                <button class="close-btn" id="close-message-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="new-message-form">
+                    <div class="form-group">
+                        <label for="message-to">Para:</label>
+                        <select id="message-to" required>
+                            <option value="">Seleccionar destinatario</option>
+                            <option value="all">Todos los clientes</option>
+                            <option value="with-projects">Clientes con proyectos activos</option>
+                            <option value="without-projects">Clientes sin proyectos</option>
+                            <!-- Opciones de clientes individuales se cargarán dinámicamente -->
+                            <option value="client-1">Juan Pérez - Empresa ABC</option>
+                            <option value="client-2">María López - Empresa XYZ</option>
+                            <option value="client-3">Carlos Rodríguez - Tech Innovate</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message-subject">Asunto:</label>
+                        <input type="text" id="message-subject" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message-content">Mensaje:</label>
+                        <textarea id="message-content" rows="8" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message-attachment">Adjuntos (opcional):</label>
+                        <input type="file" id="message-attachment" multiple>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="secondary-btn" id="save-draft-btn">Guardar Borrador</button>
+                        <button type="submit" class="primary-btn">Enviar Mensaje</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container">
+        <!-- Toast notifications will be added dynamically -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/dashboardAdministrador.js"></script>
+</body>
+</html>

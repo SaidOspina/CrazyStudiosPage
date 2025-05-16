@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servicios - Crazy Studios</title>
+    <link rel="stylesheet" href="../css/styleIndex.css">
+    <link rel="stylesheet" href="../css/servicios.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header/Navigation -->
+    <header>
+        <div class="logo">
+            <a href="../index.html">
+                <img src="../img/logo.png" alt="Crazy Studios Logo">
+            </a>
+        </div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="../index.html">INICIO</a></li>
+                <li><a href="servicios.html" class="active">SERVICIOS</a></li>
+                <li><a href="planes.html">PLANES</a></li>
+                <li><a href="contacto.html">CONTACTO</a></li>
+                <li><a href="nosotros.html">NOSOTROS</a></li>
+            </ul>
+            <div class="auth-buttons">
+                <a href="../login.html" class="login-btn">INICIAR SESIÓN</a>
+                <a href="../register.html" class="register-btn">REGISTRO</a>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Page Banner -->
+    <section class="page-banner">
+        <div class="banner-content">
+            <h1>NUESTROS SERVICIOS</h1>
+            <p>Soluciones digitales profesionales y personalizadas para potenciar tu negocio</p>
+        </div>
+    </section>
+
+    <!-- Filtros de Servicios -->
+    <section class="service-filters">
+        <div class="container">
+            <div class="filters-wrapper">
+                <button class="service-filter active" data-filter="all">Todos</button>
+                <button class="service-filter" data-filter="marketing">Marketing Digital</button>
+                <button class="service-filter" data-filter="web">Desarrollo Web</button>
+                <button class="service-filter" data-filter="analytics">Analítica</button>
+                <button class="service-filter" data-filter="design">Diseño</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Servicios Principales: Marketing Digital -->
+    <section id="marketing" class="services-main">
+        <div class="container">
+            <h2 class="section-title">Marketing Digital</h2>
+            <p class="section-subtitle">Estrategias integrales para aumentar tu visibilidad online y generar leads de calidad</p>
+            
+            <div class="services-grid">
+                <div class="service-card" data-category="marketing">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Gestión de Redes Sociales">
+                        <div class="service-icon">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Gestión de Redes Sociales</h3>
+                        <p class="service-description">Administramos profesionalmente tus perfiles en redes sociales para crear conexiones significativas con tu audiencia y potenciar tu marca.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Estrategia de contenido personalizada</li>
+                            <li><i class="fas fa-check"></i> Diseño de publicaciones atractivas</li>
+                            <li><i class="fas fa-check"></i> Programación y publicación de contenido</li>
+                            <li><i class="fas fa-check"></i> Gestión de comunidad y engagement</li>
+                            <li><i class="fas fa-check"></i> Informes mensuales de rendimiento</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="marketing">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Campañas Publicitarias">
+                        <div class="service-icon">
+                            <i class="fas fa-ad"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Campañas Publicitarias</h3>
+                        <p class="service-description">Desarrollamos campañas publicitarias efectivas en plataformas digitales para alcanzar a tu público objetivo y maximizar el ROI.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Publicidad en Google Ads</li>
+                            <li><i class="fas fa-check"></i> Campañas en Facebook e Instagram Ads</li>
+                            <li><i class="fas fa-check"></i> Segmentación avanzada de audiencias</li>
+                            <li><i class="fas fa-check"></i> Diseño de anuncios creativos</li>
+                            <li><i class="fas fa-check"></i> Optimización continua y análisis de resultados</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="marketing">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Email Marketing">
+                        <div class="service-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Email Marketing</h3>
+                        <p class="service-description">Diseñamos estrategias de email marketing efectivas para nutrir leads, fidelizar clientes y aumentar tus conversiones.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Creación y gestión de listas de suscriptores</li>
+                            <li><i class="fas fa-check"></i> Diseño de newsletters y plantillas personalizadas</li>
+                            <li><i class="fas fa-check"></i> Automatización de campañas y workflows</li>
+                            <li><i class="fas fa-check"></i> Segmentación avanzada</li>
+                            <li><i class="fas fa-check"></i> Análisis de métricas y optimización</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Sección de Desarrollo Web -->
+    <section id="web" class="services-main" style="background-color: rgba(255, 255, 255, 0.03);">
+        <div class="container">
+            <h2 class="section-title">Desarrollo Web</h2>
+            <p class="section-subtitle">Creamos sitios web a medida, optimizados y atractivos que convierten visitantes en clientes</p>
+            
+            <div class="services-grid">
+                <div class="service-card" data-category="web">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Sitios Web Corporativos">
+                        <div class="service-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Sitios Web Corporativos</h3>
+                        <p class="service-description">Desarrollamos sitios web profesionales que reflejan la identidad de tu empresa y comunican efectivamente tu propuesta de valor.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Diseño responsivo y moderno</li>
+                            <li><i class="fas fa-check"></i> Optimización SEO on-page</li>
+                            <li><i class="fas fa-check"></i> Integración con redes sociales</li>
+                            <li><i class="fas fa-check"></i> Panel de administración de contenido</li>
+                            <li><i class="fas fa-check"></i> Análisis y reportes de tráfico</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="web">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Tiendas Online">
+                        <div class="service-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Tiendas Online</h3>
+                        <p class="service-description">Creamos plataformas e-commerce optimizadas para ventas, con una experiencia de usuario intuitiva y sistemas de pago seguros.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Catálogo de productos personalizable</li>
+                            <li><i class="fas fa-check"></i> Integración con pasarelas de pago</li>
+                            <li><i class="fas fa-check"></i> Gestión de inventario</li>
+                            <li><i class="fas fa-check"></i> Carrito de compras optimizado</li>
+                            <li><i class="fas fa-check"></i> Sistema de seguimiento de pedidos</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="web">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Landing Pages">
+                        <div class="service-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Landing Pages</h3>
+                        <p class="service-description">Diseñamos páginas de aterrizaje optimizadas para conversión, enfocadas en objetivos específicos y con llamados a la acción efectivos.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Diseño centrado en conversión</li>
+                            <li><i class="fas fa-check"></i> Copywriting persuasivo</li>
+                            <li><i class="fas fa-check"></i> Formularios optimizados</li>
+                            <li><i class="fas fa-check"></i> A/B testing</li>
+                            <li><i class="fas fa-check"></i> Análisis de conversiones</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Sección de Analytics -->
+    <section id="analytics" class="services-main">
+        <div class="container">
+            <h2 class="section-title">Analítica y Optimización</h2>
+            <p class="section-subtitle">Analizamos datos para tomar decisiones basadas en evidencia y optimizar tus estrategias digitales</p>
+            
+            <div class="services-grid">
+                <div class="service-card" data-category="analytics">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="SEO">
+                        <div class="service-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Optimización SEO</h3>
+                        <p class="service-description">Mejoramos tu posicionamiento en buscadores para aumentar la visibilidad orgánica y el tráfico cualificado a tu sitio web.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Auditoría SEO completa</li>
+                            <li><i class="fas fa-check"></i> Optimización de contenidos</li>
+                            <li><i class="fas fa-check"></i> Estrategia de palabras clave</li>
+                            <li><i class="fas fa-check"></i> Optimización técnica</li>
+                            <li><i class="fas fa-check"></i> Reportes de posicionamiento</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="analytics">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Analítica Web">
+                        <div class="service-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Analítica Web</h3>
+                        <p class="service-description">Implementamos y analizamos métricas para entender el comportamiento de tus usuarios y optimizar la experiencia en tu sitio web.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Configuración de Google Analytics</li>
+                            <li><i class="fas fa-check"></i> Seguimiento de conversiones</li>
+                            <li><i class="fas fa-check"></i> Análisis de comportamiento de usuarios</li>
+                            <li><i class="fas fa-check"></i> Informes personalizados</li>
+                            <li><i class="fas fa-check"></i> Recomendaciones de optimización</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="analytics">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Consultoría Digital">
+                        <div class="service-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Consultoría Digital</h3>
+                        <p class="service-description">Asesoramos y acompañamos a tu empresa en su transformación digital, desarrollando estrategias adaptadas a tus objetivos de negocio.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Diagnóstico de presencia digital</li>
+                            <li><i class="fas fa-check"></i> Planificación estratégica</li>
+                            <li><i class="fas fa-check"></i> Formación a equipos</li>
+                            <li><i class="fas fa-check"></i> Implementación de procesos digitales</li>
+                            <li><i class="fas fa-check"></i> Seguimiento y optimización continua</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección de Diseño Gráfico -->
+    <section id="design" class="services-main" style="background-color: rgba(255, 255, 255, 0.03);">
+        <div class="container">
+            <h2 class="section-title">Diseño Gráfico</h2>
+            <p class="section-subtitle">Creamos identidades visuales atractivas y coherentes para diferenciar tu marca en el mercado</p>
+            
+            <div class="services-grid">
+                <div class="service-card" data-category="design">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Diseño de Marca">
+                        <div class="service-icon">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Diseño de Marca</h3>
+                        <p class="service-description">Desarrollamos identidades de marca memorables que reflejan los valores y la personalidad única de tu negocio.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Creación de logotipos</li>
+                            <li><i class="fas fa-check"></i> Manual de identidad corporativa</li>
+                            <li><i class="fas fa-check"></i> Paleta de colores y tipografías</li>
+                            <li><i class="fas fa-check"></i> Diseño de papelería corporativa</li>
+                            <li><i class="fas fa-check"></i> Elementos gráficos complementarios</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="design">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Diseño de Materiales Publicitarios">
+                        <div class="service-icon">
+                            <i class="fas fa-pen-fancy"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Materiales Publicitarios</h3>
+                        <p class="service-description">Creamos piezas gráficas impactantes para tus campañas publicitarias online y offline.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Banners para web y redes sociales</li>
+                            <li><i class="fas fa-check"></i> Flyers y folletos</li>
+                            <li><i class="fas fa-check"></i> Carteles y vallas publicitarias</li>
+                            <li><i class="fas fa-check"></i> Catálogos de productos</li>
+                            <li><i class="fas fa-check"></i> Presentaciones corporativas</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+                
+                <div class="service-card" data-category="design">
+                    <div class="service-image">
+                        <img src="/api/placeholder/600/300" alt="Diseño de Redes Sociales">
+                        <div class="service-icon">
+                            <i class="fas fa-images"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-title">Diseño para Redes Sociales</h3>
+                        <p class="service-description">Diseñamos contenido visual atractivo y estratégico para potenciar tu presencia en redes sociales.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Diseño de perfiles y portadas</li>
+                            <li><i class="fas fa-check"></i> Plantillas para publicaciones</li>
+                            <li><i class="fas fa-check"></i> Historias y carruseles</li>
+                            <li><i class="fas fa-check"></i> Anuncios para redes sociales</li>
+                            <li><i class="fas fa-check"></i> Infografías y GIFs</li>
+                        </ul>
+                        <a href="planes.html" class="service-link">Ver planes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Sección de Proceso -->
+    <section class="process-section">
+        <div class="container">
+            <h2 class="section-title">Nuestro Proceso</h2>
+            <p class="section-subtitle">Metodología orientada a resultados que garantiza el éxito de tus proyectos digitales</p>
+            
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Análisis</h3>
+                    <p class="step-description">Estudiamos tu negocio, objetivos y competencia para entender tus necesidades específicas.</p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Estrategia</h3>
+                    <p class="step-description">Desarrollamos un plan personalizado alineado con tus objetivos de negocio.</p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Implementación</h3>
+                    <p class="step-description">Ponemos en marcha las acciones estratégicas con atención al detalle y calidad.</p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h3 class="step-title">Medición</h3>
+                    <p class="step-description">Medimos y analizamos resultados para optimizar continuamente las estrategias.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Sección de Tecnologías -->
+    <section class="tech-section">
+        <div class="container">
+            <h2 class="section-title">Tecnologías que Utilizamos</h2>
+            <p class="section-subtitle">Trabajamos con las herramientas y plataformas más avanzadas del mercado</p>
+            
+            <div class="tech-icons">
+                <div class="tech-icon">
+                    <i class="fab fa-wordpress"></i>
+                    <span class="tech-name">WordPress</span>
+                </div>
+                
+                <div class="tech-icon">
+                    <i class="fab fa-shopify"></i>
+                    <span class="tech-name">Shopify</span>
+                </div>
+                
+                <div class="tech-icon">
+                    <i class="fab fa-react"></i>
+                    <span class="tech-name">React</span>
+                </div>
+                
+                <div class="tech-icon">
+                    <i class="fab fa-node-js"></i>
+                    <span class="tech-name">Node.js</span>
+                </div>
+                
+                <div class="tech-icon">
+                    <i class="fab fa-html5"></i>
+                    <span class="tech-name">HTML5</span>
+                </div>
+                
+                <div class="tech-icon">
+                    <i class="fab fa-css3-alt"></i>
+                    <span class="tech-name">CSS3</span>
+                </div>
+                
+                <div class="tech-icon">
+                    <i class="fab fa-js"></i>
+                    <span class="tech-name">JavaScript</span>
+                </div>
+                
+                <div class="tech-icon">
+                    <i class="fab fa-php"></i>
+                    <span class="tech-name">PHP</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Sección de CTA -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2 class="cta-title">¿Listo para impulsar tu presencia digital?</h2>
+            <p class="cta-description">Contáctanos hoy mismo para una consulta gratuita y descubre cómo podemos ayudarte a alcanzar tus objetivos de negocio con nuestras soluciones digitales personalizadas.</p>
+            <div class="cta-buttons">
+                <a href="contacto.html" class="cta-primary">Contáctanos</a>
+                <a href="planes.html" class="cta-secondary">Ver Planes</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-about">
+                <div class="footer-logo">
+                    <img src="../img/logo.png" alt="Crazy Studios Logo">
+                </div>
+                <p>Somos especialistas en marketing digital y desarrollo web, comprometidos con el éxito de nuestros clientes en el mundo digital.</p>
+                <div class="social-icons">
+                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <ul>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Sobre Nosotros</a></li>
+                    <li><a href="servicios.html">Servicios</a></li>
+                    <li><a href="planes.html">Planes</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-links">
+                <h3>Servicios</h3>
+                <ul>
+                    <li><a href="#marketing">Marketing Digital</a></li>
+                    <li><a href="#web">Desarrollo Web</a></li>
+                    <li><a href="#analytics">Analítica</a></li>
+                    <li><a href="#design">Diseño Gráfico</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-links">
+                <h3>Soporte</h3>
+                <ul>
+                    <li><a href="#">Preguntas Frecuentes</a></li>
+                    <li><a href="#">Términos y Condiciones</a></li>
+                    <li><a href="#">Política de Privacidad</a></li>
+                    <li><a href="#">Centro de Ayuda</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>&copy; 2025 Crazy Studios. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../js/servicios.js"></script>
+</body>
+</html>
