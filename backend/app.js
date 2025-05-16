@@ -42,6 +42,35 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
+// Configurar express.json con opciones de depuración
+app.use(express.json({
+    limit: '10mb',
+    verify: (req, res, buf, encoding) => {
+        try {
+            JSON.parse(buf.toString());
+        } catch (e) {
+            console.error('Error parsing JSON:', e);
+            res.status(400).json({ 
+                success: false, 
+                message: 'Invalid JSON in request body' 
+            });
+            throw new Error('Invalid JSON');
+        }
+        // Si llegamos aquí, el JSON es válido
+    }
+}));
+
+// Middleware para ver el cuerpo de las peticiones
+app.use((req, res, next) => {
+    if (req.method === 'POST' && req.url.includes('/api/auth/register')) {
+        console.log('==== PETICIÓN DE REGISTRO RECIBIDA ====');
+        console.log('Headers:', JSON.stringify(req.headers, null, 2));
+        console.log('Body:', JSON.stringify(req.body, null, 2));
+        console.log('=======================================');
+    }
+    next();
+});
+
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
   console.error(err.stack);

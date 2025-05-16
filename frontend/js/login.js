@@ -280,54 +280,76 @@ function simulateRegistration(form) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     
-    // Cambiar el texto del botón para indicar carga
+    // Cambiar el texto del botón
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
     
-    // Recopilar los datos del formulario
-    const formData = {
+    // Recopilar datos manualmente
+    const userData = {
         name: form.querySelector('#name').value,
         lastname: form.querySelector('#lastname').value,
         email: form.querySelector('#email').value,
+        password: form.querySelector('#password').value,
+        confirmPassword: form.querySelector('#confirmPassword').value,
         phone: form.querySelector('#phone').value,
         company: form.querySelector('#company').value || '',
         document_type: form.querySelector('#document_type').value,
         document_number: form.querySelector('#document_number').value,
-        password: form.querySelector('#password').value,
-        confirmPassword: form.querySelector('#confirmPassword').value,
         terms: form.querySelector('#terms').checked
     };
     
-    console.log('Datos del formulario que se están enviando:', formData);
+    console.log('Datos a enviar:', userData);
     
-    // Enviar datos a la API
+    // Verificar manualmente campos obligatorios
+    if (!userData.name || !userData.lastname || !userData.email || !userData.password) {
+        alert('Por favor, complete todos los campos obligatorios');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
+    // Verificar que las contraseñas coincidan
+    if (userData.password !== userData.confirmPassword) {
+        alert('Las contraseñas no coinciden');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
+    // Verificar términos y condiciones
+    if (!userData.terms) {
+        alert('Debe aceptar los términos y condiciones');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
+    // Enviar datos como JSON
     fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(userData)
     })
     .then(response => {
-        console.log('Estado de la respuesta:', response.status);
-        return response.json().then(data => {
-            console.log('Respuesta completa del servidor:', data);
-            if (!response.ok) {
-                throw new Error(data.message || 'Error en el registro');
-            }
-            return data;
-        });
+        console.log('Estado de respuesta:', response.status);
+        return response.json();
     })
     .then(data => {
-        console.log('Registro exitoso:', data);
-        // Mostrar mensaje de éxito y redirigir
-        alert('¡Registro exitoso! Por favor, inicia sesión con tus nuevas credenciales.');
-        window.location.href = 'login.html';
+        console.log('Respuesta del servidor:', data);
+        
+        if (data.success) {
+            alert('¡Registro exitoso! Por favor, inicia sesión con tus nuevas credenciales.');
+            window.location.href = 'login.html';
+        } else {
+            throw new Error(data.message || 'Error en el registro');
+        }
     })
     .catch(error => {
         console.error('Error en el registro:', error);
-        // Mostrar mensaje de error
         alert('Error en el registro: ' + error.message);
+        
         // Restaurar el botón
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;

@@ -10,44 +10,65 @@ const emailService = require('../services/emailService');
  */
 exports.register = async (req, res) => {
     try {
+        console.log('CONTROLADOR REGISTER - BODY RECIBIDO:', JSON.stringify(req.body, null, 2));
+        
         const db = getDatabase();
         
-        console.log('Datos recibidos para registro:', req.body);
+        // Extraer los datos del body para mayor claridad
+        const { 
+            name, lastname, email, password, confirmPassword,
+            phone, company, document_type, document_number, terms 
+        } = req.body;
         
-        // Verificar si existe el usuario
-        const existingUser = await db.collection('users').findOne({ correo: req.body.correo });
+        // Validaciones manuales (por si el middleware no está funcionando)
+        if (!name || !lastname || !email || !password) {
+            console.log('VALIDACIÓN EN CONTROLADOR FALLIDA: Campos obligatorios faltantes');
+            console.log('- name:', !!name);
+            console.log('- lastname:', !!lastname);
+            console.log('- email:', !!email);
+            console.log('- password:', !!password);
+            
+            return res.status(400).json({
+                success: false,
+                message: 'Por favor, proporcione todos los campos obligatorios - validado en controlador'
+            });
+        }
+        
+        // Verificar si ya existe un usuario con ese correo
+        const existingUser = await db.collection('users').findOne({ correo: email });
         
         if (existingUser) {
-            console.log('Usuario ya existe:', req.body.correo);
+            console.log('ERROR: Usuario ya existe:', email);
             return res.status(400).json({
                 success: false,
                 message: 'Ya existe un usuario con este correo electrónico'
             });
         }
         
-        // Validar contraseñas
-        if (req.body.password !== req.body.confirmPassword) {
+        // Verificar que las contraseñas coincidan
+        if (password !== confirmPassword) {
+            console.log('ERROR: Las contraseñas no coinciden');
             return res.status(400).json({
                 success: false,
                 message: 'Las contraseñas no coinciden'
             });
         }
         
-        // Hashear la contraseña
+        // Hashear contraseña
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        const hashedPassword = await bcrypt.hash(password, salt);
         
-        // Preparar datos del nuevo usuario
+        // Crear nuevo usuario
         const newUser = {
-            nombre: req.body.nombre,
-            apellidos: req.body.apellidos,
-            correo: req.body.correo,
-            telefono: req.body.telefono || '',
-            empresa: req.body.empresa || '',
-            tipoDocumento: req.body.tipoDocumento || '',
-            documento: req.body.documento || '',
+            nombre: name,
+            apellidos: lastname,
+            correo: email,
+            telefono: phone || '',
+            empresa: company || '',
+            tipoDocumento: document_type || '',
+            documento: document_number || '',
             password: hashedPassword,
-            rol: 'cliente', // Por defecto, todos son clientes
+            rol: 'cliente',
             fechaRegistro: new Date(),
             proyectos: [],
             citas: []
@@ -55,33 +76,14 @@ exports.register = async (req, res) => {
         
         console.log('Nuevo usuario a crear:', {
             ...newUser,
-            password: '[PROTEGIDO]' // No logueamos la contraseña hasheada
+            password: '[PROTEGIDO]'
         });
         
-        // Guardar usuario en la base de datos
+        // Insertar en la base de datos
         const result = await db.collection('users').insertOne(newUser);
-        
         console.log('Usuario creado con ID:', result.insertedId);
         
-        // Usuario creado exitosamente, ahora intentamos enviar el correo
-        let emailSent = false;
-        
-        // Enviar correo de bienvenida
-        try {
-            if (emailService && typeof emailService.sendWelcomeEmail === 'function') {
-                await emailService.sendWelcomeEmail({
-                    nombre: newUser.nombre,
-                    correo: newUser.correo
-                });
-                emailSent = true;
-                console.log(`Email de bienvenida enviado a ${newUser.correo}`);
-            } else {
-                console.log('Servicio de email no disponible o método no encontrado');
-            }
-        } catch (emailError) {
-            console.error('Error al enviar correo de bienvenida:', emailError.message);
-            // No interrumpir el registro si falla el correo
-        }
+        // Simplificar: no enviar correo de bienvenida por ahora
         
         // Generar token JWT
         const token = jwt.sign(
@@ -96,12 +98,12 @@ exports.register = async (req, res) => {
             { expiresIn: config.jwt.expiresIn }
         );
         
-        // Respuesta exitosa sin devolver la contraseña
-        const { password, ...userData } = newUser;
+        // Respuesta exitosa
+        const { password: _, ...userData } = newUser;
         
         res.status(201).json({
             success: true,
-            message: 'Usuario registrado con éxito' + (emailSent ? ' y correo de bienvenida enviado' : ' (no se pudo enviar el correo de bienvenida)'),
+            message: 'Usuario registrado con éxito',
             token,
             data: {
                 ...userData,
@@ -109,7 +111,7 @@ exports.register = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error en el registro de usuario:', error);
+        console.error('ERROR EN CONTROLADOR:', error);
         res.status(500).json({
             success: false,
             message: 'Error en el servidor al registrar usuario',
