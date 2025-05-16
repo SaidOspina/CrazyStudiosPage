@@ -20,6 +20,8 @@ function initFormValidation() {
     const forms = document.querySelectorAll('.auth-form');
     
     forms.forEach(form => {
+        if (!form) return; // Verificar que el formulario existe
+        
         const inputs = form.querySelectorAll('input');
         
         inputs.forEach(input => {
@@ -42,7 +44,11 @@ function initFormValidation() {
  * @returns {boolean} - Retorna true si el input es válido, false en caso contrario
  */
 function validateInput(input) {
+    if (!input) return false; // Verificar que el input existe
+    
     const formGroup = input.closest('.form-group');
+    if (!formGroup) return false; // Verificar que formGroup existe
+    
     let isValid = true;
     let errorMessage = '';
     
@@ -99,8 +105,11 @@ function initPasswordToggle() {
     const toggleButtons = document.querySelectorAll('.password-toggle');
     
     toggleButtons.forEach(button => {
+        if (!button) return; // Verificar que el botón existe
+        
         button.addEventListener('click', function() {
             const passwordInput = this.previousElementSibling;
+            if (!passwordInput) return; // Verificar que el input existe
             
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
@@ -200,7 +209,11 @@ function initFormSubmission() {
  * @param {HTMLFormElement} form - El formulario de login
  */
 function simulateAuthentication(form) {
+    if (!form) return; // Verificar que el formulario existe
+    
     const submitBtn = form.querySelector('button[type="submit"]');
+    if (!submitBtn) return; // Verificar que el botón existe
+    
     const originalText = submitBtn.textContent;
     
     // Cambiar el texto del botón para indicar carga
@@ -208,9 +221,19 @@ function simulateAuthentication(form) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
     
     // Recopilar los datos del formulario
+    const emailInput = form.querySelector('#email');
+    const passwordInput = form.querySelector('#password');
+    
+    if (!emailInput || !passwordInput) {
+        // Restaurar el botón si faltan campos
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
     const formData = {
-        email: form.querySelector('#email').value,
-        password: form.querySelector('#password').value
+        email: emailInput.value,
+        password: passwordInput.value
     };
     
     console.log('Intentando iniciar sesión con:', formData.email);
@@ -262,7 +285,11 @@ function simulateAuthentication(form) {
         previousErrors.forEach(el => el.remove());
         
         const formGroup = form.querySelector('.form-group:last-of-type');
-        formGroup.insertAdjacentElement('afterend', errorMessage);
+        if (formGroup) {
+            formGroup.insertAdjacentElement('afterend', errorMessage);
+        } else {
+            form.appendChild(errorMessage);
+        }
         
         // Restaurar el botón
         submitBtn.disabled = false;
@@ -277,7 +304,11 @@ function simulateAuthentication(form) {
 }
 
 function simulateRegistration(form) {
+    if (!form) return; // Verificar que el formulario existe
+    
     const submitBtn = form.querySelector('button[type="submit"]');
+    if (!submitBtn) return; // Verificar que el botón existe
+    
     const originalText = submitBtn.textContent;
     
     // Cambiar el texto del botón
@@ -285,17 +316,35 @@ function simulateRegistration(form) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
     
     // Recopilar datos manualmente
+    const nameInput = form.querySelector('#name');
+    const lastnameInput = form.querySelector('#lastname');
+    const emailInput = form.querySelector('#email');
+    const passwordInput = form.querySelector('#password');
+    const confirmPasswordInput = form.querySelector('#confirmPassword');
+    const phoneInput = form.querySelector('#phone');
+    const companyInput = form.querySelector('#company');
+    const documentTypeInput = form.querySelector('#document_type');
+    const documentNumberInput = form.querySelector('#document_number');
+    const termsInput = form.querySelector('#terms');
+    
+    if (!nameInput || !lastnameInput || !emailInput || !passwordInput || !confirmPasswordInput) {
+        // Restaurar el botón si faltan campos esenciales
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
     const userData = {
-        name: form.querySelector('#name').value,
-        lastname: form.querySelector('#lastname').value,
-        email: form.querySelector('#email').value,
-        password: form.querySelector('#password').value,
-        confirmPassword: form.querySelector('#confirmPassword').value,
-        phone: form.querySelector('#phone').value,
-        company: form.querySelector('#company').value || '',
-        document_type: form.querySelector('#document_type').value,
-        document_number: form.querySelector('#document_number').value,
-        terms: form.querySelector('#terms').checked
+        name: nameInput.value,
+        lastname: lastnameInput.value,
+        email: emailInput.value,
+        password: passwordInput.value,
+        confirmPassword: confirmPasswordInput.value,
+        phone: phoneInput ? phoneInput.value : '',
+        company: companyInput ? companyInput.value : '',
+        document_type: documentTypeInput ? documentTypeInput.value : '',
+        document_number: documentNumberInput ? documentNumberInput.value : '',
+        terms: termsInput ? termsInput.checked : false
     };
     
     console.log('Datos a enviar:', userData);
@@ -361,7 +410,11 @@ function simulateRegistration(form) {
  * @param {HTMLFormElement} form - El formulario de recuperación
  */
 function simulatePasswordReset(form) {
+    if (!form) return; // Verificar que el formulario existe
+    
     const submitBtn = form.querySelector('button[type="submit"]');
+    if (!submitBtn) return; // Verificar que el botón existe
+    
     const originalText = submitBtn.textContent;
     
     // Cambiar el texto del botón para indicar carga
@@ -369,8 +422,16 @@ function simulatePasswordReset(form) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
     
     // Recopilar los datos del formulario
+    const emailInput = form.querySelector('#email');
+    if (!emailInput) {
+        // Restaurar el botón si falta el campo de email
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
     const formData = {
-        email: form.querySelector('#email').value
+        email: emailInput.value
     };
     
     console.log('Solicitando restablecimiento para:', formData.email);
@@ -424,7 +485,11 @@ function simulatePasswordReset(form) {
         errorMessage.textContent = error.message || 'No se pudo procesar la solicitud';
         
         const formGroup = form.querySelector('.form-group:last-of-type');
-        formGroup.insertAdjacentElement('afterend', errorMessage);
+        if (formGroup) {
+            formGroup.insertAdjacentElement('afterend', errorMessage);
+        } else {
+            form.appendChild(errorMessage);
+        }
         
         // Restaurar el botón
         submitBtn.disabled = false;
