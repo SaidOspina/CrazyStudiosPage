@@ -12,22 +12,72 @@ exports.register = async (req, res) => {
     try {
         const db = getDatabase();
         
-        // ... (código existente)
+        console.log('Datos recibidos para registro:', req.body);
+        
+        // Verificar si existe el usuario
+        const existingUser = await db.collection('users').findOne({ correo: req.body.correo });
+        
+        if (existingUser) {
+            console.log('Usuario ya existe:', req.body.correo);
+            return res.status(400).json({
+                success: false,
+                message: 'Ya existe un usuario con este correo electrónico'
+            });
+        }
+        
+        // Validar contraseñas
+        if (req.body.password !== req.body.confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Las contraseñas no coinciden'
+            });
+        }
+        
+        // Hashear la contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        
+        // Preparar datos del nuevo usuario
+        const newUser = {
+            nombre: req.body.nombre,
+            apellidos: req.body.apellidos,
+            correo: req.body.correo,
+            telefono: req.body.telefono || '',
+            empresa: req.body.empresa || '',
+            tipoDocumento: req.body.tipoDocumento || '',
+            documento: req.body.documento || '',
+            password: hashedPassword,
+            rol: 'cliente', // Por defecto, todos son clientes
+            fechaRegistro: new Date(),
+            proyectos: [],
+            citas: []
+        };
+        
+        console.log('Nuevo usuario a crear:', {
+            ...newUser,
+            password: '[PROTEGIDO]' // No logueamos la contraseña hasheada
+        });
         
         // Guardar usuario en la base de datos
         const result = await db.collection('users').insertOne(newUser);
+        
+        console.log('Usuario creado con ID:', result.insertedId);
         
         // Usuario creado exitosamente, ahora intentamos enviar el correo
         let emailSent = false;
         
         // Enviar correo de bienvenida
         try {
-            await emailService.sendWelcomeEmail({
-                nombre: newUser.nombre,
-                correo: newUser.correo
-            });
-            emailSent = true;
-            console.log(`Email de bienvenida enviado a ${newUser.correo}`);
+            if (emailService && typeof emailService.sendWelcomeEmail === 'function') {
+                await emailService.sendWelcomeEmail({
+                    nombre: newUser.nombre,
+                    correo: newUser.correo
+                });
+                emailSent = true;
+                console.log(`Email de bienvenida enviado a ${newUser.correo}`);
+            } else {
+                console.log('Servicio de email no disponible o método no encontrado');
+            }
         } catch (emailError) {
             console.error('Error al enviar correo de bienvenida:', emailError.message);
             // No interrumpir el registro si falla el correo

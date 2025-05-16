@@ -232,21 +232,34 @@ function simulateAuthentication(form) {
         return response.json();
     })
     .then(data => {
-        console.log('Inicio de sesión exitoso');
+        console.log('Inicio de sesión exitoso:', data);
         
         // Guardar el token en localStorage para usarlo en futuras peticiones
         localStorage.setItem('authToken', data.token);
-        localStorage.setItem('userData', JSON.stringify(data.data));
         
-        // Redirigir al dashboard
-        window.location.href = 'dashboard/index.html';
+        // Guardar datos del usuario sin la contraseña
+        if (data.data) {
+            localStorage.setItem('userData', JSON.stringify(data.data));
+        }
+        
+        // Redirigir según el rol del usuario
+        if (data.data && data.data.rol === 'admin') {
+            window.location.href = 'html/dashboardAdministrador.html';
+        } else {
+            window.location.href = 'html/dashboard.html';
+        }
     })
     .catch(error => {
         console.error('Error en la autenticación:', error);
+        
         // Mostrar mensaje de error
         const errorMessage = document.createElement('div');
         errorMessage.className = 'error-message auth-error';
-        errorMessage.textContent = 'Correo electrónico o contraseña incorrectos';
+        errorMessage.textContent = error.message || 'Correo electrónico o contraseña incorrectos';
+        
+        // Eliminar mensajes de error anteriores
+        const previousErrors = form.querySelectorAll('.auth-error');
+        previousErrors.forEach(el => el.remove());
         
         const formGroup = form.querySelector('.form-group:last-of-type');
         formGroup.insertAdjacentElement('afterend', errorMessage);
@@ -285,6 +298,8 @@ function simulateRegistration(form) {
         terms: form.querySelector('#terms').checked
     };
     
+    console.log('Datos del formulario que se están enviando:', formData);
+    
     // Enviar datos a la API
     fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
@@ -294,12 +309,14 @@ function simulateRegistration(form) {
         body: JSON.stringify(formData)
     })
     .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.message || 'Error en el registro');
-            });
-        }
-        return response.json();
+        console.log('Estado de la respuesta:', response.status);
+        return response.json().then(data => {
+            console.log('Respuesta completa del servidor:', data);
+            if (!response.ok) {
+                throw new Error(data.message || 'Error en el registro');
+            }
+            return data;
+        });
     })
     .then(data => {
         console.log('Registro exitoso:', data);
@@ -313,7 +330,7 @@ function simulateRegistration(form) {
         alert('Error en el registro: ' + error.message);
         // Restaurar el botón
         submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        submitBtn.innerHTML = originalText;
     });
 }
 

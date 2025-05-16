@@ -43,7 +43,7 @@ exports.validateUser = (req, res, next) => {
  */
 exports.validateRegister = (req, res, next) => {
     // Validar campos obligatorios
-    if (!req.body.name || !req.body.lastname || !req.body.email || !req.body.password) {
+    if (!req.body.nombre || !req.body.apellidos || !req.body.correo || !req.body.password) {
         return res.status(400).json({
             success: false,
             message: 'Por favor, proporcione todos los campos obligatorios'
@@ -52,7 +52,7 @@ exports.validateRegister = (req, res, next) => {
     
     // Validar formato de correo electrónico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(req.body.email)) {
+    if (!emailRegex.test(req.body.correo)) {
         return res.status(400).json({
             success: false,
             message: 'Por favor, proporcione un correo electrónico válido'
@@ -84,6 +84,108 @@ exports.validateRegister = (req, res, next) => {
     }
     
     next();
+};
+
+exports.register = async (req, res) => {
+    try {
+        const db = getDatabase();
+        
+        console.log('Datos recibidos para registro:', req.body);
+        
+        // Verificar si existe el usuario
+        const existingUser = await db.collection('users').findOne({ correo: req.body.email });
+        
+        if (existingUser) {
+            console.log('Usuario ya existe:', req.body.email);
+            return res.status(400).json({
+                success: false,
+                message: 'Ya existe un usuario con este correo electrónico'
+            });
+        }
+        
+        // Hashear la contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        
+        // Preparar datos del nuevo usuario
+        const newUser = {
+            nombre: req.body.name,
+            apellidos: req.body.lastname,
+            correo: req.body.email,
+            telefono: req.body.phone || '',
+            empresa: req.body.company || '',
+            tipoDocumento: req.body.document_type || '',
+            documento: req.body.document_number || '',
+            password: hashedPassword,
+            rol: 'cliente', // Por defecto, todos son clientes
+            fechaRegistro: new Date(),
+            proyectos: [],
+            citas: []
+        };
+        
+        console.log('Nuevo usuario a crear:', {
+            ...newUser,
+            password: '[PROTEGIDO]' // No logueamos la contraseña hasheada
+        });
+        
+        // Guardar usuario en la base de datos
+        const result = await db.collection('users').insertOne(newUser);
+        
+        console.log('Usuario creado con ID:', result.insertedId);
+        
+        // Usuario creado exitosamente, ahora intentamos enviar el correo
+        let emailSent = false;
+        
+        // Enviar correo de bienvenida
+        try {
+            if (emailService && typeof emailService.sendWelcomeEmail === 'function') {
+                await emailService.sendWelcomeEmail({
+                    nombre: newUser.nombre,
+                    correo: newUser.correo
+                });
+                emailSent = true;
+                console.log(`Email de bienvenida enviado a ${newUser.correo}`);
+            } else {
+                console.log('Servicio de email no disponible o método no encontrado');
+            }
+        } catch (emailError) {
+            console.error('Error al enviar correo de bienvenida:', emailError.message);
+            // No interrumpir el registro si falla el correo
+        }
+        
+        // Generar token JWT
+        const token = jwt.sign(
+            { 
+                id: result.insertedId,
+                nombre: newUser.nombre,
+                apellidos: newUser.apellidos,
+                correo: newUser.correo,
+                rol: newUser.rol 
+            },
+            config.jwt.secret,
+            { expiresIn: config.jwt.expiresIn }
+        );
+        
+        // Respuesta exitosa sin devolver la contraseña
+        const { password, ...userData } = newUser;
+        
+        res.status(201).json({
+            success: true,
+            message: 'Usuario registrado con éxito' + (emailSent ? ' y correo de bienvenida enviado' : ' (no se pudo enviar el correo de bienvenida)'),
+            token,
+            data: {
+                ...userData,
+                _id: result.insertedId
+            }
+        });
+    } catch (error) {
+        console.error('Error en el registro de usuario:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error en el servidor al registrar usuario',
+            error: error.message
+        });
+    }
 };
 
 /**
