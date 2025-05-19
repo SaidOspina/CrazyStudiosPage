@@ -248,7 +248,11 @@ function authenticateUser(form) {
     console.log('Intentando iniciar sesión con:', formData.email);
     
     // Enviar datos a la API
-    fetch('http://localhost:3000/api/auth/login', {
+    const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000' 
+    : '';
+
+    fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -388,7 +392,7 @@ function simulateRegistration(form) {
     }
     
     // Enviar datos como JSON
-    fetch('http://localhost:3000/api/auth/register', {
+    fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -451,7 +455,7 @@ function simulatePasswordReset(form) {
     console.log('Solicitando restablecimiento para:', formData.email);
     
     // Enviar datos a la API
-    fetch('http://localhost:3000/api/auth/forgot-password', {
+    fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
