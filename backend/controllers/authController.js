@@ -126,28 +126,31 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const db = getDatabase();
-        
-        // Verificar si existe el usuario
-        const user = await db.collection('users').findOne({ correo: req.body.email });
-        
+
+        // Normaliza el email (opcional, pero recomendado)
+        const email = req.body.email.toLowerCase().trim();
+
+        // Busca por el mismo campo que usas en el registro
+        const user = await db.collection('users').findOne({ correo: email });
+
         if (!user) {
             return res.status(401).json({
                 success: false,
                 message: 'Correo electrónico o contraseña incorrectos'
             });
         }
-        
-        // Verificar contraseña
+
+        // Verifica la contraseña
         const isMatch = await bcrypt.compare(req.body.password, user.password);
-        
+
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
                 message: 'Correo electrónico o contraseña incorrectos'
             });
         }
-        
-        // Generar token JWT
+
+        // Genera token JWT
         const token = jwt.sign(
             { 
                 id: user._id,
@@ -159,16 +162,16 @@ exports.login = async (req, res) => {
             config.jwt.secret,
             { expiresIn: config.jwt.expiresIn }
         );
-        
-        // Actualizar última conexión
+
+        // Actualiza última conexión
         await db.collection('users').updateOne(
             { _id: user._id },
             { $set: { ultimaConexion: new Date() } }
         );
-        
-        // Respuesta exitosa sin devolver la contraseña
+
+        // No envía la contraseña
         const { password, ...userData } = user;
-        
+
         res.status(200).json({
             success: true,
             message: 'Inicio de sesión exitoso',
