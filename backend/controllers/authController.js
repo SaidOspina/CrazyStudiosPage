@@ -1,4 +1,4 @@
-const { getDatabase, toObjectId } = require('../config/db');
+const { getDatabase, toObjectId } = require('../config/db').default;
 const config = require('../config/config');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -7,6 +7,7 @@ const emailService = require('../services/emailService');
 
 /**
  * Registra un nuevo usuario
+ * @route POST /api/auth/register
  */
 exports.register = async (req, res) => {
     try {
@@ -14,23 +15,18 @@ exports.register = async (req, res) => {
         
         const db = getDatabase();
         
-        // Extraer los datos del body para mayor claridad
+        // Extraer los datos del body
         const { 
             name, lastname, email, password, confirmPassword,
             phone, company, document_type, document_number, terms 
         } = req.body;
         
-        // Validaciones manuales (por si el middleware no está funcionando)
+        // Validaciones manuales
         if (!name || !lastname || !email || !password) {
             console.log('VALIDACIÓN EN CONTROLADOR FALLIDA: Campos obligatorios faltantes');
-            console.log('- name:', !!name);
-            console.log('- lastname:', !!lastname);
-            console.log('- email:', !!email);
-            console.log('- password:', !!password);
-            
             return res.status(400).json({
                 success: false,
-                message: 'Por favor, proporcione todos los campos obligatorios - validado en controlador'
+                message: 'Por favor, proporcione todos los campos obligatorios'
             });
         }
         
@@ -83,7 +79,17 @@ exports.register = async (req, res) => {
         const result = await db.collection('users').insertOne(newUser);
         console.log('Usuario creado con ID:', result.insertedId);
         
-        // Simplificar: no enviar correo de bienvenida por ahora
+        // Intentar enviar correo de bienvenida
+        try {
+            await emailService.sendWelcomeEmail({
+                nombre: newUser.nombre,
+                correo: newUser.correo
+            });
+            console.log(`Email de bienvenida enviado a ${newUser.correo}`);
+        } catch (emailError) {
+            console.error('Error al enviar correo de bienvenida:', emailError);
+            // No interrumpir el registro si falla el correo
+        }
         
         // Generar token JWT
         const token = jwt.sign(
@@ -98,7 +104,7 @@ exports.register = async (req, res) => {
             { expiresIn: config.jwt.expiresIn }
         );
         
-        // Respuesta exitosa
+        // Respuesta exitosa sin devolver la contraseña
         const { password: _, ...userData } = newUser;
         
         res.status(201).json({
@@ -120,19 +126,30 @@ exports.register = async (req, res) => {
     }
 };
 
+
 /**
  * Inicia sesión de usuario existente
+ * @route POST /api/auth/login
  */
 exports.login = async (req, res) => {
     try {
         const db = getDatabase();
+        
+        // Verificar que se proporcionaron los campos requeridos
+        if (!req.body.email || !req.body.password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Por favor, proporcione correo electrónico y contraseña'
+            });
+        }
 
-        // Normaliza el email (opcional, pero recomendado)
+        // Normaliza el email y elimina espacios
         const email = req.body.email.toLowerCase().trim();
 
-        // Busca por el mismo campo que usas en el registro
+        // Buscar usuario por correo electrónico
         const user = await db.collection('users').findOne({ correo: email });
 
+        // Si no se encuentra el usuario
         if (!user) {
             return res.status(401).json({
                 success: false,
@@ -140,9 +157,10 @@ exports.login = async (req, res) => {
             });
         }
 
-        // Verifica la contraseña
+        // Verificar la contraseña
         const isMatch = await bcrypt.compare(req.body.password, user.password);
 
+        // Si la contraseña no coincide
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
@@ -150,7 +168,7 @@ exports.login = async (req, res) => {
             });
         }
 
-        // Genera token JWT
+        // Generar token JWT
         const token = jwt.sign(
             { 
                 id: user._id,
@@ -163,15 +181,16 @@ exports.login = async (req, res) => {
             { expiresIn: config.jwt.expiresIn }
         );
 
-        // Actualiza última conexión
+        // Actualizar última conexión
         await db.collection('users').updateOne(
             { _id: user._id },
             { $set: { ultimaConexion: new Date() } }
         );
 
-        // No envía la contraseña
+        // No enviar la contraseña en la respuesta
         const { password, ...userData } = user;
 
+        // Respuesta exitosa
         res.status(200).json({
             success: true,
             message: 'Inicio de sesión exitoso',
@@ -190,6 +209,7 @@ exports.login = async (req, res) => {
 
 /**
  * Obtiene el usuario actual a partir del token JWT
+ * @route GET /api/auth/me
  */
 exports.getCurrentUser = async (req, res) => {
     try {
@@ -222,12 +242,25 @@ exports.getCurrentUser = async (req, res) => {
     }
 };
 
+
+
 /**
  * Solicita restablecimiento de contraseña
+ */
+/**
+ * Solicita restablecimiento de contraseña
+ * @route POST /api/auth/forgot-password
  */
 exports.forgotPassword = async (req, res) => {
     try {
         const db = getDatabase();
+        
+        if (!req.body.email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Por favor, proporcione su correo electrónico'
+            });
+        }
         
         // Verificar si existe el usuario
         const user = await db.collection('users').findOne({ correo: req.body.email });

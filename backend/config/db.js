@@ -1,8 +1,8 @@
-const { MongoClient, ObjectId } = require('mongodb');
-const dotenv = require('dotenv');
+import { MongoClient, ObjectId } from 'mongodb';
+import { config } from 'dotenv';
 
 // Cargar variables de entorno
-dotenv.config();
+config();
 
 // URL de conexión a MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
@@ -63,7 +63,7 @@ function toObjectId(id) {
     }
 }
 
-module.exports = {
+export default {
     connectToDatabase,
     closeDatabaseConnection,
     getDatabase,

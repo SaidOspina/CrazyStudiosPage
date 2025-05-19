@@ -44,10 +44,16 @@ function initFormValidation() {
  * @returns {boolean} - Retorna true si el input es válido, false en caso contrario
  */
 function validateInput(input) {
-    if (!input) return false; // Verificar que el input existe
+    if (!input){
+        console.error('Input no encontrado');// Verificar que el input existe
+        return false;
+    }// Verificar que el input existe
     
     const formGroup = input.closest('.form-group');
-    if (!formGroup) return false; // Verificar que formGroup existe
+    if (!formGroup) {
+        console.error('Input no encontrado');
+        return false; // Verificar que el grupo de formulario existe
+    }
     
     let isValid = true;
     let errorMessage = '';
@@ -63,24 +69,20 @@ function validateInput(input) {
     
     // Validación según el tipo de input
     if (input.required && input.value.trim() === '') {
+        
         isValid = false;
         errorMessage = 'Este campo es obligatorio';
     } else if (input.type === 'email' && input.value.trim() !== '') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(input.value)) {
+            
             isValid = false;
             errorMessage = 'Por favor, introduce un email válido';
         }
     } else if (input.id === 'password' && input.value.trim() !== '') {
-        if (input.value.length < 8) {
+        if (input.value.length < 6) {
             isValid = false;
-            errorMessage = 'La contraseña debe tener al menos 8 caracteres';
-        }
-    } else if (input.id === 'confirmPassword' && input.value.trim() !== '') {
-        const password = document.getElementById('password');
-        if (password && input.value !== password.value) {
-            isValid = false;
-            errorMessage = 'Las contraseñas no coinciden';
+            errorMessage = 'La contraseña debe tener al menos 6 caracteres';
         }
     }
     
@@ -94,9 +96,9 @@ function validateInput(input) {
         
         formGroup.appendChild(errorElement);
     }
-    
     return isValid;
 }
+
 
 /**
  * Inicializa el toggle de visibilidad de contraseña
@@ -121,7 +123,6 @@ function initPasswordToggle() {
         });
     });
 }
-
 /**
  * Inicializa el manejo de envío de formularios
  */
@@ -131,26 +132,30 @@ function initFormSubmission() {
     const resetPasswordForm = document.getElementById('resetPasswordForm');
     
     // Formulario de login
-    if (loginForm) {
+     if (loginForm) {
+        
         loginForm.addEventListener('submit', function(e) {
+            
             e.preventDefault();
+            
+            // Eliminar mensajes de error anteriores
+            const previousErrors = document.querySelectorAll('.auth-error');
+            previousErrors.forEach(el => el.remove());
             
             // Validar todos los campos antes de enviar
             const inputs = this.querySelectorAll('input');
             let isFormValid = true;
-            
             inputs.forEach(input => {
+                console.log("Este error"+validateInput(input)+"    "+input);
                 if (!validateInput(input)) {
                     isFormValid = false;
+                    
                 }
             });
             
             if (isFormValid) {
-                // Aquí iría la lógica para enviar las credenciales al servidor
-                // Por ejemplo, usando fetch API para el backend
-                
-                // Simulación de autenticación (eliminar en implementación real)
-                simulateAuthentication(this);
+                authenticateUser(this);
+                console.log("Valido");
             }
         });
     }
@@ -166,6 +171,7 @@ function initFormSubmission() {
             
             inputs.forEach(input => {
                 if (!validateInput(input)) {
+                    console.log(isFormValid);
                     isFormValid = false;
                 }
             });
@@ -208,7 +214,7 @@ function initFormSubmission() {
  * Conecta con la API para autenticar al usuario
  * @param {HTMLFormElement} form - El formulario de login
  */
-function simulateAuthentication(form) {
+function authenticateUser(form) {
     if (!form) return; // Verificar que el formulario existe
     
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -223,17 +229,20 @@ function simulateAuthentication(form) {
     // Recopilar los datos del formulario
     const emailInput = form.querySelector('#email');
     const passwordInput = form.querySelector('#password');
+    const rememberMeInput = form.querySelector('#remember');
     
     if (!emailInput || !passwordInput) {
         // Restaurar el botón si faltan campos
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
+        showErrorMessage(form, 'Faltan campos requeridos');
         return;
     }
     
     const formData = {
         email: emailInput.value,
-        password: passwordInput.value
+        password: passwordInput.value,
+        remember: rememberMeInput ? rememberMeInput.checked : false
     };
     
     console.log('Intentando iniciar sesión con:', formData.email);
@@ -266,7 +275,7 @@ function simulateAuthentication(form) {
         }
         
         // Redirigir según el rol del usuario
-        if (data.data && data.data.rol === 'admin') {
+        if (data.data && (data.data.rol === 'admin' || data.data.rol === 'superadmin')) {
             window.location.href = 'html/dashboardAdministrador.html';
         } else {
             window.location.href = 'html/dashboard.html';
@@ -274,33 +283,38 @@ function simulateAuthentication(form) {
     })
     .catch(error => {
         console.error('Error en la autenticación:', error);
-        
-        // Mostrar mensaje de error
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'error-message auth-error';
-        errorMessage.textContent = error.message || 'Correo electrónico o contraseña incorrectos';
-        
-        // Eliminar mensajes de error anteriores
-        const previousErrors = form.querySelectorAll('.auth-error');
-        previousErrors.forEach(el => el.remove());
-        
-        const formGroup = form.querySelector('.form-group:last-of-type');
-        if (formGroup) {
-            formGroup.insertAdjacentElement('afterend', errorMessage);
-        } else {
-            form.appendChild(errorMessage);
-        }
+        showErrorMessage(form, error.message || 'Correo electrónico o contraseña incorrectos');
         
         // Restaurar el botón
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
-        
-        // Eliminar mensaje de error después de 5 segundos
-        setTimeout(() => {
-            const errorElements = document.querySelectorAll('.auth-error');
-            errorElements.forEach(el => el.remove());
-        }, 5000);
     });
+}
+
+/**
+ * Muestra un mensaje de error en el formulario
+ * @param {HTMLFormElement} form - El formulario donde mostrar el error
+ * @param {string} message - El mensaje de error a mostrar
+ */
+function showErrorMessage(form, message) {
+    // Crear elemento de error
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'error-message auth-error';
+    errorMessage.textContent = message;
+    
+    // Insertar después del último grupo de formulario
+    const formGroup = form.querySelector('.form-group:last-of-type');
+    if (formGroup) {
+        formGroup.insertAdjacentElement('afterend', errorMessage);
+    } else {
+        form.appendChild(errorMessage);
+    }
+    
+    // Eliminar mensaje de error después de 5 segundos
+    setTimeout(() => {
+        const errorElements = document.querySelectorAll('.auth-error');
+        errorElements.forEach(el => el.remove());
+    }, 5000);
 }
 
 function simulateRegistration(form) {

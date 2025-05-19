@@ -1,4 +1,4 @@
-const { getDatabase, toObjectId } = require('../config/db');
+const { getDatabase, toObjectId } = require('../config/db').default;
 const config = require('../config/config');
 const emailService = require('../services/emailService');
 

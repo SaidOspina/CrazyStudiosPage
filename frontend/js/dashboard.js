@@ -1597,51 +1597,6 @@ function initSettingsTabs() {
         });
     }
 }
-/**
- * db.js - Funciones para la conexión y operaciones con MongoDB
- * Este archivo contiene las funciones para interactuar con la base de datos MongoDB
- */
-
-// Importar MongoDB
-const { MongoClient, ObjectId } = require('mongodb');
-
-// URL de conexión a MongoDB (utiliza variables de entorno para producción)
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-const DB_NAME = 'crazy_studios_db';
-
-// Cliente MongoDB
-let client;
-let db;
-
-/**
- * Conecta a la base de datos MongoDB
- */
-async function connectToDatabase() {
-    if (db) return db;
-    
-    try {
-        client = new MongoClient(MONGODB_URI);
-        await client.connect();
-        
-        db = client.db(DB_NAME);
-        console.log('Conectado a MongoDB');
-        
-        return db;
-    } catch (error) {
-        console.error('Error al conectar a MongoDB:', error);
-        throw error;
-    }
-}
-
-/**
- * Cierra la conexión con MongoDB
- */
-async function closeDatabaseConnection() {
-    if (client) {
-        await client.close();
-        console.log('Conexión a MongoDB cerrada');
-    }
-}
 
 /**
  * OPERACIONES DE USUARIOS
@@ -2194,25 +2149,3 @@ async function getAppointments(options = {}) {
         throw error;
     }
 }
-
-// Exportar funciones
-module.exports = {
-    connectToDatabase,
-    closeDatabaseConnection,
-    getUserByEmail,
-    getUserById,
-    createUser,
-    updateUser,
-    deleteUser,
-    getUsers,
-    getProjectById,
-    createProject,
-    updateProject,
-    deleteProject,
-    getProjects,
-    getAppointmentById,
-    createAppointment,
-    updateAppointment,
-    deleteAppointment,
-    getAppointments
-};
