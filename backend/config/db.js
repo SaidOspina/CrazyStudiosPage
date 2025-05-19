@@ -4,9 +4,9 @@ import { config } from 'dotenv';
 // Cargar variables de entorno
 config();
 
-// URL de conexión a MongoDB
+// URL de conexión a MongoDB Atlas (o local para desarrollo)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-const DB_NAME = 'crazy_studios_db';
+const DB_NAME = process.env.DB_NAME || 'crazy_studios_db';
 
 // Cliente MongoDB
 let client;
@@ -19,11 +19,20 @@ async function connectToDatabase() {
     if (db) return db;
     
     try {
-        client = new MongoClient(MONGODB_URI);
+        // Opciones de conexión recomendadas para MongoDB Atlas
+        const options = {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            maxPoolSize: 10, // Ajusta según tus necesidades
+            serverSelectionTimeoutMS: 5000, // Timeout para selección de servidor
+            socketTimeoutMS: 45000, // Timeout para operaciones
+        };
+
+        client = new MongoClient(MONGODB_URI, options);
         await client.connect();
         
         db = client.db(DB_NAME);
-        console.log('Conectado a MongoDB');
+        console.log(`Conectado a MongoDB: ${DB_NAME}`);
         
         return db;
     } catch (error) {
@@ -39,6 +48,8 @@ async function closeDatabaseConnection() {
     if (client) {
         await client.close();
         console.log('Conexión a MongoDB cerrada');
+        db = null;
+        client = null;
     }
 }
 
@@ -63,10 +74,23 @@ function toObjectId(id) {
     }
 }
 
+// Agregar una función para verificar la conexión
+async function checkConnection() {
+    try {
+        const database = getDatabase();
+        await database.command({ ping: 1 });
+        return true;
+    } catch (error) {
+        console.error('Error al verificar la conexión:', error);
+        return false;
+    }
+}
+
 export default {
     connectToDatabase,
     closeDatabaseConnection,
     getDatabase,
     toObjectId,
-    ObjectId
-};  
+    ObjectId,
+    checkConnection
+};
