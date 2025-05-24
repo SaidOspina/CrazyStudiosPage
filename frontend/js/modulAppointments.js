@@ -1502,3 +1502,841 @@ function resetProjectsOptions() {
         projectSelect.appendChild(option);
     });
 }
+
+/**
+ * Valida el formulario de cita - FUNCIÓN FALTANTE AGREGADA
+ */
+function validateAppointmentForm() {
+    console.log('🔍 Validando formulario de cita...');
+    
+    const typeSelect = document.getElementById('appointment-type');
+    const dateInput = document.getElementById('appointment-date');
+    const timeInput = document.getElementById('appointment-time');
+    const clientSelect = document.getElementById('appointment-client');
+    const contactNameInput = document.getElementById('contact-name');
+    const contactEmailInput = document.getElementById('contact-email');
+    const projectSelect = document.getElementById('appointment-project');
+    
+    let isValid = true;
+    let errors = [];
+    
+    // Validar tipo de cita
+    if (!typeSelect || !typeSelect.value || typeSelect.value.trim() === '') {
+        errors.push('El tipo de cita es obligatorio');
+        if (typeSelect) typeSelect.style.borderColor = '#ff9800';
+        isValid = false;
+    } else {
+        if (typeSelect) typeSelect.style.borderColor = '';
+    }
+    
+    // Validar fecha
+    if (!dateInput || !dateInput.value || dateInput.value.trim() === '') {
+        errors.push('La fecha es obligatoria');
+        if (dateInput) dateInput.style.borderColor = '#ff9800';
+        isValid = false;
+    } else {
+        // Validar que la fecha no sea en el pasado
+        const selectedDate = new Date(dateInput.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            errors.push('No se pueden agendar citas en fechas pasadas');
+            if (dateInput) dateInput.style.borderColor = '#ff9800';
+            isValid = false;
+        } else {
+            if (dateInput) dateInput.style.borderColor = '';
+        }
+    }
+    
+    // Validar hora
+    if (!timeInput || !timeInput.value || timeInput.value.trim() === '') {
+        errors.push('La hora es obligatoria');
+        if (timeInput) timeInput.style.borderColor = '#ff9800';
+        isValid = false;
+    } else {
+        if (timeInput) timeInput.style.borderColor = '';
+    }
+    
+    // Validar proyecto si es seguimiento de proyecto
+    if (typeSelect && typeSelect.value === 'seguimiento-proyecto') {
+        if (!projectSelect || !projectSelect.value || projectSelect.value.trim() === '') {
+            errors.push('El proyecto es obligatorio para citas de seguimiento');
+            if (projectSelect) projectSelect.style.borderColor = '#ff9800';
+            isValid = false;
+        } else {
+            if (projectSelect) projectSelect.style.borderColor = '';
+        }
+    }
+    
+    // Validar datos de contacto si no hay cliente seleccionado
+    if (!clientSelect || !clientSelect.value) {
+        // Validar nombre de contacto
+        if (!contactNameInput || !contactNameInput.value || contactNameInput.value.trim() === '') {
+            errors.push('El nombre de contacto es obligatorio');
+            if (contactNameInput) contactNameInput.style.borderColor = '#ff9800';
+            isValid = false;
+        } else {
+            if (contactNameInput) contactNameInput.style.borderColor = '';
+        }
+        
+        // Validar email de contacto
+        if (!contactEmailInput || !contactEmailInput.value || contactEmailInput.value.trim() === '') {
+            errors.push('El email de contacto es obligatorio');
+            if (contactEmailInput) contactEmailInput.style.borderColor = '#ff9800';
+            isValid = false;
+        } else {
+            // Validar formato de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(contactEmailInput.value)) {
+                errors.push('El formato del email no es válido');
+                if (contactEmailInput) contactEmailInput.style.borderColor = '#ff9800';
+                isValid = false;
+            } else {
+                if (contactEmailInput) contactEmailInput.style.borderColor = '';
+            }
+        }
+    }
+    
+    // Mostrar errores si los hay
+    if (!isValid) {
+        const errorMessage = errors.join('\n');
+        showToast(errorMessage, 'error');
+        console.log('❌ Errores de validación:', errors);
+    } else {
+        console.log('✅ Formulario válido');
+    }
+    
+    return isValid;
+}
+
+/**
+ * Maneja la creación de una nueva cita - FUNCIÓN FALTANTE AGREGADA
+ */
+async function handleAppointmentCreate(e) {
+    console.log('📝 Creando nueva cita...');
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('#save-appointment-btn');
+    const originalText = submitBtn.textContent;
+    
+    try {
+        // Cambiar estado del botón
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agendando...';
+        
+        // Recopilar datos del formulario
+        const formData = new FormData(form);
+        const appointmentData = {};
+        
+        // Extraer datos del formulario
+        formData.forEach((value, key) => {
+            if (value && value.trim() !== '') {
+                appointmentData[key] = value.trim();
+            }
+        });
+        
+        console.log('📤 Datos de la cita a enviar:', appointmentData);
+        
+        // Validaciones adicionales
+        if (!appointmentData.tipo || !appointmentData.fecha || !appointmentData.hora) {
+            throw new Error('Faltan datos obligatorios');
+        }
+        
+        // Si no hay usuario seleccionado, validar datos de contacto
+        if (!appointmentData.usuario) {
+            if (!appointmentData.nombreContacto || !appointmentData.correoContacto) {
+                throw new Error('Se requieren datos de contacto para citas sin usuario registrado');
+            }
+        }
+        
+        // Enviar datos al servidor
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('Token de autenticación no encontrado');
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/appointments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(appointmentData)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Error al crear la cita');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Cita creada exitosamente:', data);
+        
+        // Mostrar mensaje de éxito
+        showToast('Cita agendada correctamente', 'success');
+        
+        // Cerrar modal
+        const modal = document.getElementById('appointment-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                }
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+        
+        // Recargar datos de citas
+        await loadAppointmentsData();
+        
+    } catch (error) {
+        console.error('❌ Error al crear cita:', error);
+        showToast(error.message || 'Error al agendar la cita', 'error');
+    } finally {
+        // Restaurar botón
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Maneja la actualización de una cita existente - FUNCIÓN FALTANTE AGREGADA
+ */
+async function handleAppointmentUpdate(e, appointmentData) {
+    console.log('✏️ Actualizando cita existente...');
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('#save-appointment-btn');
+    const originalText = submitBtn.textContent;
+    
+    try {
+        // Cambiar estado del botón
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        // Recopilar datos del formulario
+        const formData = new FormData(form);
+        const updateData = {};
+        
+        // Extraer datos del formulario
+        formData.forEach((value, key) => {
+            if (value && value.trim() !== '') {
+                updateData[key] = value.trim();
+            }
+        });
+        
+        console.log('📤 Datos de actualización:', updateData);
+        
+        // Enviar datos al servidor
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('Token de autenticación no encontrado');
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/appointments/${appointmentData._id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Error al actualizar la cita');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Cita actualizada exitosamente:', data);
+        
+        // Mostrar mensaje de éxito
+        showToast('Cita actualizada correctamente', 'success');
+        
+        // Cerrar modal
+        const modal = document.getElementById('appointment-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                }
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+        
+        // Recargar datos de citas
+        await loadAppointmentsData();
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar cita:', error);
+        showToast(error.message || 'Error al guardar los cambios', 'error');
+    } finally {
+        // Restaurar botón
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Funciones para acciones de citas - FUNCIONES FALTANTES AGREGADAS
+ */
+
+/**
+ * Ver detalles de una cita
+ */
+function viewAppointmentDetails(appointmentId) {
+    console.log('👁️ Viendo detalles de cita:', appointmentId);
+    
+    const appointment = appointmentsData.find(a => a._id === appointmentId);
+    if (!appointment) {
+        showToast('Cita no encontrada', 'error');
+        return;
+    }
+    
+    // Crear modal con detalles de la cita
+    const clientName = appointment.usuarioDetalles ? 
+        `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}` :
+        appointment.nombreContacto || 'Invitado';
+    
+    const clientEmail = appointment.usuarioDetalles ? 
+        appointment.usuarioDetalles.correo :
+        appointment.correoContacto || 'No disponible';
+    
+    const clientPhone = appointment.usuarioDetalles ? 
+        appointment.usuarioDetalles.telefono :
+        appointment.telefonoContacto || 'No disponible';
+    
+    const projectName = appointment.proyectoDetalles ? 
+        appointment.proyectoDetalles.nombre : 
+        'Sin proyecto asignado';
+    
+    const appointmentDate = appointment.fecha ? 
+        new Date(appointment.fecha).toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }) : 'Fecha no definida';
+    
+    const modalHTML = `
+        <div class="modal active" id="appointment-details-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Detalles de la Cita</h2>
+                    <button class="close-btn" onclick="closeAppointmentDetailsModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="appointment-details-grid">
+                        <div class="detail-section">
+                            <h4><i class="fas fa-calendar-alt"></i> Información de la Cita</h4>
+                            <div class="detail-item">
+                                <strong>Tipo:</strong> ${getAppointmentTypeLabel(appointment.tipo)}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Fecha:</strong> ${appointmentDate}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Hora:</strong> ${appointment.hora || 'No definida'}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Estado:</strong> 
+                                <span class="status-badge ${appointment.estado}">
+                                    ${getAppointmentStatusLabel(appointment.estado)}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h4><i class="fas fa-user"></i> Información del Cliente</h4>
+                            <div class="detail-item">
+                                <strong>Nombre:</strong> ${clientName}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Email:</strong> ${clientEmail}
+                            </div>
+                            <div class="detail-item">
+                                <strong>Teléfono:</strong> ${clientPhone}
+                            </div>
+                            ${appointment.usuarioDetalles && appointment.usuarioDetalles.empresa ? 
+                                `<div class="detail-item">
+                                    <strong>Empresa:</strong> ${appointment.usuarioDetalles.empresa}
+                                </div>` : ''
+                            }
+                        </div>
+                        
+                        ${appointment.proyectoDetalles ? `
+                            <div class="detail-section">
+                                <h4><i class="fas fa-project-diagram"></i> Proyecto Asociado</h4>
+                                <div class="detail-item">
+                                    <strong>Nombre:</strong> ${projectName}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Estado:</strong> 
+                                    <span class="status-badge ${appointment.proyectoDetalles.estado}">
+                                        ${appointment.proyectoDetalles.estado}
+                                    </span>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${appointment.notas ? `
+                            <div class="detail-section full-width">
+                                <h4><i class="fas fa-sticky-note"></i> Notas</h4>
+                                <div class="detail-item">
+                                    ${appointment.notas}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button class="secondary-btn" onclick="closeAppointmentDetailsModal()">Cerrar</button>
+                        <button class="primary-btn" onclick="closeAppointmentDetailsModal(); editAppointment('${appointmentId}')">
+                            <i class="fas fa-edit"></i> Editar Cita
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Verificar si ya existe un modal y eliminarlo
+    const existingModal = document.getElementById('appointment-details-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Cierra el modal de detalles de cita
+ */
+function closeAppointmentDetailsModal() {
+    const modal = document.getElementById('appointment-details-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            if (modal && modal.parentNode) {
+                modal.remove();
+            }
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+}
+
+/**
+ * Editar una cita
+ */
+function editAppointment(appointmentId) {
+    console.log('✏️ Editando cita:', appointmentId);
+    
+    const appointment = appointmentsData.find(a => a._id === appointmentId);
+    if (!appointment) {
+        showToast('Cita no encontrada', 'error');
+        return;
+    }
+    
+    // Abrir modal de edición con los datos de la cita
+    createAppointmentModal(appointment);
+}
+
+/**
+ * Eliminar una cita
+ */
+async function deleteAppointment(appointmentId) {
+    console.log('🗑️ Eliminando cita:', appointmentId);
+    
+    const appointment = appointmentsData.find(a => a._id === appointmentId);
+    if (!appointment) {
+        showToast('Cita no encontrada', 'error');
+        return;
+    }
+    
+    // Confirmar eliminación
+    const clientName = appointment.usuarioDetalles ? 
+        `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}` :
+        appointment.nombreContacto || 'Invitado';
+    
+    const appointmentDate = appointment.fecha ? 
+        new Date(appointment.fecha).toLocaleDateString('es-ES') : 
+        'fecha no definida';
+    
+    const confirmMessage = `¿Estás seguro de que deseas eliminar la cita de ${clientName} programada para el ${appointmentDate} a las ${appointment.hora}?`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('Token de autenticación no encontrado');
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/appointments/${appointmentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Error al eliminar la cita');
+        }
+        
+        console.log('✅ Cita eliminada exitosamente');
+        showToast('Cita eliminada correctamente', 'success');
+        
+        // Recargar datos de citas
+        await loadAppointmentsData();
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar cita:', error);
+        showToast(error.message || 'Error al eliminar la cita', 'error');
+    }
+}
+
+/**
+ * Funciones utilitarias para etiquetas - FUNCIONES FALTANTES AGREGADAS
+ */
+
+/**
+ * Obtiene la etiqueta del tipo de cita
+ */
+function getAppointmentTypeLabel(type) {
+    const types = {
+        'consulta-general': 'Consulta General',
+        'plan-personalizado': 'Plan Personalizado',
+        'seguimiento-proyecto': 'Seguimiento de Proyecto'
+    };
+    
+    return types[type] || type || 'No especificado';
+}
+
+/**
+ * Obtiene la etiqueta del estado de la cita
+ */
+function getAppointmentStatusLabel(status) {
+    const statuses = {
+        'pendiente': 'Pendiente',
+        'confirmada': 'Confirmada',
+        'cancelada': 'Cancelada',
+        'completada': 'Completada'
+    };
+    
+    return statuses[status] || status || 'No especificado';
+}
+
+/**
+ * Función para mostrar toast (usar la global si existe)
+ */
+function showToast(message, type = 'info') {
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, type);
+    } else {
+        // Fallback simple
+        alert(`${type.toUpperCase()}: ${message}`);
+    }
+}
+
+// Estilos CSS adicionales para el módulo de citas
+const appointmentsStyles = document.createElement('style');
+appointmentsStyles.textContent = `
+    /* Estilos específicos para el módulo de citas */
+    
+    .appointment-type-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .appointment-type-badge.consulta-general {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .appointment-type-badge.plan-personalizado {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+    }
+    
+    .appointment-type-badge.seguimiento-proyecto {
+        background-color: #fff3e0;
+        color: #f57c00;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-badge.pendiente {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-badge.confirmada {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-badge.cancelada {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-badge.completada {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .day-appointments {
+        margin-top: 4px;
+    }
+    
+    .day-appointment {
+        font-size: 9px;
+        padding: 1px 4px;
+        margin: 1px 0;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+    }
+    
+    .day-appointment[data-type="consulta-general"] {
+        background-color: #2196F3;
+        color: white;
+    }
+    
+    .day-appointment[data-type="plan-personalizado"] {
+        background-color: #9C27B0;
+        color: white;
+    }
+    
+    .day-appointment[data-type="seguimiento-proyecto"] {
+        background-color: #ff9800;
+        color: white;
+    }
+    
+    .calendar-day {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .calendar-day:hover {
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+    
+    .calendar-day.selected {
+        background-color: rgba(0, 123, 255, 0.2);
+        border: 2px solid var(--primary-color, #007bff);
+    }
+    
+    .appointment-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .detail-section {
+        background: #f8f9fa;
+        padding: 16px;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color, #007bff);
+    }
+    
+    .detail-section.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .detail-section h4 {
+        margin: 0 0 12px 0;
+        color: var(--primary-color, #007bff);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .detail-item {
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+    
+    .detail-item strong {
+        color: #333;
+        display: inline-block;
+        min-width: 80px;
+    }
+    
+    .client-info-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 16px;
+    }
+    
+    .client-info-card h4 {
+        margin: 0 0 12px 0;
+        color: var(--primary-color, #007bff);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .guest-fields-header h4 {
+        margin: 0 0 8px 0;
+        color: #333;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .actions-group {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .action-btn {
+        background: none;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 6px 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #666;
+    }
+    
+    .action-btn:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.view-btn:hover {
+        border-color: #007bff;
+        color: #007bff;
+    }
+    
+    .action-btn.edit-btn:hover {
+        border-color: #28a745;
+        color: #28a745;
+    }
+    
+    .action-btn.delete-btn:hover {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+    
+    .appointment-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        border-left: 4px solid var(--primary-color, #007bff);
+    }
+    
+    .appointment-time {
+        font-weight: 600;
+        color: var(--primary-color, #007bff);
+        min-width: 80px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .appointment-details {
+        flex: 1;
+    }
+    
+    .appointment-details h4 {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+    }
+    
+    .appointment-client {
+        margin: 0;
+        color: #666;
+        font-size: 13px;
+    }
+    
+    .appointment-project {
+        margin: 4px 0 0 0;
+        color: #666;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .appointment-notes {
+        margin: 4px 0 0 0;
+        color: #888;
+        font-size: 12px;
+        font-style: italic;
+    }
+    
+    .appointment-status {
+        margin-right: 8px;
+    }
+    
+    .appointment-actions {
+        display: flex;
+        gap: 4px;
+    }
+    
+    @media (max-width: 768px) {
+        .appointment-details-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .appointment-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .appointment-time {
+            min-width: auto;
+        }
+    }
+`;
+
+document.head.appendChild(appointmentsStyles);
+
+console.log('✅ Módulo de citas completamente cargado y configurado');
