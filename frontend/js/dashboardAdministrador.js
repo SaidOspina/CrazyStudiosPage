@@ -236,13 +236,8 @@ function switchToSection(sectionId) {
                     break;
                     
                 case 'appointments':
-                    console.log('🎯 Activando sección de citas...');
-                    if (typeof initAppointmentsModule === 'function') {
-                        console.log('✅ Inicializando módulo de citas...');
-                        initAppointmentsModule();
-                    } else {
-                        console.log('⚠️ Módulo de citas no disponible, intentando cargar...');
-                        loadAppointmentsModule();
+                    if (typeof window.initAppointmentsModuleComplete === 'function') {
+                        window.initAppointmentsModuleComplete();
                     }
                     break;
                     
