@@ -240,13 +240,6 @@ function setupModalTriggers() {
         });
     }
     
-    // Botón para nuevo cliente (solo admin)
-    const newClientBtn = document.getElementById('new-client-btn');
-    if (newClientBtn) {
-        newClientBtn.addEventListener('click', function() {
-            openModal('add-client-modal');
-        });
-    }
     
     // Botón para nuevo mensaje
     const newMessageBtn = document.getElementById('new-message-btn');
