@@ -148,10 +148,10 @@ function loadStatistics() {
     if (document.body.classList.contains('admin-dashboard')) {
         // Estadísticas de administrador
         const stats = {
-            clients: 207,
-            projects: 43,
-            appointments: 15,
-            messages: 8
+            clients: 0,
+            projects: 0,
+            appointments: 0,
+            messages: 0
         };
         
         const clientsCountElement = document.getElementById('clients-count');

@@ -30,22 +30,6 @@
     --status-completed: #2196f3;
 }
 
-/* Estructura del Dashboard */
-.dashboard-container {
-    display: flex;
-    height: calc(100vh - 85px);
-    overflow: hidden;
-}
-
-.dashboard-sidebar {
-    width: 250px;
-    background-color: var(--dark-blue);
-    padding: 20px 0;
-    overflow-y: auto;
-    transition: all 0.3s;
-    border-right: 1px solid var(--border-color);
-}
-
 .sidebar-menu {
     list-style: none;
     padding: 0;
@@ -78,6 +62,22 @@
     font-size: 1.1rem;
 }
 
+/* Estructura del Dashboard */
+.dashboard-container {
+    display: flex;
+    height: calc(100vh - 85px);
+    overflow: hidden;
+}
+
+.dashboard-sidebar {
+    width: 250px;
+    background-color: var(--dark-blue);
+    padding: 20px 0;
+    overflow-y: auto;
+    transition: all 0.3s;
+    border-right: 1px solid var(--border-color);
+}
+
 .dashboard-content {
     flex: 1;
     padding: 20px;
@@ -106,9 +106,154 @@
     opacity: 0.7;
 }
 
-.quick-actions {
-    display: flex;
-    gap: 10px;
+.quick-actions .dropdown {
+    position: relative !important;
+    display: inline-block;
+}
+
+/* Estilos mejorados para el botón principal */
+.quick-actions .primary-btn {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 20px !important;
+    color: white !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3) !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+}
+
+.quick-actions .primary-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.4) !important;
+}
+
+/* Dropdown menu corregido */
+.quick-actions .dropdown-menu {
+    display: none !important;
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    background-color: #1e1e1e !important;
+    border: 1px solid #333 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+    z-index: 1000 !important;
+    min-width: 200px !important;
+    overflow: hidden !important;
+    transform: translateY(-10px) !important;
+    opacity: 0 !important;
+    transition: all 0.3s ease !important;
+    pointer-events: none !important;
+}
+
+/* Cuando el dropdown está activo */
+.quick-actions .dropdown.active .dropdown-menu {
+    display: block !important;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+}
+
+/* Links dentro del dropdown */
+.quick-actions .dropdown-menu a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 14px 18px !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    border-bottom: 1px solid #333 !important;
+}
+
+.quick-actions .dropdown-menu a:last-child {
+    border-bottom: none !important;
+}
+
+.quick-actions .dropdown-menu a:hover {
+    background-color: #2a2a2a !important;
+    transform: translateX(4px) !important;
+}
+
+.quick-actions .dropdown-menu a i {
+    width: 18px !important;
+    text-align: center !important;
+    color: #007bff !important;
+    font-size: 14px !important;
+}
+
+/* Asegurar que el contenedor welcome-bar tenga el layout correcto */
+.welcome-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 30px !important;
+    padding: 20px !important;
+    background-color: #1e1e1e !important;
+    border-radius: 8px !important;
+    border: 1px solid #333 !important;
+}
+
+.welcome-bar .quick-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+}
+
+/* Responsive para el dropdown */
+@media (max-width: 768px) {
+    .quick-actions .dropdown-menu {
+        right: 0 !important;
+        left: auto !important;
+        min-width: 180px !important;
+    }
+    
+    .welcome-bar {
+        flex-direction: column !important;
+        gap: 15px !important;
+        text-align: center !important;
+    }
+    
+    .quick-actions {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+}
+
+/* Animación mejorada para el botón */
+.quick-actions .primary-btn i.fa-chevron-down {
+    transition: transform 0.3s ease !important;
+}
+
+.quick-actions .dropdown.active .primary-btn i.fa-chevron-down {
+    transform: rotate(180deg) !important;
+}
+
+/* Asegurar que no haya conflictos con z-index */
+.quick-actions .dropdown-menu {
+    z-index: 9999 !important;
+}
+
+/* Overlay para cerrar dropdown al hacer click fuera */
+.dropdown-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 998 !important;
+    display: none !important;
+}
+
+.quick-actions .dropdown.active ~ .dropdown-overlay,
+.quick-actions .dropdown.active .dropdown-overlay {
+    display: block !important;
 }
 
 /* Dashboard Sections */
