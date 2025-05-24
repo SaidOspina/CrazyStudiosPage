@@ -68,6 +68,7 @@ function setupQuickActions() {
 /**
  * Configura los botones específicos de quick actions
  */
+// 4. CORREGIR la función setupQuickActionButtons (línea ~65 aprox)
 function setupQuickActionButtons() {
     const createClientBtn = document.getElementById('create-client');
     const createProjectBtn = document.getElementById('create-project');
@@ -125,23 +126,32 @@ function setupQuickActionButtons() {
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
+            // ⚠️ CORRECCIÓN CRÍTICA: Mejor manejo de carga de citas
             switchToSection('appointments');
+            
             setTimeout(() => {
+                // Intentar con la función principal
                 if (typeof openCreateAppointmentModal === 'function') {
                     console.log('✅ Abriendo modal de crear cita...');
                     openCreateAppointmentModal();
                 } else {
                     console.log('⚠️ Función openCreateAppointmentModal no disponible, cargando módulo...');
+                    
+                    // Cargar módulo y luego intentar abrir modal
                     loadAppointmentsModule();
+                    
+                    // Esperar más tiempo para que se cargue el módulo
                     setTimeout(() => {
                         if (typeof openCreateAppointmentModal === 'function') {
+                            console.log('✅ Módulo cargado, abriendo modal...');
                             openCreateAppointmentModal();
                         } else {
-                            showToast('Módulo de citas aún no disponible', 'warning');
+                            console.error('❌ No se puede abrir modal de citas');
+                            showToast('No se puede abrir el formulario de citas. Intenta recargar la página.', 'error');
                         }
-                    }, 1000);
+                    }, 2000);
                 }
-            }, 300);
+            }, 400);
         });
     }
 }
@@ -216,7 +226,7 @@ function switchToSection(sectionId) {
     if (targetSection) {
         targetSection.classList.add('active');
         
-        // Inicializar módulo específico si es necesario
+        // ⚠️ CORRECCIÓN CRÍTICA: Inicializar módulo específico con mejor timing
         setTimeout(() => {
             switch(sectionId) {
                 case 'clients':
@@ -236,8 +246,18 @@ function switchToSection(sectionId) {
                     break;
                     
                 case 'appointments':
-                    if (typeof window.initAppointmentsModuleComplete === 'function') {
-                        window.initAppointmentsModuleComplete();
+                    console.log('🎯 Iniciando carga de módulo de citas...');
+                    
+                    // Verificar si las funciones están disponibles
+                    if (typeof initAppointmentsModuleComplete === 'function') {
+                        console.log('✅ Función initAppointmentsModuleComplete encontrada');
+                        initAppointmentsModuleComplete();
+                    } else if (typeof initAppointmentsModule === 'function') {
+                        console.log('✅ Función initAppointmentsModule encontrada');
+                        initAppointmentsModule();
+                    } else {
+                        console.log('⚠️ Funciones de citas no disponibles, cargando módulo...');
+                        loadAppointmentsModule();
                     }
                     break;
                     
@@ -248,11 +268,12 @@ function switchToSection(sectionId) {
                 default:
                     console.log(`Sección ${sectionId} cargada`);
             }
-        }, 100);
+        }, 150); // Aumentar el delay para asegurar que el DOM esté listo
     } else {
         console.error(`❌ Sección ${sectionId} no encontrada en el DOM`);
     }
 }
+
 
 
 
@@ -338,25 +359,58 @@ function loadAppointmentsModule() {
     // Verificar si ya existe el script
     const existingScript = document.querySelector('script[src*="modulAppointments"]');
     if (existingScript) {
-        console.log('⚠️ Script de citas ya existe, pero función no disponible');
-        showToast('Módulo de citas cargando...', 'info');
+        console.log('⚠️ Script de citas ya existe');
+        
+        // Esperar un poco más y reintentar inicialización
+        setTimeout(() => {
+            if (typeof initAppointmentsModule === 'function') {
+                console.log('✅ Reintentando inicialización de citas...');
+                initAppointmentsModule();
+                showToast('Módulo de citas inicializado', 'success');
+            } else {
+                console.log('❌ Función aún no disponible, recargando script...');
+                existingScript.remove();
+                loadAppointmentsModuleScript();
+            }
+        }, 1000);
         return;
     }
     
+    loadAppointmentsModuleScript();
+}
+
+// 3. NUEVA FUNCIÓN para cargar el script
+function loadAppointmentsModuleScript() {
+    console.log('📜 Cargando script modulAppointments.js...');
+    
     // Crear y cargar el script dinámicamente
     const script = document.createElement('script');
-    script.src = '../js/modulAppointments.js';
+    script.src = '../js/modulAppointments.js?v=' + Date.now(); // Cache busting
+    script.type = 'text/javascript';
+    
     script.onload = function() {
-        console.log('✅ Módulo de citas cargado exitosamente');
-        if (typeof initAppointmentsModule === 'function') {
-            console.log('🎯 Inicializando módulo de citas...');
-            initAppointmentsModule();
-            showToast('Módulo de citas cargado correctamente', 'success');
-        } else {
-            console.error('❌ Función initAppointmentsModule aún no disponible después de cargar');
-            showToast('Error al cargar módulo de citas', 'error');
-        }
+        console.log('✅ Script modulAppointments.js cargado exitosamente');
+        
+        // Esperar un momento para que se ejecuten las definiciones de funciones
+        setTimeout(() => {
+            if (typeof initAppointmentsModule === 'function') {
+                console.log('🎯 Inicializando módulo de citas...');
+                initAppointmentsModule();
+                showToast('Módulo de citas cargado correctamente', 'success');
+            } else if (typeof initAppointmentsModuleComplete === 'function') {
+                console.log('🎯 Inicializando módulo completo de citas...');
+                initAppointmentsModuleComplete();
+                showToast('Módulo de citas cargado correctamente', 'success');
+            } else {
+                console.error('❌ Funciones de citas aún no disponibles después de cargar');
+                showToast('Error: Funciones del módulo no disponibles', 'error');
+                
+                // Debug: mostrar qué funciones están disponibles
+                console.log('Funciones disponibles en window:', Object.keys(window).filter(key => key.includes('appointment') || key.includes('Appointment')));
+            }
+        }, 500);
     };
+    
     script.onerror = function() {
         console.error('❌ Error al cargar el módulo de citas');
         showToast('Error al cargar módulo de citas. Verifica que el archivo modulAppointments.js exista.', 'error');
@@ -364,6 +418,7 @@ function loadAppointmentsModule() {
     
     document.head.appendChild(script);
 }
+
 
 /**
  * Carga estadísticas dinámicas desde la API - MEJORADO

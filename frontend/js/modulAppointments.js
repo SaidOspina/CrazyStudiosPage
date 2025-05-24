@@ -78,6 +78,97 @@ function initAppointmentsModule() {
 }
 
 /**
+ * Función auxiliar para cerrar el modal de cita - VERSIÓN MEJORADA
+ */
+function closeAppointmentModal() {
+    console.log('🚪 Intentando cerrar modal de cita...');
+    
+    const modal = document.getElementById('appointment-modal');
+    if (!modal) {
+        console.log('⚠️ Modal no encontrado');
+        return;
+    }
+    
+    try {
+        modal.classList.remove('active');
+        
+        setTimeout(() => {
+            if (modal && modal.parentNode) {
+                modal.remove();
+                console.log('✅ Modal removido del DOM');
+            }
+            
+            // Restaurar scroll del body
+            document.body.style.overflow = 'auto';
+            
+            // Limpiar cualquier backdrop que pueda haber quedado
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+            
+        }, 300);
+        
+    } catch (error) {
+        console.error('❌ Error al cerrar modal:', error);
+        
+        // Limpieza forzada en caso de error
+        try {
+            if (modal && modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+            document.body.style.overflow = 'auto';
+        } catch (cleanupError) {
+            console.error('❌ Error en limpieza forzada:', cleanupError);
+        }
+    }
+}
+
+/**
+ * CORRECCIÓN ADICIONAL: Función para verificar y corregir el estado del DOM
+ */
+function cleanupModalsDOM() {
+    console.log('🧹 Limpiando modales del DOM...');
+    
+    // Buscar y eliminar todos los modales de citas
+    const appointmentModals = document.querySelectorAll('#appointment-modal, [id*="appointment-modal"]');
+    appointmentModals.forEach((modal, index) => {
+        console.log(`Eliminando modal ${index + 1}:`, modal.id);
+        modal.remove();
+    });
+    
+    // Restaurar scroll
+    document.body.style.overflow = 'auto';
+    
+    // Eliminar backdrops huérfanos
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    
+    console.log('✅ Limpieza completada');
+}
+
+// Exponer función de limpieza globalmente
+window.cleanupModalsDOM = cleanupModalsDOM;
+
+/**
+ * Funciones auxiliares para formateo
+ */
+function formatTime(time24) {
+    const [hours, minutes] = time24.split(':');
+    const hour12 = hours % 12 || 12;
+    const ampm = hours < 12 ? 'AM' : 'PM';
+    return `${hour12}:${minutes} ${ampm}`;
+}
+
+function formatDateForInput(date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+
+
+/**
  * Función completa de inicialización (para uso externo)
  */
 function initAppointmentsModuleComplete() {
@@ -209,36 +300,10 @@ function switchAppointmentView(view) {
     }
 }
 
-/**
- * Función para debug - verificar estado del módulo
- */
-function debugAppointmentsModule() {
-    console.log('=== DEBUG MÓDULO DE CITAS ===');
-    console.log('appointmentsData:', appointmentsData.length, 'citas');
-    console.log('clientsOptionsForAppointments:', clientsOptionsForAppointments.length, 'clientes');
-    console.log('projectsOptionsForAppointments:', projectsOptionsForAppointments.length, 'proyectos');
-    console.log('currentViewMode:', currentViewMode);
-    console.log('currentCalendarDate:', currentCalendarDate);
-    
-    // Verificar elementos del DOM
-    const elements = {
-        'new-appointment-btn': document.getElementById('new-appointment-btn'),
-        'appointments-calendar': document.getElementById('appointments-calendar'),
-        'appointments-list-view': document.getElementById('appointments-list-view'),
-        'appointments-table': document.getElementById('appointments-table')
-    };
-    
-    console.log('Elementos DOM:');
-    Object.entries(elements).forEach(([key, element]) => {
-        console.log(`- ${key}:`, element ? '✅' : '❌');
-    });
-}
-
 // Exponer funciones globalmente
 window.initAppointmentsModule = initAppointmentsModule;
 window.initAppointmentsModuleComplete = initAppointmentsModuleComplete;
 window.openCreateAppointmentModal = openCreateAppointmentModal;
-window.debugAppointmentsModule = debugAppointmentsModule;
 
 console.log('📅 Módulo de citas - Parte 1 cargada: Variables y configuración inicial');
 
@@ -585,6 +650,10 @@ function getAppointmentsByDate(date) {
  * Verificar disponibilidad de horario
  */
 function isTimeSlotAvailable(date, time, excludeAppointmentId = null) {
+    if (!appointmentsData || appointmentsData.length === 0) {
+        return true; // Si no hay datos, el horario está disponible
+    }
+    
     const targetDate = new Date(date);
     
     const conflictingAppointments = appointmentsData.filter(appointment => {
@@ -608,12 +677,10 @@ console.log('📅 Módulo de citas - Parte 2 cargada: Carga de datos desde API')
 
 
 /**
- * Módulo de Citas - Parte 3: Modal de crear/editar cita
+ * CORRECCIÓN FINAL: createAppointmentModal con HTML mejorado
+ * Reemplazar la función createAppointmentModal existente
  */
 
-/**
- * Crea el modal para agregar/editar cita
- */
 function createAppointmentModal(appointmentData = null) {
     console.log('🎯 Creando modal de cita...');
     console.log('Es edición:', !!appointmentData);
@@ -623,24 +690,25 @@ function createAppointmentModal(appointmentData = null) {
     const modalTitle = isEditing ? 'Editar Cita' : 'Agendar Nueva Cita';
     const submitButtonText = isEditing ? 'Guardar Cambios' : 'Agendar Cita';
     
-    // Verificar si ya existe un modal y eliminarlo
-    const existingModal = document.getElementById('appointment-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
+    // Limpiar modales existentes
+    cleanupModalsDOM();
     
     // Verificar clientes disponibles
     if (clientsOptionsForAppointments.length === 0) {
         console.warn('⚠️ No hay clientes disponibles');
-        showToast('No hay clientes disponibles. Crea un cliente primero.', 'warning');
+        if (typeof showToast === 'function') {
+            showToast('No hay clientes disponibles. Crea un cliente primero.', 'warning');
+        } else {
+            alert('No hay clientes disponibles. Crea un cliente primero.');
+        }
         return;
     }
     
     // Generar opciones de clientes
-    let clientOptionsHTML = '<option value="">Seleccionar cliente</option>';
+    let clientOptionsHTML = '<option value="">-- Seleccionar cliente --</option>';
     clientsOptionsForAppointments.forEach(client => {
         const isSelected = appointmentData?.usuario === client._id ? 'selected' : '';
-        const empresaText = client.empresa ? ` - ${client.empresa}` : ' - Sin empresa';
+        const empresaText = client.empresa ? ` - ${client.empresa}` : '';
         
         clientOptionsHTML += `<option value="${client._id}" ${isSelected}>
             ${client.nombre} ${client.apellidos}${empresaText}
@@ -648,7 +716,7 @@ function createAppointmentModal(appointmentData = null) {
     });
     
     // Generar opciones de horarios
-    let timeOptionsHTML = '<option value="">Seleccionar hora</option>';
+    let timeOptionsHTML = '<option value="">-- Seleccionar hora --</option>';
     AVAILABLE_TIMES.forEach(time => {
         const isSelected = appointmentData?.hora === time ? 'selected' : '';
         const timeFormatted = formatTime(time);
@@ -656,31 +724,37 @@ function createAppointmentModal(appointmentData = null) {
         timeOptionsHTML += `<option value="${time}" ${isSelected}>${timeFormatted}</option>`;
     });
     
-    // Fecha por defecto (hoy o la fecha de la cita si es edición)
+    // Fecha por defecto
     const defaultDate = appointmentData?.fecha 
         ? formatDateForInput(appointmentData.fecha)
         : formatDateForInput(new Date());
     
+    // HTML del modal con mejor estructura
     const modalHTML = `
         <div class="modal active" id="appointment-modal">
             <div class="modal-content modal-lg">
                 <div class="modal-header">
                     <h2>${modalTitle}</h2>
-                    <button class="close-btn" id="close-appointment-modal">&times;</button>
+                    <button type="button" class="close-btn" id="close-appointment-modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <form id="appointment-form">
+                    <form id="appointment-form" novalidate autocomplete="off">
+                        <!-- Fila 1: Cliente y Tipo -->
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="appointment-client">Cliente *</label>
-                                <select id="appointment-client" name="usuario" required>
+                                <label for="appointment-client">
+                                    Cliente <span style="color: red;">*</span>
+                                </label>
+                                <select id="appointment-client" name="usuario" required class="form-control">
                                     ${clientOptionsHTML}
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="appointment-type">Tipo de Cita *</label>
-                                <select id="appointment-type" name="tipo" required>
-                                    <option value="">Seleccionar tipo</option>
+                                <label for="appointment-type">
+                                    Tipo de Cita <span style="color: red;">*</span>
+                                </label>
+                                <select id="appointment-type" name="tipo" required class="form-control">
+                                    <option value="">-- Seleccionar tipo --</option>
                                     <option value="consulta-general" ${appointmentData?.tipo === 'consulta-general' ? 'selected' : ''}>Consulta General</option>
                                     <option value="plan-personalizado" ${appointmentData?.tipo === 'plan-personalizado' ? 'selected' : ''}>Plan Personalizado</option>
                                     <option value="seguimiento-proyecto" ${appointmentData?.tipo === 'seguimiento-proyecto' ? 'selected' : ''}>Seguimiento de Proyecto</option>
@@ -688,32 +762,51 @@ function createAppointmentModal(appointmentData = null) {
                             </div>
                         </div>
                         
+                        <!-- Selector de Proyecto (oculto inicialmente) -->
                         <div class="form-group" id="project-select-container" style="display: none;">
-                            <label for="appointment-project">Proyecto (requerido para seguimiento) *</label>
-                            <select id="appointment-project" name="proyecto">
-                                <option value="">Seleccionar proyecto</option>
-                                <!-- Opciones se cargarán dinámicamente -->
+                            <label for="appointment-project">
+                                Proyecto <span style="color: red;">*</span>
+                                <small style="color: #666;">(requerido para seguimiento)</small>
+                            </label>
+                            <select id="appointment-project" name="proyecto" class="form-control">
+                                <option value="">-- Seleccionar proyecto --</option>
                             </select>
                         </div>
                         
+                        <!-- Fila 2: Fecha y Hora -->
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="appointment-date">Fecha *</label>
-                                <input type="date" id="appointment-date" name="fecha" value="${defaultDate}" required min="${formatDateForInput(new Date())}">
+                                <label for="appointment-date">
+                                    Fecha <span style="color: red;">*</span>
+                                </label>
+                                <input 
+                                    type="date" 
+                                    id="appointment-date" 
+                                    name="fecha" 
+                                    value="${defaultDate}" 
+                                    required 
+                                    min="${formatDateForInput(new Date())}"
+                                    class="form-control"
+                                >
                             </div>
                             <div class="form-group">
-                                <label for="appointment-time">Hora *</label>
-                                <select id="appointment-time" name="hora" required>
+                                <label for="appointment-time">
+                                    Hora <span style="color: red;">*</span>
+                                </label>
+                                <select id="appointment-time" name="hora" required class="form-control">
                                     ${timeOptionsHTML}
                                 </select>
                             </div>
                         </div>
                         
+                        <!-- Fila 3: Estado y Notificación -->
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="appointment-status">Estado *</label>
-                                <select id="appointment-status" name="estado" required>
-                                    <option value="pendiente" ${appointmentData?.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                                <label for="appointment-status">
+                                    Estado <span style="color: red;">*</span>
+                                </label>
+                                <select id="appointment-status" name="estado" required class="form-control">
+                                    <option value="pendiente" ${!appointmentData || appointmentData?.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
                                     <option value="confirmada" ${appointmentData?.estado === 'confirmada' ? 'selected' : ''}>Confirmada</option>
                                     <option value="cancelada" ${appointmentData?.estado === 'cancelada' ? 'selected' : ''}>Cancelada</option>
                                     <option value="completada" ${appointmentData?.estado === 'completada' ? 'selected' : ''}>Completada</option>
@@ -721,21 +814,38 @@ function createAppointmentModal(appointmentData = null) {
                             </div>
                             <div class="form-group checkbox-group">
                                 <label class="checkbox-container">
-                                    <input type="checkbox" id="send-notification" name="enviarNotificacion" ${!isEditing ? 'checked' : ''}>
+                                    <input 
+                                        type="checkbox" 
+                                        id="send-notification" 
+                                        name="enviarNotificacion" 
+                                        ${!isEditing ? 'checked' : ''}
+                                    >
                                     <span class="checkmark"></span>
                                     Enviar notificación al cliente
                                 </label>
                             </div>
                         </div>
                         
+                        <!-- Notas -->
                         <div class="form-group">
                             <label for="appointment-notes">Notas (opcional)</label>
-                            <textarea id="appointment-notes" name="notas" rows="4" placeholder="Notas adicionales sobre la cita...">${appointmentData?.notas || ''}</textarea>
+                            <textarea 
+                                id="appointment-notes" 
+                                name="notas" 
+                                rows="4" 
+                                placeholder="Notas adicionales sobre la cita..."
+                                class="form-control"
+                            >${appointmentData?.notas || ''}</textarea>
                         </div>
                         
-                        <div class="form-actions" style="margin-top: 20px;">
-                            <button type="button" class="secondary-btn" id="cancel-appointment-btn">Cancelar</button>
-                            <button type="submit" class="primary-btn" id="save-appointment-btn">${submitButtonText}</button>
+                        <!-- Botones de acción -->
+                        <div class="form-actions" style="margin-top: 30px;">
+                            <button type="button" class="secondary-btn" id="cancel-appointment-btn">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="primary-btn" id="save-appointment-btn">
+                                <i class="fas fa-save"></i> ${submitButtonText}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -749,14 +859,45 @@ function createAppointmentModal(appointmentData = null) {
     // Bloquear scroll del body
     document.body.style.overflow = 'hidden';
     
-    // Configurar eventos del modal después de que esté en el DOM
+    // Enfocar el modal para accesibilidad
+    setTimeout(() => {
+        const modal = document.getElementById('appointment-modal');
+        if (modal) {
+            modal.focus();
+        }
+    }, 100);
+    
+    // Configurar eventos con tiempo suficiente
     setTimeout(() => {
         setupAppointmentModalEvents(isEditing, appointmentData);
-    }, 100);
+        
+        // Configuración inicial para edición
+        if (isEditing && appointmentData?.tipo === 'seguimiento-proyecto') {
+            const projectContainer = document.getElementById('project-select-container');
+            const projectSelect = document.getElementById('appointment-project');
+            
+            if (projectContainer && projectSelect) {
+                projectContainer.style.display = 'block';
+                projectSelect.required = true;
+                
+                // Cargar proyectos del cliente y seleccionar el proyecto actual
+                if (appointmentData.usuario) {
+                    loadProjectsForClient(appointmentData.usuario).then(() => {
+                        if (appointmentData.proyecto) {
+                            projectSelect.value = appointmentData.proyecto;
+                        }
+                    });
+                }
+            }
+        }
+        
+        console.log('✅ Modal de cita creado y configurado correctamente');
+        
+    }, 300); // Tiempo suficiente para que el DOM se estabilice
 }
 
 /**
- * Configura los eventos del modal de cita
+ * Configura los eventos del modal de cita - VERSIÓN COMPLETAMENTE CORREGIDA
  */
 function setupAppointmentModalEvents(isEditing, appointmentData) {
     console.log('🔧 Configurando eventos del modal de cita...');
@@ -765,53 +906,91 @@ function setupAppointmentModalEvents(isEditing, appointmentData) {
     const closeBtn = document.getElementById('close-appointment-modal');
     const cancelBtn = document.getElementById('cancel-appointment-btn');
     const form = document.getElementById('appointment-form');
-    const typeSelect = document.getElementById('appointment-type');
-    const clientSelect = document.getElementById('appointment-client');
-    const projectContainer = document.getElementById('project-select-container');
-    const projectSelect = document.getElementById('appointment-project');
-    const dateInput = document.getElementById('appointment-date');
-    const timeSelect = document.getElementById('appointment-time');
+    
+    console.log('Elementos encontrados:', {
+        modal: !!modal,
+        closeBtn: !!closeBtn,
+        cancelBtn: !!cancelBtn,
+        form: !!form
+    });
     
     if (!modal || !form) {
         console.error('❌ Modal o formulario no encontrado');
         return;
     }
     
-    // Función para cerrar modal
+    // ⚠️ CORRECCIÓN CRÍTICA: Función para cerrar modal (definida como función nombrada)
     function closeModal() {
-        console.log('Cerrando modal de cita...');
-        modal.classList.remove('active');
-        setTimeout(() => {
-            if (modal && modal.parentNode) {
-                modal.remove();
-            }
+        console.log('🚪 Cerrando modal de cita...');
+        
+        try {
+            modal.classList.remove('active');
+            
+            setTimeout(() => {
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                    console.log('✅ Modal removido del DOM');
+                }
+                document.body.style.overflow = 'auto';
+            }, 300);
+        } catch (error) {
+            console.error('Error al cerrar modal:', error);
+            // Forzar limpieza
             document.body.style.overflow = 'auto';
-        }, 300);
+            if (modal && modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }
     }
     
-    // Eventos de cierre
+    // ⚠️ CORRECCIÓN CRÍTICA: Eventos de cierre con mejor manejo
     if (closeBtn) {
-        console.log('Close modal de cita...');
+        console.log('✅ Configurando botón close');
         closeBtn.addEventListener('click', function(e) {
+            console.log('🖱️ Click en botón close');
             e.preventDefault();
+            e.stopPropagation();
             closeModal();
         });
+    } else {
+        console.warn('⚠️ Botón close no encontrado');
     }
     
     if (cancelBtn) {
-        console.log('Cancel modal de cita...');
+        console.log('✅ Configurando botón cancel');
         cancelBtn.addEventListener('click', function(e) {
+            console.log('🖱️ Click en botón cancel');
             e.preventDefault();
+            e.stopPropagation();
             closeModal();
         });
+    } else {
+        console.warn('⚠️ Botón cancel no encontrado');
     }
     
     // Cerrar al hacer clic fuera del modal
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
+            console.log('🖱️ Click fuera del modal');
             closeModal();
         }
     });
+    
+    // Cerrar con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            console.log('⌨️ Presionado ESC');
+            closeModal();
+        }
+    });
+    
+    // Configurar otros elementos del formulario
+    const typeSelect = document.getElementById('appointment-type');
+    const clientSelect = document.getElementById('appointment-client');
+    const projectContainer = document.getElementById('project-select-container');
+    const projectSelect = document.getElementById('appointment-project');
+    const dateInput = document.getElementById('appointment-date');
+    const timeSelect = document.getElementById('appointment-time');
     
     // Manejar cambio de tipo de cita
     if (typeSelect) {
@@ -820,21 +999,36 @@ function setupAppointmentModalEvents(isEditing, appointmentData) {
             console.log('Tipo de cita seleccionado:', selectedType);
             
             if (selectedType === 'seguimiento-proyecto') {
-                projectContainer.style.display = 'block';
-                projectSelect.required = true;
-                loadProjectsForClient(clientSelect.value);
+                if (projectContainer) {
+                    projectContainer.style.display = 'block';
+                    if (projectSelect) {
+                        projectSelect.required = true;
+                        const selectedClient = clientSelect ? clientSelect.value : null;
+                        if (selectedClient) {
+                            loadProjectsForClient(selectedClient);
+                        }
+                    }
+                }
             } else {
-                projectContainer.style.display = 'none';
-                projectSelect.required = false;
-                projectSelect.innerHTML = '<option value="">Seleccionar proyecto</option>';
+                if (projectContainer) {
+                    projectContainer.style.display = 'none';
+                }
+                if (projectSelect) {
+                    projectSelect.required = false;
+                    projectSelect.innerHTML = '<option value="">Seleccionar proyecto</option>';
+                }
             }
         });
         
         // Trigger inicial si es edición
         if (isEditing && appointmentData?.tipo === 'seguimiento-proyecto') {
-            projectContainer.style.display = 'block';
-            projectSelect.required = true;
-            loadProjectsForClient(appointmentData.usuario);
+            setTimeout(() => {
+                if (projectContainer) projectContainer.style.display = 'block';
+                if (projectSelect) projectSelect.required = true;
+                if (appointmentData.usuario) {
+                    loadProjectsForClient(appointmentData.usuario);
+                }
+            }, 100);
         }
     }
     
@@ -845,14 +1039,16 @@ function setupAppointmentModalEvents(isEditing, appointmentData) {
             console.log('Cliente seleccionado:', selectedClient);
             
             // Si el tipo es seguimiento de proyecto, cargar proyectos del cliente
-            if (typeSelect.value === 'seguimiento-proyecto' && selectedClient) {
+            if (typeSelect && typeSelect.value === 'seguimiento-proyecto' && selectedClient) {
                 loadProjectsForClient(selectedClient);
             }
         });
     }
     
-    // Validar disponibilidad de horario al cambiar fecha/hora
+    // Validar disponibilidad de horario
     function validateTimeSlot() {
+        if (!dateInput || !timeSelect) return true;
+        
         const date = dateInput.value;
         const time = timeSelect.value;
         
@@ -879,38 +1075,62 @@ function setupAppointmentModalEvents(isEditing, appointmentData) {
         timeSelect.addEventListener('change', validateTimeSlot);
     }
     
-    // Envío del formulario
+    // ⚠️ CORRECCIÓN CRÍTICA: Envío del formulario
     form.addEventListener('submit', function(e) {
         console.log('📝 Submit del formulario de cita detectado');
         e.preventDefault();
+        e.stopPropagation();
+        
+        // Debug: mostrar valores del formulario
+        console.log('🔍 Valores del formulario:');
+        const formData = new FormData(form);
+        for (let [key, value] of formData.entries()) {
+            console.log(`- ${key}: "${value}"`);
+        }
         
         // Validar horario antes de enviar
         if (!validateTimeSlot()) {
             console.log('❌ Horario no disponible');
+            showToast('El horario seleccionado no está disponible', 'error');
             return;
         }
         
+        // Llamar función apropiada
         if (isEditing) {
-            handleAppointmentUpdate(e, appointmentData);
+            if (typeof handleAppointmentUpdate === 'function') {
+                handleAppointmentUpdate(e, appointmentData);
+            } else {
+                console.error('❌ Función handleAppointmentUpdate no definida');
+                showToast('Error: Función de actualización no disponible', 'error');
+            }
         } else {
-            handleAppointmentCreate(e);
+            if (typeof handleAppointmentCreate === 'function') {
+                handleAppointmentCreate(e);
+            } else {
+                console.error('❌ Función handleAppointmentCreate no definida');
+                showToast('Error: Función de creación no disponible', 'error');
+            }
         }
     });
     
-    console.log('✅ Eventos del modal de cita configurados');
+    console.log('✅ Eventos del modal de cita configurados correctamente');
 }
 
 /**
- * Carga los proyectos de un cliente específico en el selector
+ * Carga los proyectos de un cliente específico en el selector - VERSIÓN CORREGIDA
  */
 async function loadProjectsForClient(clientId) {
     console.log('📋 Cargando proyectos para cliente:', clientId);
     
     const projectSelect = document.getElementById('appointment-project');
-    if (!projectSelect || !clientId) return;
+    if (!projectSelect || !clientId) {
+        console.warn('⚠️ ProjectSelect no encontrado o clientId vacío');
+        return;
+    }
     
     // Limpiar opciones actuales
     projectSelect.innerHTML = '<option value="">Cargando proyectos...</option>';
+    projectSelect.disabled = true;
     
     try {
         const clientProjects = await loadClientProjects(clientId);
@@ -918,39 +1138,29 @@ async function loadProjectsForClient(clientId) {
         // Generar nuevas opciones
         let projectOptionsHTML = '<option value="">Seleccionar proyecto</option>';
         
-        clientProjects.forEach(project => {
-            projectOptionsHTML += `<option value="${project._id}">
-                ${project.nombre} (${project.estado})
-            </option>`;
-        });
+        if (clientProjects && clientProjects.length > 0) {
+            clientProjects.forEach(project => {
+                projectOptionsHTML += `<option value="${project._id}">
+                    ${project.nombre} (${project.estado || 'Sin estado'})
+                </option>`;
+            });
+        } else {
+            projectOptionsHTML += '<option value="" disabled>No hay proyectos disponibles</option>';
+        }
         
         projectSelect.innerHTML = projectOptionsHTML;
+        projectSelect.disabled = false;
         
         console.log(`✅ ${clientProjects.length} proyectos cargados para el cliente`);
         
     } catch (error) {
         console.error('❌ Error al cargar proyectos del cliente:', error);
         projectSelect.innerHTML = '<option value="">Error al cargar proyectos</option>';
+        projectSelect.disabled = false;
     }
 }
 
-/**
- * Funciones auxiliares para formateo
- */
-function formatTime(time24) {
-    const [hours, minutes] = time24.split(':');
-    const hour12 = hours % 12 || 12;
-    const ampm = hours < 12 ? 'AM' : 'PM';
-    return `${hour12}:${minutes} ${ampm}`;
-}
 
-function formatDateForInput(date) {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
 
 console.log('📅 Módulo de citas - Parte 3 cargada: Modal de crear/editar cita');
 
@@ -959,7 +1169,7 @@ console.log('📅 Módulo de citas - Parte 3 cargada: Modal de crear/editar cita
  */
 
 /**
- * Maneja la creación de una nueva cita
+ * Maneja la creación de una nueva cita - VERSIÓN CON DEBUG MEJORADO
  */
 async function handleAppointmentCreate(e) {
     console.log('📝 Iniciando creación de cita...');
@@ -980,38 +1190,76 @@ async function handleAppointmentCreate(e) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
         
-        // Recopilar datos del formulario
+        // ⚠️ CORRECCIÓN CRÍTICA: Recolección de datos más robusta
+        const elements = {
+            client: document.getElementById('appointment-client'),
+            type: document.getElementById('appointment-type'),
+            date: document.getElementById('appointment-date'),
+            time: document.getElementById('appointment-time'),
+            status: document.getElementById('appointment-status'),
+            notes: document.getElementById('appointment-notes'),
+            project: document.getElementById('appointment-project')
+        };
+        
+        // Debug: verificar que todos los elementos existen
+        console.log('🔍 Elementos del formulario encontrados:');
+        Object.entries(elements).forEach(([key, element]) => {
+            console.log(`- ${key}:`, element ? `✅ (valor: "${element.value}")` : '❌');
+        });
+        
+        // Recopilar datos con verificación
         const appointmentData = {
-            usuario: document.getElementById('appointment-client')?.value || '',
-            tipo: document.getElementById('appointment-type')?.value || '',
-            fecha: document.getElementById('appointment-date')?.value || '',
-            hora: document.getElementById('appointment-time')?.value || '',
-            estado: document.getElementById('appointment-status')?.value || 'pendiente',
-            notas: document.getElementById('appointment-notes')?.value?.trim() || ''
+            usuario: elements.client?.value?.trim() || '',
+            tipo: elements.type?.value?.trim() || '',
+            fecha: elements.date?.value || '',
+            hora: elements.time?.value || '',
+            estado: elements.status?.value || 'pendiente',
+            notas: elements.notes?.value?.trim() || ''
         };
         
         // Agregar proyecto si es necesario
-        const projectSelect = document.getElementById('appointment-project');
-        if (projectSelect && projectSelect.style.display !== 'none' && projectSelect.value) {
-            appointmentData.proyecto = projectSelect.value;
+        const projectContainer = document.getElementById('project-select-container');
+        if (projectContainer && 
+            projectContainer.style.display !== 'none' && 
+            elements.project && 
+            elements.project.value) {
+            appointmentData.proyecto = elements.project.value.trim();
         }
         
-        console.log('📊 Datos a enviar:', appointmentData);
+        console.log('📊 Datos recopilados para envío:', appointmentData);
         
-        // Validaciones
+        // ⚠️ VALIDACIONES MEJORADAS con mensajes más claros
         const errors = [];
-        if (!appointmentData.usuario) errors.push('Cliente es requerido');
-        if (!appointmentData.tipo) errors.push('Tipo de cita es requerido');
-        if (!appointmentData.fecha) errors.push('Fecha es requerida');
-        if (!appointmentData.hora) errors.push('Hora es requerida');
+        
+        if (!appointmentData.usuario) {
+            errors.push('Debe seleccionar un cliente');
+            console.log('❌ Validación: Cliente no seleccionado');
+        }
+        
+        if (!appointmentData.tipo) {
+            errors.push('Debe seleccionar un tipo de cita');
+            console.log('❌ Validación: Tipo no seleccionado');
+        }
+        
+        if (!appointmentData.fecha) {
+            errors.push('Debe seleccionar una fecha');
+            console.log('❌ Validación: Fecha no seleccionada');
+        }
+        
+        if (!appointmentData.hora) {
+            errors.push('Debe seleccionar una hora');
+            console.log('❌ Validación: Hora no seleccionada');
+        }
         
         // Validación especial para seguimiento de proyecto
         if (appointmentData.tipo === 'seguimiento-proyecto' && !appointmentData.proyecto) {
-            errors.push('Proyecto es requerido para citas de seguimiento');
+            errors.push('Debe seleccionar un proyecto para citas de seguimiento');
+            console.log('❌ Validación: Proyecto requerido para seguimiento');
         }
         
         if (errors.length > 0) {
-            throw new Error(errors.join(', '));
+            console.log('❌ Errores de validación:', errors);
+            throw new Error(errors.join('\n• '));
         }
         
         // Validar que la fecha no sea en el pasado
@@ -1038,6 +1286,9 @@ async function handleAppointmentCreate(e) {
             ? 'http://localhost:3000' 
             : '';
         
+        console.log('📡 Enviando petición a:', `${API_BASE}/api/appointments`);
+        console.log('📡 Datos a enviar:', JSON.stringify(appointmentData, null, 2));
+        
         const response = await fetch(`${API_BASE}/api/appointments`, {
             method: 'POST',
             headers: {
@@ -1047,28 +1298,49 @@ async function handleAppointmentCreate(e) {
             body: JSON.stringify(appointmentData)
         });
         
-        console.log('📡 Respuesta del servidor:', response.status);
+        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            let errorMessage = `Error ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+                console.log('📡 Error del servidor:', errorData);
+            } catch (e) {
+                console.warn('No se pudo parsear error del servidor');
+            }
+            throw new Error(errorMessage);
         }
         
         const responseData = await response.json();
         console.log('✅ Cita creada exitosamente:', responseData);
         
         // Mostrar mensaje de éxito
-        showToast('Cita creada correctamente', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Cita creada correctamente', 'success');
+        } else {
+            alert('Cita creada correctamente');
+        }
         
         // Recargar datos
-        await loadAppointmentsData();
+        if (typeof loadAppointmentsData === 'function') {
+            await loadAppointmentsData();
+        }
         
         // Cerrar modal
         closeAppointmentModal();
         
     } catch (error) {
         console.error('❌ Error al crear cita:', error);
-        showToast(error.message || 'Error al crear cita', 'error');
+        
+        // Mostrar error más detallado
+        const errorMessage = error.message || 'Error desconocido al crear cita';
+        
+        if (typeof showToast === 'function') {
+            showToast(errorMessage, 'error');
+        } else {
+            alert(`Error: ${errorMessage}`);
+        }
     } finally {
         // Restaurar botón
         if (submitBtn) {
@@ -1078,8 +1350,9 @@ async function handleAppointmentCreate(e) {
     }
 }
 
+
 /**
- * Maneja la actualización de una cita existente
+ * Maneja la actualización de una cita existente - VERSIÓN CORREGIDA
  */
 async function handleAppointmentUpdate(e, appointmentData) {
     console.log('📝 Iniciando actualización de cita...');
@@ -1100,10 +1373,10 @@ async function handleAppointmentUpdate(e, appointmentData) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
         
-        // Recopilar datos del formulario
+        // ⚠️ CORRECCIÓN CRÍTICA: Mejor recolección de datos
         const updatedData = {
-            usuario: document.getElementById('appointment-client')?.value || '',
-            tipo: document.getElementById('appointment-type')?.value || '',
+            usuario: document.getElementById('appointment-client')?.value?.trim() || '',
+            tipo: document.getElementById('appointment-type')?.value?.trim() || '',
             fecha: document.getElementById('appointment-date')?.value || '',
             hora: document.getElementById('appointment-time')?.value || '',
             estado: document.getElementById('appointment-status')?.value || 'pendiente',
@@ -1112,26 +1385,40 @@ async function handleAppointmentUpdate(e, appointmentData) {
         
         // Agregar proyecto si es necesario
         const projectSelect = document.getElementById('appointment-project');
-        if (projectSelect && projectSelect.style.display !== 'none') {
-            updatedData.proyecto = projectSelect.value || null;
+        const projectContainer = document.getElementById('project-select-container');
+        
+        if (projectContainer && projectContainer.style.display !== 'none') {
+            updatedData.proyecto = projectSelect?.value?.trim() || null;
         }
         
         console.log('📊 Datos de actualización:', updatedData);
         
-        // Validaciones
+        // Validaciones (similar a crear)
         const errors = [];
-        if (!updatedData.usuario) errors.push('Cliente es requerido');
-        if (!updatedData.tipo) errors.push('Tipo de cita es requerido');
-        if (!updatedData.fecha) errors.push('Fecha es requerida');
-        if (!updatedData.hora) errors.push('Hora es requerida');
+        
+        if (!updatedData.usuario) {
+            errors.push('Debe seleccionar un cliente');
+        }
+        
+        if (!updatedData.tipo) {
+            errors.push('Debe seleccionar un tipo de cita');
+        }
+        
+        if (!updatedData.fecha) {
+            errors.push('Debe seleccionar una fecha');
+        }
+        
+        if (!updatedData.hora) {
+            errors.push('Debe seleccionar una hora');
+        }
         
         // Validación especial para seguimiento de proyecto
         if (updatedData.tipo === 'seguimiento-proyecto' && !updatedData.proyecto) {
-            errors.push('Proyecto es requerido para citas de seguimiento');
+            errors.push('Debe seleccionar un proyecto para citas de seguimiento');
         }
         
         if (errors.length > 0) {
-            throw new Error(errors.join(', '));
+            throw new Error(errors.join('\n• '));
         }
         
         // Validar disponibilidad del horario (excluyendo la cita actual)
@@ -1149,6 +1436,8 @@ async function handleAppointmentUpdate(e, appointmentData) {
             ? 'http://localhost:3000' 
             : '';
         
+        console.log('📡 Enviando actualización a API...');
+        
         const response = await fetch(`${API_BASE}/api/appointments/${appointmentData._id}`, {
             method: 'PUT',
             headers: {
@@ -1161,15 +1450,23 @@ async function handleAppointmentUpdate(e, appointmentData) {
         console.log('📡 Respuesta de actualización:', response.status);
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            let errorMessage = `Error ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                console.warn('No se pudo parsear error del servidor');
+            }
+            throw new Error(errorMessage);
         }
         
         const responseData = await response.json();
         console.log('✅ Cita actualizada exitosamente:', responseData);
         
         // Mostrar mensaje de éxito
-        showToast('Cita actualizada correctamente', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Cita actualizada correctamente', 'success');
+        }
         
         // Recargar datos
         await loadAppointmentsData();
@@ -1179,7 +1476,11 @@ async function handleAppointmentUpdate(e, appointmentData) {
         
     } catch (error) {
         console.error('❌ Error al actualizar cita:', error);
-        showToast(error.message || 'Error al actualizar cita', 'error');
+        if (typeof showToast === 'function') {
+            showToast(error.message || 'Error al actualizar cita', 'error');
+        } else {
+            alert(error.message || 'Error al actualizar cita');
+        }
     } finally {
         // Restaurar botón
         if (submitBtn) {
@@ -1231,21 +1532,7 @@ async function deleteAppointment(appointmentId) {
     }
 }
 
-/**
- * Función auxiliar para cerrar el modal de cita
- */
-function closeAppointmentModal() {
-    const modal = document.getElementById('appointment-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            if (modal && modal.parentNode) {
-                modal.remove();
-            }
-            document.body.style.overflow = 'auto';
-        }, 300);
-    }
-}
+
 
 /**
  * Ver detalles de una cita
@@ -1625,7 +1912,7 @@ function showDayAppointmentsModal(dateString, appointments) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Citas del ${formattedDate}</h2>
-                    <button class="close-btn" id="close-day-appointments-modal">&times;</button>
+                    <button class="close-btn" id="close-appointments-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="day-appointments-list">
@@ -1677,7 +1964,7 @@ function showDayAppointmentsModal(dateString, appointments) {
                         <button type="button" class="secondary-btn" onclick="openCreateAppointmentModalForDate('${dateString}')">
                             <i class="fas fa-plus"></i> Nueva Cita
                         </button>
-                        <button type="button" class="primary-btn" id="close-day-modal-btn">Cerrar</button>
+                        <button type="button" class="primary-btn" id="close-modal-btn">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -1691,8 +1978,8 @@ function showDayAppointmentsModal(dateString, appointments) {
     // Configurar eventos
     setTimeout(() => {
         const modal = document.getElementById('day-appointments-modal');
-        const closeBtn = document.getElementById('close-day-appointments-modal');
-        const closeDayBtn = document.getElementById('close-day-modal-btn');
+        const closeBtn = document.getElementById('close-appointments-modal');
+        const closeDayBtn = document.getElementById('close-modal-btn');
         
         function closeModal() {
             modal.classList.remove('active');
@@ -2368,18 +2655,13 @@ function showAppointmentDetailsModal(appointment) {
                         ` : ''}
                         
                         ${appointment.estado !== 'cancelada' && appointment.estado !== 'completada' ? `
-                            <button type="button" class="secondary-btn warning-btn" onclick="rescheduleAppointment('${appointment._id}')">
-                                <i class="fas fa-calendar-alt"></i> Reprogramar
-                            </button>
+                            
                             <button type="button" class="secondary-btn danger-btn" onclick="cancelAppointment('${appointment._id}')">
                                 <i class="fas fa-times"></i> Cancelar
                             </button>
                         ` : ''}
                         
                         ${appointment.usuarioDetalles ? `
-                            <button type="button" class="secondary-btn" onclick="contactAppointmentClient('${appointment.usuario}')">
-                                <i class="fas fa-envelope"></i> Contactar Cliente
-                            </button>
                         ` : ''}
                         
                         <button type="button" class="primary-btn" id="close-appointment-details-btn">Cerrar</button>
@@ -2537,48 +2819,6 @@ function cleanupAppointmentsModule() {
     console.log('✅ Módulo de citas limpio');
 }
 
-/**
- * Función de debug completa
- */
-function debugAppointmentsModuleComplete() {
-    console.log('=== DEBUG COMPLETO MÓDULO DE CITAS ===');
-    
-    // Estado general
-    console.log('📊 Estado general:');
-    console.log('- appointmentsData:', appointmentsData.length, 'citas');
-    console.log('- filteredAppointmentsData:', filteredAppointmentsData.length, 'citas filtradas');
-    console.log('- clientsOptionsForAppointments:', clientsOptionsForAppointments.length, 'clientes');
-    console.log('- projectsOptionsForAppointments:', projectsOptionsForAppointments.length, 'proyectos');
-    console.log('- currentViewMode:', currentViewMode);
-    console.log('- currentCalendarDate:', currentCalendarDate);
-    
-    // Elementos DOM
-    console.log('🎯 Elementos DOM:');
-    const elements = {
-        'new-appointment-btn': document.getElementById('new-appointment-btn'),
-        'appointments-calendar': document.getElementById('appointments-calendar'),
-        'appointments-list-view': document.getElementById('appointments-list-view'),
-        'appointments-table': document.getElementById('appointments-table'),
-        'calendar-title': document.getElementById('calendar-title'),
-        'calendar-body': document.getElementById('calendar-body')
-    };
-    
-    Object.entries(elements).forEach(([key, element]) => {
-        console.log(`- ${key}:`, element ? '✅' : '❌');
-    });
-    
-    // Estadísticas
-    console.log('📊 Estadísticas:');
-    const stats = getAppointmentsStats();
-    console.log('- Stats:', stats);
-    
-    // Próximas citas
-    console.log('🔔 Próximas citas:');
-    const upcoming = getUpcomingAppointments();
-    console.log('- Upcoming:', upcoming.length, 'citas');
-    
-    console.log('=== FIN DEBUG ===');
-}
 
 // Funciones globales para uso externo
 window.viewAppointment = viewAppointment;
@@ -2591,7 +2831,6 @@ window.rescheduleAppointment = rescheduleAppointment;
 window.contactAppointmentClient = contactAppointmentClient;
 window.refreshAppointmentsData = refreshAppointmentsData;
 window.cleanupAppointmentsModule = cleanupAppointmentsModule;
-window.debugAppointmentsModuleComplete = debugAppointmentsModuleComplete;
 
 // Auto-inicialización de recordatorios cuando se carga el módulo completo
 document.addEventListener('DOMContentLoaded', function() {
@@ -2604,7 +2843,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('📅 Módulo de citas - Parte 7 cargada: Modal de detalles y funciones finales');
-console.log('🎉 MÓDULO DE CITAS COMPLETADO - Todas las partes cargadas correctamente');
+console.log('🎉 MÓDULO DE CITAS COMPLETADO - Tdas las partes cargadas correctamente');
+
 
 // Exportar configuración final del módulo
 if (typeof module !== 'undefined' && module.exports) {

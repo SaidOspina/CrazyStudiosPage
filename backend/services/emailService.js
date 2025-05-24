@@ -968,6 +968,211 @@ exports.testConnection = async () => {
     }
 };
 
+/**
+ * Envía notificación por email a un cliente cuando un admin le responde
+ * @param {Object} client - Datos del cliente
+ * @param {Object} messageData - Datos del mensaje
+ */
+exports.sendMessageNotificationToClient = async (client, messageData) => {
+    try {
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #4a4a4a;">Nueva Respuesta de Crazy Studios</h1>
+                </div>
+                <div style="color: #666; line-height: 1.6;">
+                    <p>Hola ${client.nombre},</p>
+                    <p><strong>${messageData.adminName}</strong> de nuestro equipo te ha enviado una respuesta:</p>
+                    
+                    <div style="background-color: #f9f9f9; padding: 20px; border-left: 4px solid #4CAF50; margin: 20px 0; border-radius: 4px;">
+                        <p style="margin: 0; font-style: italic; color: #333;">
+                            "${messageData.mensaje}"
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">
+                            Enviado el ${messageData.fechaEnvio.toLocaleDateString('es-ES', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </p>
+                    </div>
+                    
+                    <p>Para ver la conversación completa y responder, accede a tu cuenta en nuestro portal.</p>
+                    
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard" 
+                           style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Ver Mensajes
+                        </a>
+                    </p>
+                    
+                    <p>Si tienes alguna pregunta adicional, no dudes en responder a través de tu cuenta.</p>
+                    <p>¡Gracias por confiar en Crazy Studios!</p>
+                </div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+                    <p>© ${new Date().getFullYear()} Crazy Studios. Todos los derechos reservados.</p>
+                    <p>Este mensaje fue enviado porque tienes una cuenta activa en nuestro sistema.</p>
+                </div>
+            </div>
+        `;
+        
+        await sendEmail({
+            to: client.correo,
+            subject: 'Nueva respuesta de Crazy Studios - Centro de Mensajes',
+            html: emailContent
+        });
+        
+        console.log(`Notificación de mensaje enviada al cliente: ${client.correo}`);
+        
+    } catch (error) {
+        console.error('Error al enviar notificación de mensaje al cliente:', error);
+        throw error;
+    }
+};
+
+/**
+ * Envía notificación por email a un admin cuando un cliente envía un mensaje
+ * @param {Object} admin - Datos del administrador
+ * @param {Object} messageData - Datos del mensaje
+ */
+exports.sendMessageNotificationToAdmin = async (admin, messageData) => {
+    try {
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #4a4a4a;">💬 Nuevo Mensaje de Cliente</h1>
+                </div>
+                <div style="color: #666; line-height: 1.6;">
+                    <p>Hola ${admin.nombre},</p>
+                    <p>Has recibido un nuevo mensaje de <strong>${messageData.clientName}</strong>:</p>
+                    
+                    <div style="background-color: #f0f8ff; padding: 20px; border-left: 4px solid #007bff; margin: 20px 0; border-radius: 4px;">
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: #007bff;">De:</strong> ${messageData.clientName}<br>
+                            <strong style="color: #007bff;">Email:</strong> ${messageData.clientEmail}<br>
+                            <strong style="color: #007bff;">Fecha:</strong> ${messageData.fechaEnvio.toLocaleDateString('es-ES', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </div>
+                        <div style="border-top: 1px solid #ccc; padding-top: 15px; margin-top: 15px;">
+                            <strong style="color: #333;">Mensaje:</strong>
+                            <p style="margin: 10px 0 0 0; font-style: italic; color: #333;">
+                                "${messageData.mensaje}"
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <p>Para responder a este cliente, accede al panel de administración.</p>
+                    
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/html/dashboardAdministrador.html" 
+                           style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Responder Mensaje
+                        </a>
+                    </p>
+                    
+                    <div style="background-color: #fffbee; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="margin: 0; color: #b8860b;">
+                            <strong>💡 Consejo:</strong> Responde pronto para mantener una buena comunicación con el cliente.
+                        </p>
+                    </div>
+                </div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+                    <p>© ${new Date().getFullYear()} Crazy Studios. Todos los derechos reservados.</p>
+                    <p>Este mensaje fue enviado porque eres administrador del sistema.</p>
+                </div>
+            </div>
+        `;
+        
+        await sendEmail({
+            to: admin.correo,
+            subject: `Nuevo mensaje de ${messageData.clientName} - Centro de Mensajes`,
+            html: emailContent
+        });
+        
+        console.log(`Notificación de mensaje enviada al admin: ${admin.correo}`);
+        
+    } catch (error) {
+        console.error('Error al enviar notificación de mensaje al admin:', error);
+        throw error;
+    }
+};
+
+/**
+ * Envía resumen diario de mensajes a los administradores
+ * @param {Object} admin - Datos del administrador
+ * @param {Object} summary - Resumen de mensajes
+ */
+exports.sendDailyMessageSummary = async (admin, summary) => {
+    try {
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #4a4a4a;">📊 Resumen Diario de Mensajes</h1>
+                </div>
+                <div style="color: #666; line-height: 1.6;">
+                    <p>Hola ${admin.nombre},</p>
+                    <p>Aquí tienes el resumen de mensajes del día:</p>
+                    
+                    <div style="display: flex; justify-content: space-around; margin: 30px 0;">
+                        <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; flex: 1; margin: 0 10px;">
+                            <h3 style="color: #007bff; margin: 0; font-size: 28px;">${summary.nuevosHoy}</h3>
+                            <p style="margin: 5px 0 0 0; color: #666;">Mensajes Nuevos</p>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; flex: 1; margin: 0 10px;">
+                            <h3 style="color: #28a745; margin: 0; font-size: 28px;">${summary.respondidosHoy}</h3>
+                            <p style="margin: 5px 0 0 0; color: #666;">Respondidos</p>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; flex: 1; margin: 0 10px;">
+                            <h3 style="color: #dc3545; margin: 0; font-size: 28px;">${summary.pendientes}</h3>
+                            <p style="margin: 5px 0 0 0; color: #666;">Pendientes</p>
+                        </div>
+                    </div>
+                    
+                    ${summary.conversacionesActivas.length > 0 ? `
+                        <h3 style="color: #333; margin-top: 30px;">Conversaciones Activas</h3>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            ${summary.conversacionesActivas.map(conv => `
+                                <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6;">
+                                    <strong>${conv.clientName}</strong> - ${conv.mensajesPendientes} mensaje(s) sin responder
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/html/dashboardAdministrador.html" 
+                           style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Ver Centro de Mensajes
+                        </a>
+                    </p>
+                </div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+                    <p>© ${new Date().getFullYear()} Crazy Studios. Todos los derechos reservados.</p>
+                </div>
+            </div>
+        `;
+        
+        await sendEmail({
+            to: admin.correo,
+            subject: `Resumen diario de mensajes - ${new Date().toLocaleDateString('es-ES')}`,
+            html: emailContent
+        });
+        
+        console.log(`Resumen diario enviado a: ${admin.correo}`);
+        
+    } catch (error) {
+        console.error('Error al enviar resumen diario:', error);
+        throw error;
+    }
+};
+
 module.exports = {
     sendEmail,
     sendWelcomeEmail: exports.sendWelcomeEmail,
@@ -986,5 +1191,8 @@ module.exports = {
     sendGuestAppointmentRescheduledEmail: exports.sendGuestAppointmentRescheduledEmail,
     sendAppointmentCancellationEmail: exports.sendAppointmentCancellationEmail,
     sendGuestAppointmentCancellationEmail: exports.sendGuestAppointmentCancellationEmail,
-    sendAdminAppointmentNotificationEmail: exports.sendAdminAppointmentNotificationEmail
+    sendAdminAppointmentNotificationEmail: exports.sendAdminAppointmentNotificationEmail,
+    sendMessageNotificationToClient: exports.sendMessageNotificationToClient,
+    sendMessageNotificationToAdmin: exports.sendMessageNotificationToAdmin,
+    sendDailyMessageSummary: exports.sendDailyMessageSummary
 };
