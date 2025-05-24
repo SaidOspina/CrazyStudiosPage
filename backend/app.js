@@ -15,8 +15,6 @@ const app = express();
 // Conectar a la base de datos
 connectToDatabase();
 
-
-
 // Middleware
 const corsOptions = {
     origin: ['http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500','https://crazystudiospage.onrender.com'],
@@ -33,7 +31,7 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // Rutas API
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/projects', projectRoutes);
+app.use('/api/projects', projectRoutes); // ✅ ESTA LÍNEA ES IMPORTANTE
 app.use('/api/appointments', appointmentRoutes);
 
 // Ruta principal (SPA)
@@ -55,17 +53,18 @@ app.use(express.json({
             });
             throw new Error('Invalid JSON');
         }
-        // Si llegamos aquí, el JSON es válido
     }
 }));
 
-// Middleware para ver el cuerpo de las peticiones
+// Middleware para ver el cuerpo de las peticiones (debugging)
 app.use((req, res, next) => {
-    if (req.method === 'POST' && req.url.includes('/api/auth/register')) {
-        console.log('==== PETICIÓN DE REGISTRO RECIBIDA ====');
+    if (req.method === 'POST' && req.url.includes('/api/projects')) {
+        console.log('==== PETICIÓN DE PROYECTO RECIBIDA ====');
+        console.log('URL:', req.url);
+        console.log('Method:', req.method);
         console.log('Headers:', JSON.stringify(req.headers, null, 2));
         console.log('Body:', JSON.stringify(req.body, null, 2));
-        console.log('=======================================');
+        console.log('=========================================');
     }
     next();
 });
@@ -80,7 +79,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Añadir esto a app.js o a una ruta apropiada
+// Añadir esto para development
 if (process.env.NODE_ENV === 'development') {
     const emailService = require('./services/emailService');
     
@@ -96,6 +95,21 @@ if (process.env.NODE_ENV === 'development') {
                 error: error.message
             });
         }
+    });
+    
+    // Ruta de prueba para verificar rutas de proyectos
+    app.get('/api/test/projects', (req, res) => {
+        res.json({
+            success: true,
+            message: 'Ruta de proyectos funcionando correctamente',
+            availableRoutes: [
+                'GET /api/projects - Obtener todos los proyectos',
+                'POST /api/projects - Crear nuevo proyecto',
+                'GET /api/projects/:id - Obtener proyecto por ID',
+                'PUT /api/projects/:id - Actualizar proyecto',
+                'DELETE /api/projects/:id - Eliminar proyecto'
+            ]
+        });
     });
 }
 

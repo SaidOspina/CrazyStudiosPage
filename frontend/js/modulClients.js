@@ -522,7 +522,8 @@ async function loadClientsData() {
             ? 'http://localhost:3000' 
             : '';
         
-        const response = await fetch(`${API_BASE}/api/users?page=${currentClientsPage}&limit=${clientsPerPage}`, {
+        // Cargar todos los usuarios y luego filtrar por rol cliente
+        const response = await fetch(`${API_BASE}/api/users?limit=1000`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -530,20 +531,28 @@ async function loadClientsData() {
         });
         
         if (!response.ok) {
-            throw new Error('Error al cargar clientes');
+            throw new Error('Error al cargar usuarios');
         }
         
         const data = await response.json();
-        console.log('Clientes cargados:', data);
+        console.log('Usuarios cargados:', data);
         
-        clientsData = data.data || [];
+        // FILTRAR SOLO USUARIOS CON ROL "cliente"
+        const allUsers = data.data || [];
+        clientsData = allUsers.filter(user => user.rol === 'cliente');
         filteredClientsData = [...clientsData];
+        
+        console.log(`Clientes filtrados: ${clientsData.length} de ${allUsers.length} usuarios totales`);
         
         // Renderizar tabla de clientes
         renderClientsTable();
         
-        // Actualizar paginación
-        updateClientsPagination(data.pagination);
+        // Actualizar paginación (simulada por ahora)
+        updateClientsPagination({
+            total: clientsData.length,
+            page: currentClientsPage,
+            pages: Math.ceil(clientsData.length / clientsPerPage)
+        });
         
     } catch (error) {
         console.error('Error al cargar clientes:', error);

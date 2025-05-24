@@ -146,57 +146,120 @@ exports.getProjectById = async (req, res) => {
  */
 exports.createProject = async (req, res) => {
     try {
+        console.log('=== CREAR PROYECTO ===');
+        console.log('Body recibido:', JSON.stringify(req.body, null, 2));
+        
         const db = getDatabase();
         
-        // Validar estado del proyecto
-        if (req.body.estado && !config.projectStatuses.includes(req.body.estado)) {
+        // Extraer y validar datos del body
+        const {
+            nombre,
+            descripcion,
+            categoria,
+            estado,
+            cliente,
+            costo,
+            porcentajeProgreso,
+            notas
+        } = req.body;
+        
+        console.log('Datos extraídos:', {
+            nombre,
+            descripcion,
+            categoria,
+            estado,
+            cliente,
+            costo,
+            porcentajeProgreso,
+            notas
+        });
+        
+        // Validaciones básicas
+        if (!nombre || !descripcion || !categoria || !cliente) {
+            console.log('Error de validación - Campos faltantes:', {
+                nombre: !!nombre,
+                descripcion: !!descripcion,
+                categoria: !!categoria,
+                cliente: !!cliente
+            });
+            
             return res.status(400).json({
                 success: false,
-                message: 'Estado de proyecto inválido'
+                message: 'Nombre, descripción, categoría y cliente son obligatorios',
+                received: {
+                    nombre: !!nombre,
+                    descripcion: !!descripcion,
+                    categoria: !!categoria,
+                    cliente: !!cliente
+                }
+            });
+        }
+        
+        // Validar estado del proyecto
+        const validStates = ['cotizacion', 'pago procesado', 'iniciado', 'desarrollo inicial', 'desarrollo medio', 'finalizado'];
+        const projectState = estado || 'cotizacion';
+        
+        if (!validStates.includes(projectState)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Estado de proyecto inválido',
+                validStates: validStates
+            });
+        }
+        
+        // Verificar que el cliente existe
+        let clienteObjectId;
+        try {
+            clienteObjectId = toObjectId(cliente);
+            const clienteExists = await db.collection('users').findOne({ 
+                _id: clienteObjectId,
+                rol: 'cliente' // Asegurar que es un cliente
+            });
+            
+            if (!clienteExists) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Cliente no encontrado o no es un cliente válido'
+                });
+            }
+            
+            console.log('Cliente encontrado:', clienteExists.nombre, clienteExists.apellidos);
+            
+        } catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: 'ID de cliente inválido'
             });
         }
         
         // Preparar datos del nuevo proyecto
         const newProject = {
-            nombre: req.body.nombre,
-            descripcion: req.body.descripcion || '',
-            categoria: req.body.categoria || '',
-            estado: req.body.estado || 'cotizacion',
-            cliente: req.body.cliente ? toObjectId(req.body.cliente) : null,
+            nombre: nombre.trim(),
+            descripcion: descripcion.trim(),
+            categoria: categoria,
+            estado: projectState,
+            cliente: clienteObjectId,
             fechaCreacion: new Date(),
             fechaActualizacion: new Date(),
-            porcentajeProgreso: req.body.porcentajeProgreso || 0,
-            costo: req.body.costo || 0,
-            notas: req.body.notas || '',
-            archivosAdjuntos: req.body.archivosAdjuntos || []
+            porcentajeProgreso: Math.max(0, Math.min(100, parseInt(porcentajeProgreso) || 0)),
+            costo: parseFloat(costo) || 0,
+            notas: (notas || '').trim(),
+            archivosAdjuntos: []
         };
+        
+        console.log('Proyecto a crear:', newProject);
         
         // Insertar proyecto
         const result = await db.collection('projects').insertOne(newProject);
+        console.log('Proyecto insertado con ID:', result.insertedId);
         
-        // Si hay un cliente, actualizar su lista de proyectos
-        if (newProject.cliente) {
-            await db.collection('users').updateOne(
-                { _id: newProject.cliente },
-                { $push: { proyectos: result.insertedId } }
-            );
-            
-            // Enviar notificación por correo al cliente
-            try {
-                const client = await db.collection('users').findOne({ _id: newProject.cliente });
-                
-                if (client) {
-                    await emailService.sendProjectCreationEmail(client, {
-                        id: result.insertedId,
-                        nombre: newProject.nombre,
-                        estado: newProject.estado
-                    });
-                }
-            } catch (emailError) {
-                console.error('Error al enviar correo de notificación:', emailError);
-                // No interrumpimos el proceso si falla el envío del correo
-            }
-        }
+        // Actualizar el array de proyectos del cliente
+        await db.collection('users').updateOne(
+            { _id: clienteObjectId },
+            { $push: { proyectos: result.insertedId } }
+        );
+        
+        console.log('Array de proyectos del cliente actualizado');
         
         // Obtener proyecto creado con detalles del cliente
         const createdProject = await db.collection('projects').findOne({ _id: result.insertedId });
@@ -210,11 +273,27 @@ exports.createProject = async (req, res) => {
             createdProject.clienteDetalles = client || null;
         }
         
+        // Enviar notificación por correo al cliente (opcional)
+        try {
+            if (createdProject.clienteDetalles) {
+                await emailService.sendProjectCreationEmail(createdProject.clienteDetalles, {
+                    id: result.insertedId,
+                    nombre: createdProject.nombre,
+                    estado: createdProject.estado
+                });
+                console.log('Email de notificación enviado al cliente');
+            }
+        } catch (emailError) {
+            console.error('Error al enviar correo de notificación:', emailError);
+            // No interrumpimos el proceso si falla el correo
+        }
+        
         res.status(201).json({
             success: true,
             message: 'Proyecto creado correctamente',
             data: createdProject
         });
+        
     } catch (error) {
         console.error('Error al crear proyecto:', error);
         res.status(500).json({
@@ -247,16 +326,16 @@ exports.updateProject = async (req, res) => {
         const updateData = {};
         
         // Solo actualizar campos proporcionados
-        if (req.body.nombre !== undefined) updateData.nombre = req.body.nombre;
-        if (req.body.descripcion !== undefined) updateData.descripcion = req.body.descripcion;
+        if (req.body.nombre !== undefined) updateData.nombre = req.body.nombre.trim();
+        if (req.body.descripcion !== undefined) updateData.descripcion = req.body.descripcion.trim();
         if (req.body.categoria !== undefined) updateData.categoria = req.body.categoria;
-        if (req.body.costo !== undefined) updateData.costo = req.body.costo;
-        if (req.body.notas !== undefined) updateData.notas = req.body.notas;
-        if (req.body.archivosAdjuntos !== undefined) updateData.archivosAdjuntos = req.body.archivosAdjuntos;
+        if (req.body.costo !== undefined) updateData.costo = parseFloat(req.body.costo) || 0;
+        if (req.body.notas !== undefined) updateData.notas = req.body.notas.trim();
         
         // Validar estado del proyecto
         if (req.body.estado !== undefined) {
-            if (config.projectStatuses.includes(req.body.estado)) {
+            const validStates = ['cotizacion', 'pago procesado', 'iniciado', 'desarrollo inicial', 'desarrollo medio', 'finalizado'];
+            if (validStates.includes(req.body.estado)) {
                 updateData.estado = req.body.estado;
             } else {
                 return res.status(400).json({
@@ -268,7 +347,7 @@ exports.updateProject = async (req, res) => {
         
         // Validar porcentaje de progreso
         if (req.body.porcentajeProgreso !== undefined) {
-            const progress = parseFloat(req.body.porcentajeProgreso);
+            const progress = parseInt(req.body.porcentajeProgreso);
             
             if (isNaN(progress) || progress < 0 || progress > 100) {
                 return res.status(400).json({
@@ -291,7 +370,10 @@ exports.updateProject = async (req, res) => {
                     updateData.cliente = toObjectId(req.body.cliente);
                     
                     // Verificar si existe el cliente
-                    const clientExists = await db.collection('users').findOne({ _id: updateData.cliente });
+                    const clientExists = await db.collection('users').findOne({ 
+                        _id: updateData.cliente,
+                        rol: 'cliente'
+                    });
                     
                     if (!clientExists) {
                         return res.status(404).json({
@@ -336,7 +418,7 @@ exports.updateProject = async (req, res) => {
         if (oldClientId) {
             // Quitar referencia del cliente anterior
             await db.collection('users').updateOne(
-                { _id: toObjectId(oldClientId) },
+                { _id: oldClientId },
                 { $pull: { proyectos: toObjectId(projectId) } }
             );
         }

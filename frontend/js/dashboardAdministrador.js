@@ -1,3 +1,7 @@
+/**
+ * Dashboard Administrador - Versión Actualizada con Módulos Integrados
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar autenticación y cargar datos del usuario
     checkAuthentication();
@@ -99,16 +103,20 @@ function setupQuickActionButtons() {
     if (createProjectBtn) {
         createProjectBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Click en crear proyecto');
+            console.log('Click en crear proyecto desde quick actions');
             
             // Cerrar dropdown
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
+            // Cambiar a la sección de proyectos y abrir modal
             switchToSection('projects');
             setTimeout(() => {
-                console.log('Abrir modal de crear proyecto - funcionalidad próximamente');
-                showToast('Funcionalidad de crear proyecto próximamente', 'info');
+                if (typeof openCreateProjectModal === 'function') {
+                    openCreateProjectModal();
+                } else {
+                    console.error('Función openCreateProjectModal no disponible');
+                }
             }, 300);
         });
     }
@@ -202,15 +210,32 @@ function switchToSection(sectionId) {
         targetSection.classList.add('active');
         
         // Inicializar módulo específico si es necesario
-        if (sectionId === 'clients') {
-            setTimeout(() => {
-                if (typeof initClientsModule === 'function') {
-                    initClientsModule();
-                } else {
-                    console.error('Función initClientsModule no disponible');
-                }
-            }, 100);
-        }
+        setTimeout(() => {
+            switch(sectionId) {
+                case 'clients':
+                    if (typeof initClientsModule === 'function') {
+                        initClientsModule();
+                    } else {
+                        console.error('Función initClientsModule no disponible');
+                    }
+                    break;
+                case 'projects':
+                    if (typeof initProjectsModule === 'function') {
+                        initProjectsModule();
+                    } else {
+                        console.error('Función initProjectsModule no disponible');
+                    }
+                    break;
+                case 'appointments':
+                    console.log('Módulo de citas - próximamente');
+                    break;
+                case 'messages':
+                    console.log('Módulo de mensajes - próximamente');
+                    break;
+                default:
+                    console.log(`Sección ${sectionId} cargada`);
+            }
+        }, 100);
     }
 }
 
@@ -244,13 +269,26 @@ function setupSectionNavigation() {
                     targetSection.classList.add('active');
                     
                     // Inicializar módulo específico
-                    if (section === 'clients') {
-                        setTimeout(() => {
-                            if (typeof initClientsModule === 'function') {
-                                initClientsModule();
-                            }
-                        }, 100);
-                    }
+                    setTimeout(() => {
+                        switch(section) {
+                            case 'clients':
+                                if (typeof initClientsModule === 'function') {
+                                    initClientsModule();
+                                }
+                                break;
+                            case 'projects':
+                                if (typeof initProjectsModule === 'function') {
+                                    initProjectsModule();
+                                }
+                                break;
+                            case 'appointments':
+                                console.log('Módulo de citas - próximamente');
+                                break;
+                            case 'messages':
+                                console.log('Módulo de mensajes - próximamente');
+                                break;
+                        }
+                    }, 100);
                 }
             }
         });
@@ -258,7 +296,7 @@ function setupSectionNavigation() {
 }
 
 /**
- * Carga estadísticas dinámicas desde la API - NUEVO
+ * Carga estadísticas dinámicas desde la API - MEJORADO
  */
 async function loadDynamicStatistics() {
     console.log('Cargando estadísticas dinámicas...');
@@ -275,11 +313,11 @@ async function loadDynamicStatistics() {
             ? 'http://localhost:3000' 
             : '';
         
-        // Cargar estadísticas de clientes
+        // Cargar estadísticas de clientes (solo clientes, no admins)
         await loadClientsStatistics(API_BASE, token);
         
-        // Cargar estadísticas de proyectos (próximamente)
-        loadProjectsStatistics();
+        // Cargar estadísticas de proyectos
+        await loadProjectsStatistics(API_BASE, token);
         
         // Cargar estadísticas de citas (próximamente)
         loadAppointmentsStatistics();
@@ -294,7 +332,7 @@ async function loadDynamicStatistics() {
 }
 
 /**
- * Carga estadísticas de clientes desde la API
+ * Carga estadísticas de clientes desde la API - SOLO CLIENTES
  */
 async function loadClientsStatistics(API_BASE, token) {
     try {
@@ -309,10 +347,10 @@ async function loadClientsStatistics(API_BASE, token) {
         
         if (response.ok) {
             const data = await response.json();
-            const clients = data.data || [];
+            const allUsers = data.data || [];
             
-            // Filtrar solo clientes (no administradores)
-            const clientesActivos = clients.filter(user => user.rol === 'cliente');
+            // FILTRAR SOLO CLIENTES (no administradores)
+            const clientesActivos = allUsers.filter(user => user.rol === 'cliente');
             
             // Actualizar contador de clientes
             const clientsCount = document.getElementById('clients-count');
@@ -358,6 +396,71 @@ async function loadClientsStatistics(API_BASE, token) {
 }
 
 /**
+ * Carga estadísticas de proyectos desde la API - NUEVO
+ */
+async function loadProjectsStatistics(API_BASE, token) {
+    try {
+        console.log('Cargando estadísticas de proyectos...');
+        
+        const response = await fetch(`${API_BASE}/api/projects?limit=1000`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const projects = data.data || [];
+            
+            // Calcular proyectos en curso
+            const proyectosEnCurso = projects.filter(project => 
+                ['iniciado', 'desarrollo inicial', 'desarrollo medio', 'pago procesado'].includes(project.estado)
+            ).length;
+            
+            // Calcular proyectos finalizados
+            const proyectosFinalizados = projects.filter(project => 
+                project.estado === 'finalizado'
+            ).length;
+            
+            // Calcular proyectos nuevos este mes
+            const proyectosNuevosEsteMes = projects.filter(project => {
+                if (!project.fechaCreacion) return false;
+                const fechaCreacion = new Date(project.fechaCreacion);
+                const now = new Date();
+                return fechaCreacion.getMonth() === now.getMonth() && 
+                       fechaCreacion.getFullYear() === now.getFullYear();
+            }).length;
+            
+            // Actualizar contador de proyectos (proyectos en curso)
+            const projectsCount = document.getElementById('projects-count');
+            if (projectsCount) {
+                projectsCount.textContent = proyectosEnCurso;
+            }
+            
+            // Actualizar descripción
+            const projectsDescription = document.querySelector('.projects-icon').closest('.stat-card').querySelector('.stat-description');
+            if (projectsDescription) {
+                projectsDescription.textContent = `${proyectosNuevosEsteMes} nuevos este mes`;
+            }
+            
+            console.log('Estadísticas de proyectos cargadas:', {
+                total: projects.length,
+                enCurso: proyectosEnCurso,
+                finalizados: proyectosFinalizados,
+                nuevosEsteMes: proyectosNuevosEsteMes
+            });
+            
+        } else {
+            console.warn('No se pudieron cargar las estadísticas de proyectos');
+        }
+        
+    } catch (error) {
+        console.error('Error al cargar estadísticas de proyectos:', error);
+    }
+}
+
+/**
  * Carga estadísticas estáticas como fallback
  */
 function loadStaticStatistics() {
@@ -380,14 +483,6 @@ function loadStaticStatistics() {
     if (projectsCount) projectsCount.textContent = stats.projects;
     if (appointmentsCount) appointmentsCount.textContent = stats.appointments;
     if (messagesCount) messagesCount.textContent = stats.messages;
-}
-
-/**
- * Estadísticas de proyectos (placeholder)
- */
-function loadProjectsStatistics() {
-    console.log('Estadísticas de proyectos - próximamente');
-    // Aquí iría la lógica para cargar estadísticas de proyectos
 }
 
 /**
@@ -1066,6 +1161,10 @@ additionalStyles.textContent = `
         border: 1px solid #333;
     }
     
+    .modal-content.modal-lg {
+        max-width: 800px;
+    }
+    
     @keyframes modalSlideIn {
         from {
             transform: scale(0.8) translateY(-50px);
@@ -1224,6 +1323,107 @@ additionalStyles.textContent = `
         transform: translateY(-1px);
     }
     
+    /* Estilos para checkboxes */
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        margin-top: 16px;
+    }
+    
+    .checkbox-container {
+        position: relative;
+        padding-left: 30px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+    }
+    
+    .checkbox-container input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+    
+    .checkmark {
+        position: absolute;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #2a2a2a;
+        border: 1px solid #555;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    .checkbox-container:hover .checkmark {
+        background-color: #333;
+    }
+    
+    .checkbox-container input:checked ~ .checkmark {
+        background-color: var(--primary-color, #007bff);
+        border-color: var(--primary-color, #007bff);
+    }
+    
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+    
+    .checkbox-container input:checked ~ .checkmark:after {
+        display: block;
+    }
+    
+    .checkbox-container .checkmark:after {
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    /* Estilos para progress bars */
+    .progress-bar {
+        background-color: #333;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 8px;
+        flex: 1;
+    }
+    
+    .progress-bar.small {
+        height: 6px;
+    }
+    
+    .progress-bar.large {
+        height: 12px;
+    }
+    
+    .progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color, #007bff), #28a745);
+        transition: width 0.3s ease;
+        border-radius: 10px;
+    }
+    
+    .progress-preview {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .progress-text, .progress-percentage {
+        font-size: 12px;
+        color: #999;
+        min-width: 35px;
+    }
+    
     /* Responsive improvements */
     @media (max-width: 768px) {
         .form-row {
@@ -1257,4 +1457,4 @@ additionalStyles.textContent = `
 
 document.head.appendChild(additionalStyles);
 
-console.log('Dashboard integrado completamente - Versión mejorada cargada');
+console.log('Dashboard integrado completamente - Versión mejorada con módulos cargada');
