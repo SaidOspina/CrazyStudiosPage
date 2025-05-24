@@ -73,10 +73,10 @@ function setupQuickActionButtons() {
     const createProjectBtn = document.getElementById('create-project');
     const createAppointmentBtn = document.getElementById('create-appointment');
     
-    console.log('Configurando botones de quick actions:', {
-        createClientBtn,
-        createProjectBtn,
-        createAppointmentBtn
+    console.log('🔧 Configurando botones de quick actions:', {
+        createClientBtn: !!createClientBtn,
+        createProjectBtn: !!createProjectBtn,
+        createAppointmentBtn: !!createAppointmentBtn
     });
     
     if (createClientBtn) {
@@ -84,11 +84,9 @@ function setupQuickActionButtons() {
             e.preventDefault();
             console.log('Click en crear cliente desde quick actions');
             
-            // Cerrar dropdown
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
-            // Cambiar a la sección de clientes y abrir modal
             switchToSection('clients');
             setTimeout(() => {
                 if (typeof openCreateClientModal === 'function') {
@@ -105,11 +103,9 @@ function setupQuickActionButtons() {
             e.preventDefault();
             console.log('Click en crear proyecto desde quick actions');
             
-            // Cerrar dropdown
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
-            // Cambiar a la sección de proyectos y abrir modal
             switchToSection('projects');
             setTimeout(() => {
                 if (typeof openCreateProjectModal === 'function') {
@@ -124,16 +120,27 @@ function setupQuickActionButtons() {
     if (createAppointmentBtn) {
         createAppointmentBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Click en crear cita');
+            console.log('🎯 Click en crear cita desde quick actions');
             
-            // Cerrar dropdown
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
             switchToSection('appointments');
             setTimeout(() => {
-                console.log('Abrir modal de crear cita - funcionalidad próximamente');
-                showToast('Funcionalidad de crear cita próximamente', 'info');
+                if (typeof openCreateAppointmentModal === 'function') {
+                    console.log('✅ Abriendo modal de crear cita...');
+                    openCreateAppointmentModal();
+                } else {
+                    console.log('⚠️ Función openCreateAppointmentModal no disponible, cargando módulo...');
+                    loadAppointmentsModule();
+                    setTimeout(() => {
+                        if (typeof openCreateAppointmentModal === 'function') {
+                            openCreateAppointmentModal();
+                        } else {
+                            showToast('Módulo de citas aún no disponible', 'warning');
+                        }
+                    }, 1000);
+                }
             }, 300);
         });
     }
@@ -188,7 +195,7 @@ function setupStatisticsClicks() {
  * Cambia a una sección específica - VERSIÓN MEJORADA
  */
 function switchToSection(sectionId) {
-    console.log('Cambiando a sección:', sectionId);
+    console.log('🔄 Cambiando a sección:', sectionId);
     
     // Quitar clase activa de todos los links del sidebar
     const sidebarLinks = document.querySelectorAll('.sidebar-menu li');
@@ -219,6 +226,7 @@ function switchToSection(sectionId) {
                         console.error('Función initClientsModule no disponible');
                     }
                     break;
+                    
                 case 'projects':
                     if (typeof initProjectsModule === 'function') {
                         initProjectsModule();
@@ -226,18 +234,32 @@ function switchToSection(sectionId) {
                         console.error('Función initProjectsModule no disponible');
                     }
                     break;
+                    
                 case 'appointments':
-                    console.log('Módulo de citas - próximamente');
+                    console.log('🎯 Activando sección de citas...');
+                    if (typeof initAppointmentsModule === 'function') {
+                        console.log('✅ Inicializando módulo de citas...');
+                        initAppointmentsModule();
+                    } else {
+                        console.log('⚠️ Módulo de citas no disponible, intentando cargar...');
+                        loadAppointmentsModule();
+                    }
                     break;
+                    
                 case 'messages':
                     console.log('Módulo de mensajes - próximamente');
                     break;
+                    
                 default:
                     console.log(`Sección ${sectionId} cargada`);
             }
         }, 100);
+    } else {
+        console.error(`❌ Sección ${sectionId} no encontrada en el DOM`);
     }
 }
+
+
 
 /**
  * Configura la navegación entre secciones - VERSIÓN MEJORADA
@@ -273,20 +295,40 @@ function setupSectionNavigation() {
                         switch(section) {
                             case 'clients':
                                 if (typeof initClientsModule === 'function') {
+                                    console.log('Inicializando módulo de clientes...');
                                     initClientsModule();
+                                } else {
+                                    console.error('Función initClientsModule no disponible');
                                 }
                                 break;
+                                
                             case 'projects':
                                 if (typeof initProjectsModule === 'function') {
+                                    console.log('Inicializando módulo de proyectos...');
                                     initProjectsModule();
+                                } else {
+                                    console.error('Función initProjectsModule no disponible');
                                 }
                                 break;
+                                
                             case 'appointments':
-                                console.log('Módulo de citas - próximamente');
+                                if (typeof initAppointmentsModule === 'function') {
+                                    console.log('✅ Inicializando módulo de citas...');
+                                    initAppointmentsModule();
+                                } else {
+                                    console.error('❌ Función initAppointmentsModule no disponible');
+                                    console.log('Verificando disponibilidad del módulo...');
+                                    // Intentar cargar el módulo si no está disponible
+                                    loadAppointmentsModule();
+                                }
                                 break;
+                                
                             case 'messages':
                                 console.log('Módulo de mensajes - próximamente');
                                 break;
+                                
+                            default:
+                                console.log(`Sección ${section} cargada`);
                         }
                     }, 100);
                 }
@@ -295,11 +337,44 @@ function setupSectionNavigation() {
     });
 }
 
+function loadAppointmentsModule() {
+    console.log('🔄 Intentando cargar módulo de citas...');
+    
+    // Verificar si ya existe el script
+    const existingScript = document.querySelector('script[src*="modulAppointments"]');
+    if (existingScript) {
+        console.log('⚠️ Script de citas ya existe, pero función no disponible');
+        showToast('Módulo de citas cargando...', 'info');
+        return;
+    }
+    
+    // Crear y cargar el script dinámicamente
+    const script = document.createElement('script');
+    script.src = '../js/modulAppointments.js';
+    script.onload = function() {
+        console.log('✅ Módulo de citas cargado exitosamente');
+        if (typeof initAppointmentsModule === 'function') {
+            console.log('🎯 Inicializando módulo de citas...');
+            initAppointmentsModule();
+            showToast('Módulo de citas cargado correctamente', 'success');
+        } else {
+            console.error('❌ Función initAppointmentsModule aún no disponible después de cargar');
+            showToast('Error al cargar módulo de citas', 'error');
+        }
+    };
+    script.onerror = function() {
+        console.error('❌ Error al cargar el módulo de citas');
+        showToast('Error al cargar módulo de citas. Verifica que el archivo modulAppointments.js exista.', 'error');
+    };
+    
+    document.head.appendChild(script);
+}
+
 /**
  * Carga estadísticas dinámicas desde la API - MEJORADO
  */
 async function loadDynamicStatistics() {
-    console.log('Cargando estadísticas dinámicas...');
+    console.log('📊 Cargando estadísticas dinámicas...');
     
     try {
         const token = localStorage.getItem('authToken');
@@ -313,14 +388,14 @@ async function loadDynamicStatistics() {
             ? 'http://localhost:3000' 
             : '';
         
-        // Cargar estadísticas de clientes (solo clientes, no admins)
+        // Cargar estadísticas de clientes
         await loadClientsStatistics(API_BASE, token);
         
         // Cargar estadísticas de proyectos
         await loadProjectsStatistics(API_BASE, token);
         
-        // Cargar estadísticas de citas (próximamente)
-        loadAppointmentsStatistics();
+        // Cargar estadísticas de citas
+        await loadAppointmentsStatistics(API_BASE, token);
         
         // Cargar estadísticas de mensajes (próximamente)
         loadMessagesStatistics();
@@ -330,6 +405,7 @@ async function loadDynamicStatistics() {
         loadStaticStatistics();
     }
 }
+
 
 /**
  * Carga estadísticas de clientes desde la API - SOLO CLIENTES
@@ -488,10 +564,62 @@ function loadStaticStatistics() {
 /**
  * Estadísticas de citas (placeholder)
  */
-function loadAppointmentsStatistics() {
-    console.log('Estadísticas de citas - próximamente');
-    // Aquí iría la lógica para cargar estadísticas de citas
+async function loadAppointmentsStatistics(API_BASE, token) {
+    try {
+        console.log('📅 Cargando estadísticas de citas...');
+        
+        const response = await fetch(`${API_BASE}/api/appointments?limit=1000`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const appointments = data.data || [];
+            
+            // Calcular citas pendientes y confirmadas
+            const citasPendientes = appointments.filter(appointment => 
+                appointment.estado === 'pendiente' || appointment.estado === 'confirmada'
+            ).length;
+            
+            // Calcular citas de este mes
+            const citasEsteMes = appointments.filter(appointment => {
+                if (!appointment.fecha) return false;
+                const fechaCita = new Date(appointment.fecha);
+                const now = new Date();
+                return fechaCita.getMonth() === now.getMonth() && 
+                       fechaCita.getFullYear() === now.getFullYear();
+            }).length;
+            
+            // Actualizar contador de citas
+            const appointmentsCount = document.getElementById('appointments-count');
+            if (appointmentsCount) {
+                appointmentsCount.textContent = citasPendientes;
+            }
+            
+            // Actualizar descripción
+            const appointmentsDescription = document.querySelector('.appointments-icon')?.closest('.stat-card')?.querySelector('.stat-description');
+            if (appointmentsDescription) {
+                appointmentsDescription.textContent = `${citasEsteMes} este mes`;
+            }
+            
+            console.log('✅ Estadísticas de citas cargadas:', {
+                total: appointments.length,
+                pendientes: citasPendientes,
+                esteMes: citasEsteMes
+            });
+            
+        } else {
+            console.warn('⚠️ No se pudieron cargar las estadísticas de citas');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas de citas:', error);
+    }
 }
+
 
 /**
  * Estadísticas de mensajes (placeholder)
@@ -1455,6 +1583,24 @@ additionalStyles.textContent = `
     }
 `;
 
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Verificando módulos disponibles...');
+    
+    // Verificar cada módulo
+    const modules = {
+        clients: typeof initClientsModule === 'function',
+        projects: typeof initProjectsModule === 'function',
+        appointments: typeof initAppointmentsModule === 'function'
+    };
+    
+    console.log('📋 Estado de módulos:', modules);
+    
+    // Si el módulo de citas no está disponible, intentar cargarlo
+    if (!modules.appointments) {
+        console.log('⚠️ Módulo de citas no disponible, se cargará dinámicamente cuando sea necesario');
+    }
+});
+
 document.head.appendChild(additionalStyles);
 
-console.log('Dashboard integrado completamente - Versión mejorada con módulos cargada');
+console.log('Dashboard integrado con módulo de citas - Versión completa cargada');

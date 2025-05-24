@@ -134,6 +134,205 @@ function setupProjectsEvents() {
     }
 }
 
+function createProjectModal(projectData = null) {
+    console.log('=== CREANDO MODAL DE PROYECTO ===');
+    console.log('Es edición:', !!projectData);
+    console.log('Clientes disponibles:', clientsOptions.length);
+    
+    const isEditing = projectData !== null;
+    const modalTitle = isEditing ? 'Editar Proyecto' : 'Crear Nuevo Proyecto';
+    const submitButtonText = isEditing ? 'Guardar Cambios' : 'Crear Proyecto';
+    
+    // Verificar si ya existe un modal y eliminarlo
+    const existingModal = document.getElementById('project-modal');
+    if (existingModal) {
+        console.log('Eliminando modal existente...');
+        existingModal.remove();
+    }
+    
+    // Verificar clientes disponibles
+    if (clientsOptions.length === 0) {
+        console.warn('⚠️ No hay clientes disponibles');
+        showToast('No hay clientes disponibles. Crea un cliente primero.', 'warning');
+        return;
+    }
+    
+    // Generar opciones de clientes
+    let clientOptionsHTML = '<option value="">Seleccionar cliente</option>';
+    
+    clientsOptions.forEach(client => {
+        const isSelected = projectData?.cliente === client._id ? 'selected' : '';
+        const empresaText = client.empresa ? ` - ${client.empresa}` : ' - Sin empresa';
+        
+        clientOptionsHTML += `<option value="${client._id}" ${isSelected}>
+            ${client.nombre} ${client.apellidos}${empresaText}
+        </option>`;
+    });
+    
+    console.log('Opciones de clientes generadas para', clientsOptions.length, 'clientes');
+    
+    const modalHTML = `
+        <div class="modal active" id="project-modal">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2>${modalTitle}</h2>
+                    <button class="close-btn" id="close-project-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="project-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project-name">Nombre del Proyecto *</label>
+                                <input 
+                                    type="text" 
+                                    id="project-name" 
+                                    name="nombre"
+                                    value="${projectData?.nombre || ''}" 
+                                    required 
+                                    placeholder="Ej: Sitio web corporativo"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="project-client">Cliente *</label>
+                                <select id="project-client" name="cliente" required>
+                                    ${clientOptionsHTML}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project-description">Descripción *</label>
+                            <textarea 
+                                id="project-description" 
+                                name="descripcion"
+                                rows="4" 
+                                required 
+                                placeholder="Descripción detallada del proyecto..."
+                            >${projectData?.descripcion || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project-category">Categoría *</label>
+                                <select id="project-category" name="categoria" required>
+                                    <option value="">Seleccionar categoría</option>
+                                    <option value="web-development" ${projectData?.categoria === 'web-development' ? 'selected' : ''}>Desarrollo Web</option>
+                                    <option value="ecommerce" ${projectData?.categoria === 'ecommerce' ? 'selected' : ''}>Tienda Online</option>
+                                    <option value="marketing-digital" ${projectData?.categoria === 'marketing-digital' ? 'selected' : ''}>Marketing Digital</option>
+                                    <option value="social-media" ${projectData?.categoria === 'social-media' ? 'selected' : ''}>Redes Sociales</option>
+                                    <option value="seo" ${projectData?.categoria === 'seo' ? 'selected' : ''}>SEO</option>
+                                    <option value="branding" ${projectData?.categoria === 'branding' ? 'selected' : ''}>Branding</option>
+                                    <option value="design" ${projectData?.categoria === 'design' ? 'selected' : ''}>Diseño Gráfico</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="project-status">Estado *</label>
+                                <select id="project-status" name="estado" required>
+                                    <option value="cotizacion" ${projectData?.estado === 'cotizacion' ? 'selected' : ''}>Cotización</option>
+                                    <option value="pago procesado" ${projectData?.estado === 'pago procesado' ? 'selected' : ''}>Pago Procesado</option>
+                                    <option value="iniciado" ${projectData?.estado === 'iniciado' ? 'selected' : ''}>Iniciado</option>
+                                    <option value="desarrollo inicial" ${projectData?.estado === 'desarrollo inicial' ? 'selected' : ''}>Desarrollo Inicial</option>
+                                    <option value="desarrollo medio" ${projectData?.estado === 'desarrollo medio' ? 'selected' : ''}>Desarrollo Medio</option>
+                                    <option value="finalizado" ${projectData?.estado === 'finalizado' ? 'selected' : ''}>Finalizado</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="project-cost">Costo del Proyecto ($)</label>
+                                <input 
+                                    type="number" 
+                                    id="project-cost" 
+                                    name="costo"
+                                    min="0" 
+                                    step="0.01" 
+                                    value="${projectData?.costo || ''}" 
+                                    placeholder="0.00"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="project-progress">Progreso (%)</label>
+                                <input 
+                                    type="number" 
+                                    id="project-progress" 
+                                    name="porcentajeProgreso"
+                                    min="0" 
+                                    max="100" 
+                                    value="${projectData?.porcentajeProgreso || 0}"
+                                >
+                                <div class="progress-preview" style="margin-top: 8px;">
+                                    <div class="progress-bar small">
+                                        <div class="progress" id="progress-preview-bar" style="width: ${projectData?.porcentajeProgreso || 0}%;"></div>
+                                    </div>
+                                    <span id="progress-preview-text">${projectData?.porcentajeProgreso || 0}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project-notes">Notas Adicionales</label>
+                            <textarea 
+                                id="project-notes" 
+                                name="notas"
+                                rows="3" 
+                                placeholder="Notas internas sobre el proyecto..."
+                            >${projectData?.notas || ''}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project-files">Archivos Adjuntos (opcional)</label>
+                            <input type="file" id="project-files" name="archivos" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                            <small style="color: #999; font-size: 12px;">Formatos permitidos: PDF, DOC, DOCX, imágenes, ZIP, RAR (Max 5MB cada uno)</small>
+                        </div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="notify-client" name="notificarCliente" ${isEditing ? '' : 'checked'}>
+                                <span class="checkmark"></span>
+                                ${isEditing ? 'Notificar cambios al cliente' : 'Notificar creación al cliente'}
+                            </label>
+                        </div>
+                        
+                        <div class="form-actions" style="margin-top: 20px;">
+                            <button type="button" class="secondary-btn" id="cancel-project-btn">Cancelar</button>
+                            <button type="submit" class="primary-btn" id="save-project-btn">${submitButtonText}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    console.log('HTML del modal generado, insertando en DOM...');
+    
+    // Insertar el modal en el DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Bloquear scroll del body
+    document.body.style.overflow = 'hidden';
+    
+    console.log('Modal insertado, configurando eventos...');
+    
+    // Configurar eventos del modal después de que esté en el DOM
+    setTimeout(() => {
+        setupProjectModalEvents(isEditing, projectData);
+        
+        // Verificar que el modal se insertó correctamente
+        const insertedModal = document.getElementById('project-modal');
+        const insertedForm = document.getElementById('project-form');
+        
+        console.log('Verificación post-inserción:');
+        console.log('- Modal insertado:', !!insertedModal);
+        console.log('- Form insertado:', !!insertedForm);
+        
+        if (insertedForm) {
+            console.log('- Form HTML snippet:', insertedForm.outerHTML.substring(0, 100) + '...');
+        }
+        
+    }, 100);
+}
+
 /**
  * Abre el modal para crear un nuevo proyecto
  */
@@ -410,6 +609,9 @@ function createProjectModal(projectData = null) {
  * Configura los eventos del modal de proyecto
  */
 function setupProjectModalEvents(isEditing, projectData) {
+    console.log('=== CONFIGURANDO EVENTOS DEL MODAL ===');
+    console.log('Es edición:', isEditing);
+    
     const modal = document.getElementById('project-modal');
     const closeBtn = document.getElementById('close-project-modal');
     const cancelBtn = document.getElementById('cancel-project-btn');
@@ -418,13 +620,29 @@ function setupProjectModalEvents(isEditing, projectData) {
     const progressBar = document.getElementById('progress-preview-bar');
     const progressText = document.getElementById('progress-preview-text');
     
+    console.log('Elementos encontrados:', {
+        modal: !!modal,
+        closeBtn: !!closeBtn,
+        cancelBtn: !!cancelBtn,
+        form: !!form,
+        progressInput: !!progressInput,
+        progressBar: !!progressBar,
+        progressText: !!progressText
+    });
+    
     if (!modal) {
-        console.error('Modal de proyecto no encontrado');
+        console.error('❌ Modal de proyecto no encontrado');
+        return;
+    }
+    
+    if (!form) {
+        console.error('❌ Formulario de proyecto no encontrado');
         return;
     }
     
     // Función para cerrar modal
     function closeModal() {
+        console.log('Cerrando modal...');
         modal.classList.remove('active');
         setTimeout(() => {
             if (modal && modal.parentNode) {
@@ -438,23 +656,38 @@ function setupProjectModalEvents(isEditing, projectData) {
     if (closeBtn) {
         closeBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            console.log('Click en botón cerrar');
             closeModal();
         });
+    } else {
+        console.warn('⚠️ Botón de cerrar no encontrado');
     }
     
     if (cancelBtn) {
         cancelBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            console.log('Click en botón cancelar');
             closeModal();
         });
+    } else {
+        console.warn('⚠️ Botón de cancelar no encontrado');
     }
     
     // Cerrar al hacer clic fuera del modal
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
+            console.log('Click fuera del modal, cerrando...');
             closeModal();
         }
     });
+    
+    // Prevenir que el modal se cierre al hacer clic dentro del contenido
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
     
     // Actualizar preview del progreso
     if (progressInput && progressBar && progressText) {
@@ -463,25 +696,57 @@ function setupProjectModalEvents(isEditing, projectData) {
             progressBar.style.width = value + '%';
             progressText.textContent = value + '%';
         });
+        console.log('✅ Evento de progreso configurado');
+    } else {
+        console.warn('⚠️ Elementos de progreso no encontrados');
     }
     
-    // Envío del formulario
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (isEditing) {
-                handleProjectUpdate(e, projectData);
-            } else {
-                handleProjectCreate(e);
-            }
+    // EVENTO PRINCIPAL: Envío del formulario
+    form.addEventListener('submit', function(e) {
+        console.log('=== SUBMIT DEL FORMULARIO DETECTADO ===');
+        console.log('Evento:', e);
+        console.log('Form target:', e.target);
+        console.log('Es edición:', isEditing);
+        
+        e.preventDefault(); // Importante: prevenir envío por defecto
+        
+        // Verificar que los campos existen antes de procesar
+        const requiredFields = {
+            name: document.getElementById('project-name'),
+            description: document.getElementById('project-description'),
+            category: document.getElementById('project-category'),
+            client: document.getElementById('project-client')
+        };
+        
+        console.log('Verificando campos requeridos:');
+        Object.entries(requiredFields).forEach(([key, element]) => {
+            console.log(`- ${key}:`, element ? `✅ (${element.value})` : '❌ NO ENCONTRADO');
         });
-    }
+        
+        // Llamar a la función apropiada
+        if (isEditing) {
+            console.log('Llamando handleProjectUpdate...');
+            handleProjectUpdate(e, projectData);
+        } else {
+            console.log('Llamando handleProjectCreate...');
+            handleProjectCreate(e);
+        }
+    });
     
-    console.log('Eventos del modal de proyecto configurados correctamente');
+    console.log('✅ Eventos del modal configurados correctamente');
+    
+    // Debug adicional - mostrar la estructura del formulario
+    console.log('=== ESTRUCTURA DEL FORMULARIO ===');
+    const allInputs = form.querySelectorAll('input, select, textarea');
+    console.log(`Total de campos: ${allInputs.length}`);
+    
+    allInputs.forEach((input, index) => {
+        console.log(`${index + 1}. ${input.tagName} - ID: ${input.id} - Name: ${input.name} - Value: "${input.value}"`);
+    });
 }
 
 /**
- * Maneja la creación de un nuevo proyecto
+ * Maneja la creación de un nuevo proyecto - VERSION CORREGIDA
  */
 async function handleProjectCreate(e) {
     console.log('=== INICIANDO CREACIÓN DE PROYECTO ===');
@@ -502,63 +767,82 @@ async function handleProjectCreate(e) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
         
-        // Debug: verificar que los elementos existan
-        const nameEl = document.getElementById('project-name');
-        const descEl = document.getElementById('project-description');
-        const catEl = document.getElementById('project-category');
-        const clientEl = document.getElementById('project-client');
-        const costEl = document.getElementById('project-cost');
-        const progressEl = document.getElementById('project-progress');
-        const notesEl = document.getElementById('project-notes');
+        // MÉTODO MEJORADO: Usar FormData y obtener datos directamente del form
+        const formData = new FormData(form);
         
-        console.log('=== ELEMENTOS DEL FORMULARIO ===');
-        console.log('Nombre element:', nameEl, 'Value:', nameEl?.value);
-        console.log('Descripción element:', descEl, 'Value:', descEl?.value);
-        console.log('Categoría element:', catEl, 'Value:', catEl?.value);
-        console.log('Cliente element:', clientEl, 'Value:', clientEl?.value);
-        console.log('Costo element:', costEl, 'Value:', costEl?.value);
-        console.log('Progreso element:', progressEl, 'Value:', progressEl?.value);
-        console.log('Notas element:', notesEl, 'Value:', notesEl?.value);
-        
-        // Recopilar datos del formulario con verificación
-        const formData = {
-            nombre: nameEl?.value?.trim() || '',
-            descripcion: descEl?.value?.trim() || '',
-            categoria: catEl?.value || '',
-            estado: document.getElementById('project-status')?.value || 'cotizacion',
-            cliente: clientEl?.value || '',
-            costo: parseFloat(costEl?.value) || 0,
-            porcentajeProgreso: parseInt(progressEl?.value) || 0,
-            notas: notesEl?.value?.trim() || ''
+        // También obtener elementos directamente por ID con verificación
+        const projectData = {
+            nombre: form.querySelector('#project-name')?.value?.trim() || 
+                   document.getElementById('project-name')?.value?.trim() || '',
+            descripcion: form.querySelector('#project-description')?.value?.trim() || 
+                        document.getElementById('project-description')?.value?.trim() || '',
+            categoria: form.querySelector('#project-category')?.value || 
+                      document.getElementById('project-category')?.value || '',
+            estado: form.querySelector('#project-status')?.value || 
+                   document.getElementById('project-status')?.value || 'cotizacion',
+            cliente: form.querySelector('#project-client')?.value || 
+                    document.getElementById('project-client')?.value || '',
+            costo: parseFloat(form.querySelector('#project-cost')?.value || 
+                             document.getElementById('project-cost')?.value || '0') || 0,
+            porcentajeProgreso: parseInt(form.querySelector('#project-progress')?.value || 
+                                       document.getElementById('project-progress')?.value || '0') || 0,
+            notas: form.querySelector('#project-notes')?.value?.trim() || 
+                  document.getElementById('project-notes')?.value?.trim() || ''
         };
         
-        console.log('=== DATOS RECOPILADOS ===');
-        console.log('FormData completo:', JSON.stringify(formData, null, 2));
+        console.log('=== DEBUG: ELEMENTOS DEL DOM ===');
+        console.log('Form element:', form);
+        console.log('Nombre input:', form.querySelector('#project-name'));
+        console.log('Descripción textarea:', form.querySelector('#project-description'));
+        console.log('Categoría select:', form.querySelector('#project-category'));
+        console.log('Cliente select:', form.querySelector('#project-client'));
         
-        // Validaciones con debugging detallado
-        const validationErrors = [];
+        console.log('=== DATOS EXTRAÍDOS ===');
+        Object.entries(projectData).forEach(([key, value]) => {
+            console.log(`${key}:`, typeof value, `"${value}"`);
+        });
         
-        if (!formData.nombre) validationErrors.push('Nombre vacío');
-        if (!formData.descripcion) validationErrors.push('Descripción vacía');
-        if (!formData.categoria) validationErrors.push('Categoría vacía');
-        if (!formData.cliente) validationErrors.push('Cliente vacío');
+        // Validaciones detalladas
+        const errors = [];
+        if (!projectData.nombre) errors.push('Nombre del proyecto es requerido');
+        if (!projectData.descripcion) errors.push('Descripción es requerida');
+        if (!projectData.categoria) errors.push('Categoría es requerida');
+        if (!projectData.cliente) errors.push('Cliente es requerido');
         
-        if (validationErrors.length > 0) {
+        if (errors.length > 0) {
             console.error('=== ERRORES DE VALIDACIÓN ===');
-            console.error('Errores encontrados:', validationErrors);
-            throw new Error(`Errores de validación: ${validationErrors.join(', ')}`);
+            errors.forEach(error => console.error(`- ${error}`));
+            
+            // Mostrar cuáles campos específicos están fallando
+            const formElements = {
+                nombre: document.getElementById('project-name'),
+                descripcion: document.getElementById('project-description'),
+                categoria: document.getElementById('project-category'),
+                cliente: document.getElementById('project-client')
+            };
+            
+            console.log('=== ESTADO DE ELEMENTOS ===');
+            Object.entries(formElements).forEach(([field, element]) => {
+                if (element) {
+                    console.log(`${field}: EXISTS - Value: "${element.value}" - Type: ${element.type || element.tagName}`);
+                } else {
+                    console.error(`${field}: NOT FOUND`);
+                }
+            });
+            
+            throw new Error(errors.join(', '));
         }
         
-        if (formData.porcentajeProgreso < 0 || formData.porcentajeProgreso > 100) {
+        // Validación adicional del progreso
+        if (projectData.porcentajeProgreso < 0 || projectData.porcentajeProgreso > 100) {
             throw new Error('El porcentaje de progreso debe estar entre 0 y 100');
         }
         
-        console.log('=== VALIDACIÓN EXITOSA ===');
-        console.log('Enviando datos:', formData);
+        console.log('=== DATOS VALIDADOS - ENVIANDO ===');
+        console.log('Datos finales:', JSON.stringify(projectData, null, 2));
         
-        // Enviar datos al servidor
+        // Enviar al servidor
         const token = localStorage.getItem('authToken');
-        
         if (!token) {
             throw new Error('Token de autenticación no encontrado');
         }
@@ -568,12 +852,7 @@ async function handleProjectCreate(e) {
             : '';
         
         const url = `${API_BASE}/api/projects`;
-        console.log('=== ENVIANDO PETICIÓN ===');
-        console.log('URL:', url);
-        console.log('Headers:', {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token.substring(0, 20)}...`
-        });
+        console.log('URL de envío:', url);
         
         const response = await fetch(url, {
             method: 'POST',
@@ -581,7 +860,7 @@ async function handleProjectCreate(e) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(projectData)
         });
         
         console.log('=== RESPUESTA DEL SERVIDOR ===');
@@ -596,31 +875,19 @@ async function handleProjectCreate(e) {
         }
         
         console.log('=== PROYECTO CREADO EXITOSAMENTE ===');
-        console.log('Proyecto creado:', responseData.data);
         
         // Mostrar mensaje de éxito
         showToast('Proyecto creado correctamente', 'success');
         
-        // Recargar datos de proyectos
+        // Recargar datos
         await loadProjectsData();
         
         // Cerrar modal
-        const modal = document.getElementById('project-modal');
-        if (modal) {
-            modal.classList.remove('active');
-            setTimeout(() => {
-                if (modal && modal.parentNode) {
-                    modal.remove();
-                }
-                document.body.style.overflow = 'auto';
-            }, 300);
-        }
+        closeProjectModal();
         
     } catch (error) {
         console.error('=== ERROR AL CREAR PROYECTO ===');
         console.error('Error completo:', error);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
         showToast(error.message || 'Error al crear proyecto', 'error');
     } finally {
         // Restaurar botón
@@ -632,10 +899,10 @@ async function handleProjectCreate(e) {
 }
 
 /**
- * Maneja la actualización de un proyecto existente
+ * Maneja la actualización de un proyecto existente - VERSION CORREGIDA
  */
 async function handleProjectUpdate(e, projectData) {
-    console.log('Iniciando actualización de proyecto...');
+    console.log('=== INICIANDO ACTUALIZACIÓN DE PROYECTO ===');
     e.preventDefault();
     
     const form = e.target;
@@ -653,32 +920,48 @@ async function handleProjectUpdate(e, projectData) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
         
-        // Recopilar datos del formulario
-        const formData = {
-            nombre: document.getElementById('project-name')?.value?.trim() || '',
-            descripcion: document.getElementById('project-description')?.value?.trim() || '',
-            categoria: document.getElementById('project-category')?.value || '',
-            estado: document.getElementById('project-status')?.value || 'cotizacion',
-            cliente: document.getElementById('project-client')?.value || '',
-            costo: parseFloat(document.getElementById('project-cost')?.value) || 0,
-            porcentajeProgreso: parseInt(document.getElementById('project-progress')?.value) || 0,
-            notas: document.getElementById('project-notes')?.value?.trim() || ''
+        // Obtener datos del formulario con el mismo método mejorado
+        const updatedData = {
+            nombre: form.querySelector('#project-name')?.value?.trim() || 
+                   document.getElementById('project-name')?.value?.trim() || '',
+            descripcion: form.querySelector('#project-description')?.value?.trim() || 
+                        document.getElementById('project-description')?.value?.trim() || '',
+            categoria: form.querySelector('#project-category')?.value || 
+                      document.getElementById('project-category')?.value || '',
+            estado: form.querySelector('#project-status')?.value || 
+                   document.getElementById('project-status')?.value || 'cotizacion',
+            cliente: form.querySelector('#project-client')?.value || 
+                    document.getElementById('project-client')?.value || '',
+            costo: parseFloat(form.querySelector('#project-cost')?.value || 
+                             document.getElementById('project-cost')?.value || '0') || 0,
+            porcentajeProgreso: parseInt(form.querySelector('#project-progress')?.value || 
+                                       document.getElementById('project-progress')?.value || '0') || 0,
+            notas: form.querySelector('#project-notes')?.value?.trim() || 
+                  document.getElementById('project-notes')?.value?.trim() || ''
         };
         
+        console.log('=== DATOS DE ACTUALIZACIÓN ===');
+        Object.entries(updatedData).forEach(([key, value]) => {
+            console.log(`${key}:`, typeof value, `"${value}"`);
+        });
+        
         // Validaciones
-        if (!formData.nombre || !formData.descripcion || !formData.categoria || !formData.cliente) {
-            throw new Error('Nombre, descripción, categoría y cliente son obligatorios');
+        const errors = [];
+        if (!updatedData.nombre) errors.push('Nombre del proyecto es requerido');
+        if (!updatedData.descripcion) errors.push('Descripción es requerida');
+        if (!updatedData.categoria) errors.push('Categoría es requerida');
+        if (!updatedData.cliente) errors.push('Cliente es requerido');
+        
+        if (errors.length > 0) {
+            throw new Error(errors.join(', '));
         }
         
-        if (formData.porcentajeProgreso < 0 || formData.porcentajeProgreso > 100) {
+        if (updatedData.porcentajeProgreso < 0 || updatedData.porcentajeProgreso > 100) {
             throw new Error('El porcentaje de progreso debe estar entre 0 y 100');
         }
         
-        console.log('Datos a enviar:', formData);
-        
-        // Enviar datos al servidor
+        // Enviar al servidor
         const token = localStorage.getItem('authToken');
-        
         if (!token) {
             throw new Error('Token de autenticación no encontrado');
         }
@@ -687,47 +970,42 @@ async function handleProjectUpdate(e, projectData) {
             ? 'http://localhost:3000' 
             : '';
         
-        console.log('Enviando petición a:', `${API_BASE}/api/projects/${projectData._id}`);
+        const url = `${API_BASE}/api/projects/${projectData._id}`;
+        console.log('URL de actualización:', url);
         
-        const response = await fetch(`${API_BASE}/api/projects/${projectData._id}`, {
+        const response = await fetch(url, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(updatedData)
         });
         
-        console.log('Respuesta del servidor:', response.status);
+        console.log('=== RESPUESTA DE ACTUALIZACIÓN ===');
+        console.log('Status:', response.status);
+        
+        const responseData = await response.json();
+        console.log('Response data:', responseData);
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Error al actualizar proyecto');
+            throw new Error(responseData.message || `Error ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        console.log('Proyecto actualizado:', data);
+        console.log('=== PROYECTO ACTUALIZADO EXITOSAMENTE ===');
         
         // Mostrar mensaje de éxito
         showToast('Proyecto actualizado correctamente', 'success');
         
-        // Recargar datos de proyectos
+        // Recargar datos
         await loadProjectsData();
         
         // Cerrar modal
-        const modal = document.getElementById('project-modal');
-        if (modal) {
-            modal.classList.remove('active');
-            setTimeout(() => {
-                if (modal && modal.parentNode) {
-                    modal.remove();
-                }
-                document.body.style.overflow = 'auto';
-            }, 300);
-        }
+        closeProjectModal();
         
     } catch (error) {
-        console.error('Error al actualizar proyecto:', error);
+        console.error('=== ERROR AL ACTUALIZAR PROYECTO ===');
+        console.error('Error completo:', error);
         showToast(error.message || 'Error al actualizar proyecto', 'error');
     } finally {
         // Restaurar botón
@@ -737,6 +1015,66 @@ async function handleProjectUpdate(e, projectData) {
         }
     }
 }
+
+/**
+ * Función auxiliar para cerrar el modal
+ */
+function closeProjectModal() {
+    const modal = document.getElementById('project-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            if (modal && modal.parentNode) {
+                modal.remove();
+            }
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+}
+
+/**
+ * Función de debugging para inspeccionar el DOM
+ */
+function debugProjectForm() {
+    console.log('=== DEBUG DEL FORMULARIO DE PROYECTO ===');
+    
+    const modal = document.getElementById('project-modal');
+    const form = document.getElementById('project-form');
+    
+    console.log('Modal encontrado:', !!modal);
+    console.log('Form encontrado:', !!form);
+    
+    if (form) {
+        console.log('Form HTML:', form.outerHTML.substring(0, 200) + '...');
+        
+        const inputs = form.querySelectorAll('input, select, textarea');
+        console.log(`Total de campos encontrados: ${inputs.length}`);
+        
+        inputs.forEach((input, index) => {
+            console.log(`Campo ${index + 1}:`, {
+                id: input.id,
+                name: input.name,
+                type: input.type || input.tagName,
+                value: input.value,
+                required: input.required
+            });
+        });
+    }
+    
+    // Verificar elementos específicos
+    const requiredFields = ['project-name', 'project-description', 'project-category', 'project-client'];
+    requiredFields.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        console.log(`${fieldId}:`, {
+            found: !!element,
+            value: element?.value,
+            type: element?.type || element?.tagName
+        });
+    });
+}
+
+// Exponer función de debug globalmente para testing
+window.debugProjectForm = debugProjectForm;
 
 /**
  * Renderiza las tarjetas de proyectos
