@@ -1,5 +1,5 @@
 /**
- * Módulo de Citas para Dashboard Administrador - VERSIÓN CORREGIDA
+ * Módulo de Citas para Dashboard Administrador - VERSIÓN COMPLETA Y CORREGIDA
  * Archivo: frontend/js/modulAppointments.js
  */
 
@@ -134,6 +134,108 @@ function setupCalendar() {
 }
 
 /**
+ * Configura los filtros de citas
+ */
+function setupAppointmentsFilters() {
+    console.log('📋 Configurando filtros de citas...');
+    
+    const typeFilter = document.getElementById('appointment-filter-type');
+    const statusFilter = document.getElementById('appointment-filter-status');
+    const dateFilter = document.getElementById('appointment-date-filter');
+    
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function() {
+            console.log('🔍 Filtro por tipo:', this.value);
+            applyAppointmentsFilters();
+        });
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function() {
+            console.log('🔍 Filtro por estado:', this.value);
+            applyAppointmentsFilters();
+        });
+    }
+    
+    if (dateFilter) {
+        dateFilter.addEventListener('change', function() {
+            console.log('🔍 Filtro por fecha:', this.value);
+            applyAppointmentsFilters();
+        });
+    }
+}
+
+/**
+ * Aplica los filtros a las citas
+ */
+function applyAppointmentsFilters() {
+    console.log('🔍 Aplicando filtros de citas...');
+    
+    let filtered = [...appointmentsData];
+    
+    const typeFilter = document.getElementById('appointment-filter-type');
+    const statusFilter = document.getElementById('appointment-filter-status');
+    const dateFilter = document.getElementById('appointment-date-filter');
+    const searchInput = document.getElementById('appointment-search');
+    
+    // Filtro por tipo
+    if (typeFilter && typeFilter.value && typeFilter.value !== 'all') {
+        filtered = filtered.filter(appointment => appointment.tipo === typeFilter.value);
+    }
+    
+    // Filtro por estado
+    if (statusFilter && statusFilter.value && statusFilter.value !== 'all') {
+        filtered = filtered.filter(appointment => appointment.estado === statusFilter.value);
+    }
+    
+    // Filtro por fecha
+    if (dateFilter && dateFilter.value) {
+        const filterDate = new Date(dateFilter.value).toISOString().split('T')[0];
+        filtered = filtered.filter(appointment => {
+            if (!appointment.fecha) return false;
+            const appointmentDate = new Date(appointment.fecha).toISOString().split('T')[0];
+            return appointmentDate === filterDate;
+        });
+    }
+    
+    // Filtro por búsqueda
+    if (searchInput && searchInput.value.trim()) {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        filtered = filtered.filter(appointment => {
+            const clientName = appointment.usuarioDetalles ? 
+                `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}`.toLowerCase() :
+                (appointment.nombreContacto || '').toLowerCase();
+            
+            const projectName = appointment.proyectoDetalles ? 
+                appointment.proyectoDetalles.nombre.toLowerCase() : '';
+            
+            const notes = (appointment.notas || '').toLowerCase();
+            
+            return clientName.includes(searchTerm) || 
+                   projectName.includes(searchTerm) || 
+                   notes.includes(searchTerm);
+        });
+    }
+    
+    filteredAppointmentsData = filtered;
+    currentAppointmentsPage = 1; // Resetear a primera página
+    
+    console.log(`📊 Filtrados: ${filtered.length} de ${appointmentsData.length} citas`);
+    
+    // Re-renderizar
+    renderAppointmentsList();
+    renderCalendar(); // También actualizar calendario
+}
+
+/**
+ * Función de búsqueda de citas
+ */
+function searchAppointments() {
+    console.log('🔍 Buscando citas...');
+    applyAppointmentsFilters(); // Utilizar la función de filtros
+}
+
+/**
  * Renderiza el calendario con las citas
  */
 function renderCalendar() {
@@ -217,6 +319,261 @@ function renderCalendar() {
     }
     
     calendarBody.innerHTML = calendarHTML;
+}
+
+/**
+ * Renderiza la lista de citas - FUNCIÓN FALTANTE AGREGADA
+ */
+function renderAppointmentsList() {
+    console.log('📋 Renderizando lista de citas...');
+    
+    const tableBody = document.querySelector('#appointments-table tbody');
+    if (!tableBody) {
+        console.error('❌ Tabla de citas no encontrada');
+        return;
+    }
+    
+    // Calcular paginación
+    const startIndex = (currentAppointmentsPage - 1) * appointmentsPerPage;
+    const endIndex = startIndex + appointmentsPerPage;
+    const paginatedData = filteredAppointmentsData.slice(startIndex, endIndex);
+    
+    if (paginatedData.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                    <i class="far fa-calendar-times" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
+                    ${filteredAppointmentsData.length === 0 && appointmentsData.length > 0 ? 
+                        'No se encontraron citas con los filtros aplicados' : 
+                        'No hay citas programadas'}
+                </td>
+            </tr>
+        `;
+        updateAppointmentsPagination(0);
+        return;
+    }
+    
+    const rowsHTML = paginatedData.map(appointment => {
+        const clientName = appointment.usuarioDetalles ? 
+            `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}` :
+            appointment.nombreContacto || 'Invitado';
+        
+        const clientEmail = appointment.usuarioDetalles ? 
+            appointment.usuarioDetalles.correo :
+            appointment.correoContacto || '';
+        
+        const projectName = appointment.proyectoDetalles ? 
+            appointment.proyectoDetalles.nombre : 
+            'Sin proyecto';
+        
+        const appointmentDate = appointment.fecha ? 
+            new Date(appointment.fecha).toLocaleDateString('es-ES') : 
+            'Fecha no definida';
+        
+        const appointmentTime = appointment.hora || 'Hora no definida';
+        
+        return `
+            <tr>
+                <td>
+                    <div class="client-info">
+                        <div class="client-name">${clientName}</div>
+                        ${clientEmail ? `<div class="client-email" style="font-size: 12px; color: #999;">${clientEmail}</div>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <span class="appointment-type-badge ${appointment.tipo}">
+                        ${getAppointmentTypeLabel(appointment.tipo)}
+                    </span>
+                </td>
+                <td>${appointmentDate}</td>
+                <td>${appointmentTime}</td>
+                <td>
+                    <span class="status-badge ${appointment.estado}">
+                        ${getAppointmentStatusLabel(appointment.estado)}
+                    </span>
+                </td>
+                <td>
+                    <div class="project-info">
+                        ${appointment.proyectoDetalles ? 
+                            `<span class="project-name">${projectName}</span>` :
+                            '<span class="no-project">Sin proyecto</span>'
+                        }
+                    </div>
+                </td>
+                <td>
+                    <div class="actions-group">
+                        <button class="action-btn view-btn" onclick="viewAppointmentDetails('${appointment._id}')" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" onclick="editAppointment('${appointment._id}')" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteAppointment('${appointment._id}')" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tableBody.innerHTML = rowsHTML;
+    
+    // Actualizar paginación
+    updateAppointmentsPagination(filteredAppointmentsData.length);
+}
+
+/**
+ * Actualiza la paginación de citas - FUNCIÓN FALTANTE AGREGADA
+ */
+function updateAppointmentsPagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / appointmentsPerPage);
+    const pagination = document.getElementById('appointments-pagination');
+    
+    if (!pagination || totalPages <= 1) {
+        if (pagination) pagination.style.display = 'none';
+        return;
+    }
+    
+    pagination.style.display = 'flex';
+    
+    let paginationHTML = '';
+    
+    // Botón anterior
+    paginationHTML += `
+        <button class="page-btn prev-btn" ${currentAppointmentsPage === 1 ? 'disabled' : ''} 
+                onclick="changeAppointmentsPage(${currentAppointmentsPage - 1})">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+    
+    // Números de página
+    const startPage = Math.max(1, currentAppointmentsPage - 2);
+    const endPage = Math.min(totalPages, currentAppointmentsPage + 2);
+    
+    if (startPage > 1) {
+        paginationHTML += `<button class="page-btn" onclick="changeAppointmentsPage(1)">1</button>`;
+        if (startPage > 2) {
+            paginationHTML += `<span class="page-ellipsis">...</span>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <button class="page-btn ${i === currentAppointmentsPage ? 'active' : ''}" 
+                    onclick="changeAppointmentsPage(${i})">
+                ${i}
+            </button>
+        `;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationHTML += `<span class="page-ellipsis">...</span>`;
+        }
+        paginationHTML += `<button class="page-btn" onclick="changeAppointmentsPage(${totalPages})">${totalPages}</button>`;
+    }
+    
+    // Botón siguiente
+    paginationHTML += `
+        <button class="page-btn next-btn" ${currentAppointmentsPage === totalPages ? 'disabled' : ''} 
+                onclick="changeAppointmentsPage(${currentAppointmentsPage + 1})">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `;
+    
+    pagination.innerHTML = paginationHTML;
+}
+
+/**
+ * Cambia la página de citas - FUNCIÓN FALTANTE AGREGADA
+ */
+function changeAppointmentsPage(page) {
+    const totalPages = Math.ceil(filteredAppointmentsData.length / appointmentsPerPage);
+    
+    if (page < 1 || page > totalPages) return;
+    
+    currentAppointmentsPage = page;
+    renderAppointmentsList();
+}
+
+/**
+ * Actualiza las estadísticas de citas - FUNCIÓN FALTANTE AGREGADA
+ */
+function updateAppointmentsStatistics() {
+    console.log('📊 Actualizando estadísticas de citas...');
+    
+    // Calcular estadísticas
+    const totalAppointments = appointmentsData.length;
+    const pendingAppointments = appointmentsData.filter(a => a.estado === 'pendiente').length;
+    const confirmedAppointments = appointmentsData.filter(a => a.estado === 'confirmada').length;
+    const completedAppointments = appointmentsData.filter(a => a.estado === 'completada').length;
+    const canceledAppointments = appointmentsData.filter(a => a.estado === 'cancelada').length;
+    
+    // Citas de este mes
+    const thisMonth = new Date();
+    const appointmentsThisMonth = appointmentsData.filter(appointment => {
+        if (!appointment.fecha) return false;
+        const appointmentDate = new Date(appointment.fecha);
+        return appointmentDate.getMonth() === thisMonth.getMonth() && 
+               appointmentDate.getFullYear() === thisMonth.getFullYear();
+    }).length;
+    
+    console.log('📈 Estadísticas calculadas:', {
+        total: totalAppointments,
+        pendientes: pendingAppointments,
+        confirmadas: confirmedAppointments,
+        completadas: completedAppointments,
+        canceladas: canceledAppointments,
+        esteMes: appointmentsThisMonth
+    });
+    
+    // Actualizar en la interfaz si estamos en el overview
+    const appointmentsCount = document.getElementById('appointments-count');
+    if (appointmentsCount) {
+        appointmentsCount.textContent = pendingAppointments + confirmedAppointments;
+    }
+}
+
+/**
+ * Muestra datos de ejemplo en caso de error - FUNCIÓN FALTANTE AGREGADA
+ */
+function showSampleAppointmentsData() {
+    console.log('📋 Mostrando datos de ejemplo para citas...');
+    
+    appointmentsData = [
+        {
+            _id: 'sample1',
+            tipo: 'consulta-general',
+            fecha: new Date(),
+            hora: '10:00',
+            estado: 'pendiente',
+            nombreContacto: 'María García',
+            correoContacto: 'maria@ejemplo.com',
+            telefonoContacto: '+57 300 123 4567',
+            notas: 'Consulta sobre servicios de marketing digital'
+        },
+        {
+            _id: 'sample2',
+            tipo: 'seguimiento-proyecto',
+            fecha: new Date(Date.now() + 86400000), // Mañana
+            hora: '14:30',
+            estado: 'confirmada',
+            usuarioDetalles: {
+                nombre: 'Juan',
+                apellidos: 'Pérez',
+                correo: 'juan@empresa.com'
+            },
+            proyectoDetalles: {
+                nombre: 'Sitio Web Corporativo'
+            }
+        }
+    ];
+    
+    filteredAppointmentsData = [...appointmentsData];
+    renderCalendar();
+    renderAppointmentsList();
+    updateAppointmentsStatistics();
 }
 
 /**
@@ -951,26 +1308,6 @@ function setupAppointmentModalEvents(isEditing, appointmentData) {
         }, 200);
     }
     
-    // Validación en tiempo real del tipo de cita
-    if (typeSelect) {
-        typeSelect.addEventListener('change', function() {
-            // Remover estilos de error si había
-            this.style.borderColor = '';
-            
-            if (this.value) {
-                console.log('✅ Tipo de cita válido seleccionado:', this.value);
-            }
-        });
-        
-        // Validación al perder el foco
-        typeSelect.addEventListener('blur', function() {
-            if (!this.value || this.value.trim() === '') {
-                this.style.borderColor = '#ff9800';
-                console.log('⚠️ Tipo de cita requerido');
-            }
-        });
-    }
-    
     // Envío del formulario
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -1017,35 +1354,11 @@ function setupAppointmentModalEvents(isEditing, appointmentData) {
         }
     });
     
-    // Validación en tiempo real de campos requeridos
-    const requiredFields = [
-        { element: document.getElementById('appointment-date'), name: 'fecha' },
-        { element: document.getElementById('appointment-time'), name: 'hora' },
-        { element: contactNameInput, name: 'nombre contacto' },
-        { element: contactEmailInput, name: 'email contacto' }
-    ];
-    
-    requiredFields.forEach(field => {
-        if (field.element) {
-            field.element.addEventListener('input', function() {
-                if (this.value.trim()) {
-                    this.style.borderColor = '';
-                }
-            });
-            
-            field.element.addEventListener('blur', function() {
-                if (this.required && !this.value.trim()) {
-                    this.style.borderColor = '#ff9800';
-                }
-            });
-        }
-    });
-    
     console.log('✅ Eventos del modal de cita configurados correctamente');
 }
 
 /**
- * Funciones auxiliares para el modal
+ * Funciones auxiliares faltantes
  */
 
 /**
@@ -1189,5 +1502,3 @@ function resetProjectsOptions() {
         projectSelect.appendChild(option);
     });
 }
-
-console.log('✅ Funciones de eventos del modal de citas definidas correctamente');
