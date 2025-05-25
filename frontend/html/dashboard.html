@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="../img/logo.ico" />
-    <title>Dashboard - Crazy Studios</title>
+    <title>Dashboard Cliente - Crazy Studios</title>
     <link rel="stylesheet" href="../css/styleIndex.css">
     <link rel="stylesheet" href="../css/dashboard.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -12,445 +12,421 @@
     <!-- Chart.js para gráficos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
-<body>
+<body class="client-dashboard">
+    <!-- Header/Navigation -->
+    <header>
+        <div class="logo">
+            <img src="../img/logo.png" alt="Crazy Studios Logo">
+        </div>
+        <nav>
+            <div class="auth-buttons">
+                <a href="#" class="user-menu client-menu">
+                    <i class="fas fa-user"></i>
+                    <span id="client-name">Cliente</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Client dropdown menu -->
+    <div class="user-dropdown" id="client-dropdown">
+        <ul>
+            <li><a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="#" id="client-profile-link"><i class="fas fa-user"></i> Mi Perfil</a></li>
+            <li><a href="#" id="client-logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+        </ul>
+    </div>
+    
+    <!-- Dashboard Content -->
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <img src="../img/logo.png" alt="Crazy Studios">
-                    <span>Crazy Studios</span>
-                </div>
-                <button class="sidebar-toggle">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-            </div>
-            
-            <div class="sidebar-menu">
-                <div class="menu-title">Panel</div>
-                <ul>
-                    <li class="menu-item" data-tooltip="Dashboard">
-                        <a href="index.html" class="menu-link active">
-                            <i class="fas fa-home"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="menu-item" data-tooltip="Proyectos">
-                        <a href="projects.html" class="menu-link">
-                            <i class="fas fa-project-diagram"></i>
-                            <span>Mis Proyectos</span>
-                            <span class="menu-badge">4</span>
-                        </a>
-                    </li>
-                    <li class="menu-item" data-tooltip="Mensajes">
-                        <a href="messages.html" class="menu-link">
-                            <i class="fas fa-envelope"></i>
-                            <span>Mensajes</span>
-                            <span class="menu-badge">2</span>
-                        </a>
-                    </li>
-                </ul>
-                
-                <div class="menu-title">Servicios</div>
-                <ul>
-                    <li class="menu-item" data-tooltip="Marketing Digital">
-                        <a href="services-marketing.html" class="menu-link">
-                            <i class="fas fa-bullhorn"></i>
-                            <span>Marketing Digital</span>
-                        </a>
-                    </li>
-                    <li class="menu-item" data-tooltip="Desarrollo Web">
-                        <a href="services-development.html" class="menu-link">
-                            <i class="fas fa-laptop-code"></i>
-                            <span>Desarrollo Web</span>
-                        </a>
-                    </li>
-                    <li class="menu-item" data-tooltip="Redes Sociales">
-                        <a href="services-social.html" class="menu-link">
-                            <i class="fas fa-hashtag"></i>
-                            <span>Redes Sociales</span>
-                        </a>
-                    </li>
-                    <li class="menu-item" data-tooltip="Diseño Gráfico">
-                        <a href="services-design.html" class="menu-link">
-                            <i class="fas fa-palette"></i>
-                            <span>Diseño Gráfico</span>
-                        </a>
-                    </li>
-                </ul>
-                
-                <div class="menu-title">Mi Cuenta</div>
-                <ul>
-                    <li class="menu-item" data-tooltip="Perfil">
-                        <a href="profile.html" class="menu-link">
-                            <i class="fas fa-user"></i>
-                            <span>Mi Perfil</span>
-                        </a>
-                    </li>
-                    <li class="menu-item" data-tooltip="Facturación">
-                        <a href="billing.html" class="menu-link">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            <span>Facturación</span>
-                        </a>
-                    </li>
-                    <li class="menu-item" data-tooltip="Configuración">
-                        <a href="settings.html" class="menu-link">
-                            <i class="fas fa-cog"></i>
-                            <span>Configuración</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <img src="/api/placeholder/40/40" alt="Usuario">
-                    </div>
-                    <div class="user-details">
-                        <div class="user-name">Juan Pérez</div>
-                        <div class="user-role">Cliente</div>
-                    </div>
-                </div>
-                
-                <div class="user-menu">
-                    <button class="user-menu-toggle">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <div class="user-menu-dropdown">
-                        <a href="profile.html" class="user-menu-item">
-                            <i class="fas fa-user"></i>
-                            Mi Perfil
-                        </a>
-                        <a href="#" class="user-menu-item">
-                            <i class="fas fa-moon"></i>
-                            Modo Oscuro
-                        </a>
-                        <a href="../index.html" class="user-menu-item">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Cerrar Sesión
-                        </a>
-                    </div>
-                </div>
-            </div>
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                <li class="active" data-section="overview"><i class="fas fa-home"></i> Panel General</li>
+                <li data-section="projects"><i class="fas fa-project-diagram"></i> Mis Proyectos</li>
+                <li data-section="appointments"><i class="far fa-calendar-alt"></i> Mis Citas</li>
+                <li data-section="messages"><i class="far fa-envelope"></i> Mensajes</li>
+                <li data-section="billing"><i class="fas fa-file-invoice-dollar"></i> Facturación</li>
+            </ul>
         </aside>
         
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="header">
-                <div class="header-left">
-                    <button class="mobile-menu-toggle d-md-none">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1 class="page-title">Dashboard</h1>
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-content">
+            <!-- Welcome Bar -->
+            <div class="welcome-bar">
+                <div>
+                    <h1>Bienvenido, <span id="welcome-client-name">Cliente</span></h1>
+                    <p id="current-date">Cargando fecha...</p>
                 </div>
-                
-                <div class="header-right">
-                    <div class="search-bar">
-                        <i class="fas fa-search"></i>
-                        <input type="text" class="search-input" placeholder="Buscar...">
-                    </div>
-                    
-                    <div class="header-actions">
-                        <div class="header-action">
-                            <i class="fas fa-bell"></i>
-                            <span class="badge">3</span>
-                        </div>
-                        <div class="header-action">
-                            <i class="fas fa-envelope"></i>
-                            <span class="badge">2</span>
+                <div class="quick-actions">
+                    <div class="dropdown">
+                        <button class="primary-btn">
+                            <i class="fas fa-plus"></i> Nuevo <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="#" id="request-project"><i class="fas fa-project-diagram"></i> Solicitar Proyecto</a>
+                            <a href="#" id="schedule-appointment"><i class="far fa-calendar-plus"></i> Agendar Cita</a>
+                            <a href="#" id="send-message"><i class="fas fa-envelope"></i> Enviar Mensaje</a>
                         </div>
                     </div>
                 </div>
-            </header>
+            </div>
             
-            <div class="content-wrapper">
-                <!-- Stats Cards -->
-                <div class="stats-cards">
+            <!-- Overview Section -->
+            <section id="overview" class="dashboard-section active">
+                <div class="stats-container">
                     <div class="stat-card">
-                        <div class="stat-icon green">
+                        <div class="stat-icon projects-icon">
                             <i class="fas fa-project-diagram"></i>
                         </div>
                         <div class="stat-info">
-                            <div class="stat-value">4</div>
-                            <div class="stat-label">Proyectos Activos</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> 25% vs mes anterior
-                            </div>
+                            <h3>Proyectos</h3>
+                            <p class="stat-number" id="client-projects-count">0</p>
+                            <p class="stat-description">Proyectos totales</p>
                         </div>
                     </div>
                     
                     <div class="stat-card">
-                        <div class="stat-icon blue">
-                            <i class="fas fa-check-circle"></i>
+                        <div class="stat-icon appointments-icon">
+                            <i class="far fa-calendar-check"></i>
                         </div>
                         <div class="stat-info">
-                            <div class="stat-value">7</div>
-                            <div class="stat-label">Proyectos Completados</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> 10% vs mes anterior
-                            </div>
+                            <h3>Citas</h3>
+                            <p class="stat-number" id="client-appointments-count">0</p>
+                            <p class="stat-description">Citas programadas</p>
                         </div>
                     </div>
                     
                     <div class="stat-card">
-                        <div class="stat-icon purple">
-                            <i class="fas fa-hourglass-half"></i>
+                        <div class="stat-icon messages-icon">
+                            <i class="far fa-envelope"></i>
                         </div>
                         <div class="stat-info">
-                            <div class="stat-value">2</div>
-                            <div class="stat-label">Proyectos Pendientes</div>
-                            <div class="stat-change negative">
-                                <i class="fas fa-arrow-down"></i> 5% vs mes anterior
-                            </div>
+                            <h3>Mensajes</h3>
+                            <p class="stat-number" id="client-messages-count">0</p>
+                            <p class="stat-description">Sin leer</p>
                         </div>
                     </div>
                     
                     <div class="stat-card">
-                        <div class="stat-icon orange">
-                            <i class="fas fa-money-bill-wave"></i>
+                        <div class="stat-icon clients-icon">
+                            <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-info">
-                            <div class="stat-value">$3,240</div>
-                            <div class="stat-label">Facturado (Último Mes)</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> 18% vs mes anterior
-                            </div>
+                            <h3>Tiempo</h3>
+                            <p class="stat-number" id="client-member-time">0</p>
+                            <p class="stat-description">Días como cliente</p>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Dashboard Grid -->
-                <div class="dashboard-grid">
-                    <!-- Project Progress -->
-                    <div class="col-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Progreso de Proyectos</h2>
-                                <div class="card-actions">
-                                    <button class="card-action">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="statsChart" height="250"></canvas>
-                            </div>
+                <!-- Recent Projects Section -->
+                <div class="recent-projects-container">
+                    <div class="section-header">
+                        <h2>Proyectos en Progreso</h2>
+                        <a href="#" class="view-all" onclick="switchToSection('projects')">
+                            Ver todos <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="recent-projects" id="recent-projects-container">
+                        <!-- Los proyectos se cargarán dinámicamente -->
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
                         </div>
                     </div>
-                    
-                    <!-- Project Distribution -->
-                    <div class="col-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Distribución de Proyectos</h2>
-                                <div class="card-actions">
-                                    <button class="card-action">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="projectsChart" height="250"></canvas>
-                            </div>
+                </div>
+                
+                <!-- Upcoming Appointments -->
+                <div class="upcoming-appointments-container">
+                    <div class="section-header">
+                        <h2>Próximas Citas</h2>
+                        <a href="#" class="view-all" onclick="switchToSection('appointments')">
+                            Ver todas <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="upcoming-appointments" id="recent-appointments-container">
+                        <!-- Las citas se cargarán dinámicamente -->
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
                         </div>
                     </div>
-                    
-                    <!-- Recent Projects -->
-                    <div class="col-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Proyectos Recientes</h2>
-                                <div class="card-actions">
-                                    <a href="projects.html" class="btn btn-sm btn-outline">Ver Todos</a>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <ul class="projects-list">
-                                    <li class="project-item">
-                                        <div class="project-logo">
-                                            <i class="fas fa-laptop-code"></i>
-                                        </div>
-                                        <div class="project-info">
-                                            <div class="project-name">Tienda Online - Fashion Store</div>
-                                            <div class="project-details">
-                                                <span><i class="far fa-calendar-alt"></i> Inicio: 15/04/2025</span>
-                                                <span><i class="far fa-calendar-check"></i> Entrega: 30/06/2025</span>
-                                            </div>
-                                        </div>
-                                        <div class="project-status status-in-progress">En Progreso</div>
-                                        <div class="project-actions">
-                                            <a href="project-detail.html" class="project-action">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </div>
-                                    </li>
-                                    
-                                    <li class="project-item">
-                                        <div class="project-logo">
-                                            <i class="fas fa-bullhorn"></i>
-                                        </div>
-                                        <div class="project-info">
-                                            <div class="project-name">Campaña Marketing - Restaurante Gourmet</div>
-                                            <div class="project-details">
-                                                <span><i class="far fa-calendar-alt"></i> Inicio: 01/03/2025</span>
-                                                <span><i class="far fa-calendar-check"></i> Entrega: 01/06/2025</span>
-                                            </div>
-                                        </div>
-                                        <div class="project-status status-in-progress">En Progreso</div>
-                                        <div class="project-actions">
-                                            <a href="project-detail.html" class="project-action">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </div>
-                                    </li>
-                                    
-                                    <li class="project-item">
-                                        <div class="project-logo">
-                                            <i class="fas fa-palette"></i>
-                                        </div>
-                                        <div class="project-info">
-                                            <div class="project-name">Diseño de Logo - Tech Startup</div>
-                                            <div class="project-details">
-                                                <span><i class="far fa-calendar-alt"></i> Inicio: 10/04/2025</span>
-                                                <span><i class="far fa-calendar-check"></i> Entrega: 25/04/2025</span>
-                                            </div>
-                                        </div>
-                                        <div class="project-status status-completed">Completado</div>
-                                        <div class="project-actions">
-                                            <a href="project-detail.html" class="project-action">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </div>
-                                    </li>
-                                    
-                                    <li class="project-item">
-                                        <div class="project-logo">
-                                            <i class="fas fa-hashtag"></i>
-                                        </div>
-                                        <div class="project-info">
-                                            <div class="project-name">Gestión de Redes Sociales - Boutique</div>
-                                            <div class="project-details">
-                                                <span><i class="far fa-calendar-alt"></i> Inicio: 01/05/2025</span>
-                                                <span><i class="far fa-calendar-check"></i> Entrega: Mensual</span>
-                                            </div>
-                                        </div>
-                                        <div class="project-status status-pending">Pendiente</div>
-                                        <div class="project-actions">
-                                            <a href="project-detail.html" class="project-action">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="recent-activity-container">
+                    <div class="section-header">
+                        <h2>Actividad Reciente</h2>
+                    </div>
+                    <div class="activity-list" id="recent-activity-list">
+                        <!-- La actividad se cargará dinámicamente -->
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
                         </div>
                     </div>
+                </div>
+            </section>
+            
+            <!-- Projects Section -->
+            <section id="projects" class="dashboard-section">
+                <div class="section-header">
+                    <h2>Mis Proyectos</h2>
+                    <button class="primary-btn" id="request-new-project-btn">
+                        <i class="fas fa-plus"></i> Solicitar Proyecto
+                    </button>
+                </div>
+                
+                <!-- Projects Filter -->
+                <div class="projects-filter">
+                    <div class="filter-group search-group">
+                        <input type="text" id="client-project-search" placeholder="Buscar proyecto...">
+                        <button id="client-project-search-btn"><i class="fas fa-search"></i></button>
+                    </div>
                     
-                    <!-- Recent Messages -->
-                    <div class="col-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Mensajes Recientes</h2>
-                                <div class="card-actions">
-                                    <a href="messages.html" class="btn btn-sm btn-outline">Ver Todos</a>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <ul class="projects-list">
-                                    <li class="project-item">
-                                        <div class="project-logo">
-                                            <img src="/api/placeholder/40/40" alt="Usuario">
-                                        </div>
-                                        <div class="project-info">
-                                            <div class="project-name">Alejandra Méndez</div>
-                                            <div class="project-details">
-                                                <span>Actualización sobre el diseño del logo...</span>
-                                            </div>
-                                        </div>
-                                        <div class="project-details">
-                                            <span><i class="far fa-clock"></i> 2h</span>
-                                        </div>
-                                    </li>
-                                    
-                                    <li class="project-item">
-                                        <div class="project-logo">
-                                            <img src="/api/placeholder/40/40" alt="Usuario">
-                                        </div>
-                                        <div class="project-info">
-                                            <div class="project-name">Carlos Ramírez</div>
-                                            <div class="project-details">
-                                                <span>Hemos actualizado la propuesta para...</span>
-                                            </div>
-                                        </div>
-                                        <div class="project-details">
-                                            <span><i class="far fa-clock"></i> 1d</span>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
+                    <div class="filter-group">
+                        <select id="client-project-filter-status">
+                            <option value="all">Todos los estados</option>
+                            <option value="cotizacion">Cotización</option>
+                            <option value="pago procesado">Pago Procesado</option>
+                            <option value="iniciado">Iniciado</option>
+                            <option value="desarrollo inicial">Desarrollo Inicial</option>
+                            <option value="desarrollo medio">Desarrollo Medio</option>
+                            <option value="finalizado">Finalizado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <select id="client-project-filter-category">
+                            <option value="all">Todas las categorías</option>
+                            <option value="web-development">Desarrollo Web</option>
+                            <option value="ecommerce">Tienda Online</option>
+                            <option value="marketing-digital">Marketing Digital</option>
+                            <option value="social-media">Redes Sociales</option>
+                            <option value="seo">SEO</option>
+                            <option value="branding">Branding</option>
+                            <option value="design">Diseño Gráfico</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Project Cards -->
+                <div class="project-cards" id="client-projects-container">
+                    <!-- Los proyectos se cargarán dinámicamente -->
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination" id="client-projects-pagination">
+                    <!-- La paginación se generará dinámicamente -->
+                </div>
+            </section>
+            
+            <!-- Appointments Section -->
+            <section id="appointments" class="dashboard-section">
+                <div class="section-header">
+                    <h2>Mis Citas</h2>
+                    <button class="primary-btn" id="schedule-new-appointment-btn">
+                        <i class="far fa-calendar-plus"></i> Agendar Cita
+                    </button>
+                </div>
+                
+                <!-- Calendar and List View Tabs -->
+                <div class="view-tabs">
+                    <button class="view-tab active" data-view="calendar">
+                        <i class="far fa-calendar-alt"></i> Vista Calendario
+                    </button>
+                    <button class="view-tab" data-view="list">
+                        <i class="fas fa-list"></i> Vista Lista
+                    </button>
+                </div>
+                
+                <!-- Calendar View -->
+                <div class="calendar-view active" id="client-appointments-calendar">
+                    <div class="calendar-header">
+                        <button class="calendar-nav-btn" id="client-prev-month-btn">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h3 id="client-calendar-title">Cargando...</h3>
+                        <button class="calendar-nav-btn" id="client-next-month-btn">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <table class="calendar-table">
+                        <thead>
+                            <tr>
+                                <th>Dom</th>
+                                <th>Lun</th>
+                                <th>Mar</th>
+                                <th>Mié</th>
+                                <th>Jue</th>
+                                <th>Vie</th>
+                                <th>Sáb</th>
+                            </tr>
+                        </thead>
+                        <tbody id="client-calendar-body">
+                            <!-- El calendario se generará dinámicamente -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="calendar-legend">
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: var(--primary-color);"></span>
+                            <span>Consulta General</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: var(--secondary-color);"></span>
+                            <span>Plan Personalizado</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #ff9800;"></span>
+                            <span>Seguimiento de Proyecto</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- List View -->
+                <div class="list-view" id="client-appointments-list-view">
+                    <!-- Appointments Filter -->
+                    <div class="appointments-filter">
+                        <div class="filter-group search-group">
+                            <input type="text" id="client-appointment-search" placeholder="Buscar cita...">
+                            <button id="client-appointment-search-btn"><i class="fas fa-search"></i></button>
                         </div>
                         
-                        <!-- Project Progress -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Progreso de Proyectos</h2>
+                        <div class="filter-group">
+                            <select id="client-appointment-filter-type">
+                                <option value="all">Todos los tipos</option>
+                                <option value="consulta-general">Consulta General</option>
+                                <option value="plan-personalizado">Plan Personalizado</option>
+                                <option value="seguimiento-proyecto">Seguimiento de Proyecto</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select id="client-appointment-filter-status">
+                                <option value="all">Todos los estados</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="confirmada">Confirmada</option>
+                                <option value="cancelada">Cancelada</option>
+                                <option value="completada">Completada</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <input type="date" id="client-appointment-date-filter">
+                        </div>
+                    </div>
+                    
+                    <!-- Appointments Table -->
+                    <div class="table-responsive">
+                        <table class="data-table" id="client-appointments-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Estado</th>
+                                    <th>Proyecto</th>
+                                    <th>Notas</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Las citas se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="pagination" id="client-appointments-pagination">
+                        <!-- La paginación se generará dinámicamente -->
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Messages Section -->
+            <section id="messages" class="dashboard-section">
+                <div class="section-header">
+                    <h2>Centro de Mensajes</h2>
+                    <div class="messages-header-actions">
+                        <button class="secondary-btn" id="client-refresh-messages-btn" title="Actualizar mensajes">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                        <button class="primary-btn" id="client-new-message-btn">
+                            <i class="fas fa-envelope"></i> Nuevo Mensaje
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="messages-container">
+                    <!-- Messages content will be loaded here -->
+                    <div class="no-conversation">
+                        <i class="fas fa-comments" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
+                        <h3>Centro de Mensajes</h3>
+                        <p>Aquí podrás comunicarte directamente con nuestro equipo</p>
+                        <button class="primary-btn" id="start-client-conversation-btn">
+                            <i class="fas fa-plus"></i> Iniciar Conversación
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Billing Section -->
+            <section id="billing" class="dashboard-section">
+                <div class="section-header">
+                    <h2>Facturación</h2>
+                </div>
+                
+                <div class="billing-container">
+                    <div class="billing-summary-card">
+                        <h3><i class="fas fa-dollar-sign"></i> Resumen de Facturación</h3>
+                        <div class="billing-stats">
+                            <div class="billing-stat">
+                                <span class="billing-label">Total Facturado</span>
+                                <span class="billing-value" id="total-billed">$0.00</span>
                             </div>
-                            <div class="card-body">
-                                <div>
-                                    <div class="progress-label">
-                                        <span>Tienda Online - Fashion Store</span>
-                                        <span>45%</span>
-                                    </div>
-                                    <div class="progress-wrapper">
-                                        <div class="progress-bar">
-                                            <div class="progress-value green" style="width: 45%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <div class="progress-label">
-                                        <span>Campaña Marketing - Restaurante</span>
-                                        <span>60%</span>
-                                    </div>
-                                    <div class="progress-wrapper">
-                                        <div class="progress-bar">
-                                            <div class="progress-value blue" style="width: 60%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <div class="progress-label">
-                                        <span>Diseño de Logo - Tech Startup</span>
-                                        <span>100%</span>
-                                    </div>
-                                    <div class="progress-wrapper">
-                                        <div class="progress-bar">
-                                            <div class="progress-value purple" style="width: 100%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <div class="progress-label">
-                                        <span>Gestión de Redes - Boutique</span>
-                                        <span>0%</span>
-                                    </div>
-                                    <div class="progress-wrapper">
-                                        <div class="progress-bar">
-                                            <div class="progress-value orange" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="billing-stat">
+                                <span class="billing-label">Pendiente de Pago</span>
+                                <span class="billing-value" id="pending-payment">$0.00</span>
+                            </div>
+                            <div class="billing-stat">
+                                <span class="billing-label">Último Pago</span>
+                                <span class="billing-value" id="last-payment">-</span>
                             </div>
                         </div>
                     </div>
                     
+                    <div class="invoices-container">
+                        <h3><i class="fas fa-file-invoice"></i> Facturas</h3>
+                        <div class="table-responsive">
+                            <table class="data-table" id="client-invoices-table">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Fecha</th>
+                                        <th>Proyecto</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Las facturas se cargarán dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </section>
         </main>
+    </div>
+    
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container">
+        <!-- Las notificaciones se añadirán dinámicamente -->
     </div>
     
     <script src="../js/dashboard.js"></script>

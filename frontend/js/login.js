@@ -390,6 +390,10 @@ function simulateRegistration(form) {
         submitBtn.innerHTML = originalText;
         return;
     }
+
+    const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000' 
+    : '';
     
     // Enviar datos como JSON
     fetch(`${API_BASE}/api/auth/register`, {
@@ -453,7 +457,9 @@ function simulatePasswordReset(form) {
     };
     
     console.log('Solicitando restablecimiento para:', formData.email);
-    
+    const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000' 
+    : '';
     // Enviar datos a la API
     fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
