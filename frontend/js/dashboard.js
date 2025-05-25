@@ -671,9 +671,6 @@ function setupClientQuickActionButtons() {
             
             // Ir a la sección de proyectos y abrir modal de solicitud
             switchToClientSection('projects');
-            setTimeout(() => {
-                openRequestProjectModal();
-            }, 300);
         });
     }
     
@@ -786,7 +783,7 @@ function switchToClientSection(sectionId) {
                     loadDashboardData();
                     break;
                 case 'projects':
-                    loadClientProjects();
+                    initClientProjectsModule();
                     break;
                 case 'appointments':
                     loadClientAppointments();
@@ -1118,14 +1115,6 @@ function loadClientMessages() {
 function loadClientBilling() {
     console.log('💰 Cargando facturación del cliente...');
     // Implementar carga de datos de facturación
-}
-
-/**
- * Placeholder functions para modals
- */
-function openRequestProjectModal() {
-    console.log('📋 Abriendo modal de solicitud de proyecto...');
-    showToast('Funcionalidad de solicitud de proyecto próximamente', 'info');
 }
 
 function openScheduleAppointmentModal() {

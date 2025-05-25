@@ -6,7 +6,7 @@
 /* Contenedor principal de mensajes */
 .messages-container {
     display: flex;
-    height: calc(100vh - 140px);
+    height: calc(170vh - 140px);
     background-color: #1e1e1e;
     border-radius: 12px;
     overflow: hidden;

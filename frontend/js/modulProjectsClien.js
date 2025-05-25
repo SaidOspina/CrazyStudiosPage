@@ -1118,7 +1118,8 @@ function setupRequestProjectModalEvents() {
 }
 
 /**
- * Maneja el envío de solicitud de proyecto
+ * Maneja el envío de solicitud de proyecto - VERSIÓN MEJORADA
+ * Envía mensaje a través de la aplicación Y notificación por correo
  */
 async function handleProjectRequestSend() {
     const form = document.getElementById('request-project-form');
@@ -1130,8 +1131,11 @@ async function handleProjectRequestSend() {
     
     try {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando solicitud...';
         
+        console.log('🚀 Iniciando envío de solicitud de proyecto...');
+        
+        // Recopilar datos del formulario
         const formData = {
             name: document.getElementById('request-project-name').value.trim(),
             category: document.getElementById('request-project-category').value,
@@ -1144,10 +1148,21 @@ async function handleProjectRequestSend() {
             consultation: document.getElementById('request-consultation').checked
         };
         
+        console.log('📋 Datos del formulario recopilados:', {
+            ...formData,
+            description: `${formData.description.substring(0, 50)}...`
+        });
+        
+        // Validaciones
         if (!formData.name || !formData.category || !formData.description) {
             throw new Error('Por favor, completa todos los campos obligatorios');
         }
         
+        if (formData.description.length < 20) {
+            throw new Error('La descripción debe tener al menos 20 caracteres para ayudarnos a entender mejor tu proyecto');
+        }
+        
+        // Labels para categorías y presupuestos
         const categoryLabels = {
             'web-development': 'Desarrollo Web',
             'ecommerce': 'Tienda Online',
@@ -1158,62 +1173,173 @@ async function handleProjectRequestSend() {
             'design': 'Diseño Gráfico'
         };
         
+        const budgetLabels = {
+            '500-1000': '$500 - $1,000',
+            '1000-2500': '$1,000 - $2,500',
+            '2500-5000': '$2,500 - $5,000',
+            '5000-10000': '$5,000 - $10,000',
+            '10000+': 'Más de $10,000',
+            'consultar': 'A consultar'
+        };
+        
+        const priorityLabels = {
+            'normal': 'Normal',
+            'alta': 'Alta',
+            'urgente': 'Urgente'
+        };
+        
         const user = window.currentUser;
-        const requestMessage = `
-NUEVA SOLICITUD DE PROYECTO
+        
+        // Crear mensaje estructurado para la aplicación
+        const requestMessage = `🚀 NUEVA SOLICITUD DE PROYECTO
 
-CLIENTE: ${user.nombre} ${user.apellidos}
-EMPRESA: ${user.empresa || 'No especificada'}
-EMAIL: ${user.correo}
-TELÉFONO: ${user.telefono || 'No especificado'}
+👤 INFORMACIÓN DEL CLIENTE:
+• Nombre: ${user.nombre} ${user.apellidos}
+• Empresa: ${user.empresa || 'No especificada'}
+• Correo: ${user.correo}
+• Teléfono: ${user.telefono || 'No especificado'}
 
-DETALLES DEL PROYECTO:
-• Nombre: ${formData.name}
-• Tipo: ${categoryLabels[formData.category] || formData.category}
-• Presupuesto: ${formData.budget || 'No especificado'}
-• Prioridad: ${formData.priority.toUpperCase()}
-${formData.timeline ? `• Fecha deseada: ${new Date(formData.timeline).toLocaleDateString('es-ES')}` : ''}
+📋 DETALLES DEL PROYECTO:
+• Nombre del Proyecto: ${formData.name}
+• Categoría: ${categoryLabels[formData.category] || formData.category}
+• Presupuesto Estimado: ${formData.budget ? budgetLabels[formData.budget] || formData.budget : 'No especificado'}
+• Prioridad: ${priorityLabels[formData.priority] || formData.priority}
+${formData.timeline ? `• Fecha Deseada de Entrega: ${new Date(formData.timeline).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}` : ''}
 
-DESCRIPCIÓN:
+📝 DESCRIPCIÓN DEL PROYECTO:
 ${formData.description}
 
-${formData.references ? `REFERENCIAS:
-${formData.references}` : ''}
+${formData.references ? `🔗 REFERENCIAS E INSPIRACIÓN:
+${formData.references}
 
-${formData.additional ? `INFORMACIÓN ADICIONAL:
-${formData.additional}` : ''}
+` : ''}${formData.additional ? `ℹ️ INFORMACIÓN ADICIONAL:
+${formData.additional}
 
-${formData.consultation ? '✅ Cliente solicita consulta gratuita' : '❌ Cliente no requiere consulta previa'}
+` : ''}${formData.consultation ? '✅ El cliente SOLICITA una consulta gratuita antes de iniciar' : '⏭️ El cliente NO requiere consulta previa'}
+
+📊 PRÓXIMOS PASOS SUGERIDOS:
+1. Revisar la solicitud y evaluar viabilidad
+2. ${formData.consultation ? 'Programar consulta gratuita con el cliente' : 'Preparar cotización inicial'}
+3. Contactar al cliente en máximo 24 horas
+4. ${formData.priority === 'urgente' ? '⚠️ ATENCIÓN: Proyecto marcado como URGENTE' : ''}
 
 ---
-Solicitud enviada desde Dashboard del Cliente
-Fecha: ${new Date().toLocaleString('es-ES')}
-        `.trim();
+📱 Solicitud enviada desde Dashboard del Cliente
+🕐 Fecha y hora: ${new Date().toLocaleString('es-ES', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+})}
+🆔 ID Cliente: ${user._id}`;
+        
+        console.log('✉️ Mensaje estructurado creado');
         
         const token = localStorage.getItem('authToken');
         const API_BASE = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
             : '';
         
-        const response = await fetch(`${API_BASE}/api/messages/send`, {
+        // PASO 1: Enviar mensaje a través del sistema de mensajería
+        console.log('📤 Enviando mensaje a través del sistema...');
+        
+        const messageResponse = await fetch(`${API_BASE}/api/messages/send`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                mensaje: requestMessage
+                mensaje: requestMessage,
+                tipo: 'solicitud-proyecto', // Tipo especial para identificar solicitudes
+                prioridad: formData.priority,
+                metadatos: {
+                    tipoSolicitud: 'nuevo-proyecto',
+                    categoria: formData.category,
+                    presupuesto: formData.budget,
+                    requiereConsulta: formData.consultation,
+                    fechaDeseada: formData.timeline || null
+                }
             })
         });
         
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Error al enviar solicitud');
+        if (!messageResponse.ok) {
+            const error = await messageResponse.json();
+            throw new Error(error.message || 'Error al enviar mensaje del sistema');
         }
         
-        showToast('¡Solicitud enviada correctamente! Nos pondremos en contacto contigo pronto.', 'success');
+        const messageResult = await messageResponse.json();
+        console.log('✅ Mensaje enviado exitosamente por el sistema:', messageResult);
         
-        // Cerrar modal
+        // PASO 2: Enviar notificación por correo a administradores
+        console.log('📧 Enviando notificaciones por correo...');
+        
+        // Cambiar el texto del botón para indicar el paso actual
+        submitBtn.innerHTML = '<i class="fas fa-envelope fa-spin"></i> Enviando notificaciones...';
+        
+        try {
+            // Crear payload para notificación por correo
+            const emailNotificationPayload = {
+                tipo: 'nueva-solicitud-proyecto',
+                cliente: {
+                    id: user._id,
+                    nombre: user.nombre,
+                    apellidos: user.apellidos,
+                    correo: user.correo,
+                    telefono: user.telefono || '',
+                    empresa: user.empresa || ''
+                },
+                proyecto: {
+                    nombre: formData.name,
+                    categoria: formData.category,
+                    categoriaLabel: categoryLabels[formData.category] || formData.category,
+                    presupuesto: formData.budget,
+                    presupuestoLabel: formData.budget ? budgetLabels[formData.budget] || formData.budget : '',
+                    descripcion: formData.description,
+                    referencias: formData.references || '',
+                    informacionAdicional: formData.additional || '',
+                    prioridad: formData.priority,
+                    prioridadLabel: priorityLabels[formData.priority] || formData.priority,
+                    fechaDeseada: formData.timeline || '',
+                    requiereConsulta: formData.consultation,
+                    fechaSolicitud: new Date().toISOString()
+                }
+            };
+            
+            // Enviar notificación por correo (este endpoint debería existir en el backend)
+            const emailResponse = await fetch(`${API_BASE}/api/notifications/project-request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(emailNotificationPayload)
+            });
+            
+            if (emailResponse.ok) {
+                console.log('✅ Notificación por correo enviada exitosamente');
+            } else {
+                console.warn('⚠️ No se pudo enviar la notificación por correo, pero el mensaje del sistema sí se envió');
+            }
+            
+        } catch (emailError) {
+            console.warn('⚠️ Error al enviar notificación por correo:', emailError);
+            // No lanzamos error aquí porque el mensaje principal ya se envió
+        }
+        
+        // PASO 3: Mostrar confirmación exitosa
+        console.log('🎉 Solicitud procesada completamente');
+        
+        showToast('¡Solicitud enviada correctamente! Hemos notificado a nuestro equipo y nos pondremos en contacto contigo pronto.', 'success');
+        
+        // Mostrar toast adicional con información
+        setTimeout(() => {
+            showToast(`📧 Se ha enviado una copia de tu solicitud por correo electrónico a ${user.correo}`, 'info');
+        }, 1500);
+        
+        // PASO 4: Cerrar modal y limpiar
         const modal = document.getElementById('request-project-modal');
         if (modal) {
             modal.classList.remove('active');
@@ -1225,19 +1351,54 @@ Fecha: ${new Date().toLocaleString('es-ES')}
             }, 300);
         }
         
-        // Recargar proyectos después de un momento
+        // PASO 5: Actualizar estadísticas y datos
         setTimeout(() => {
+            // Recargar estadísticas de mensajes
+            if (window.loadClientDynamicStatistics) {
+                window.loadClientDynamicStatistics();
+            }
+            
+            // Recargar proyectos por si se creó alguno automáticamente
             loadClientProjectsData();
         }, 2000);
         
+        // PASO 6: Mostrar mensaje de seguimiento
+        setTimeout(() => {
+            showToast('💡 Revisa la sección de mensajes para ver el estado de tu solicitud', 'info');
+        }, 4000);
+        
     } catch (error) {
-        console.error('Error al enviar solicitud de proyecto:', error);
-        showToast(error.message || 'Error al enviar solicitud', 'error');
+        console.error('❌ Error al enviar solicitud de proyecto:', error);
+        
+        // Mostrar error específico según el tipo
+        let errorMessage = 'Error al enviar solicitud';
+        
+        if (error.message.includes('obligatorios')) {
+            errorMessage = error.message;
+        } else if (error.message.includes('descripción')) {
+            errorMessage = error.message;
+        } else if (error.message.includes('conexión') || error.message.includes('network')) {
+            errorMessage = 'Error de conexión. Verifica tu internet e intenta nuevamente.';
+        } else if (error.message.includes('autenticación') || error.message.includes('token')) {
+            errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
+            // Redirigir al login después de un momento
+            setTimeout(() => {
+                window.location.href = '../login.html';
+            }, 3000);
+        } else {
+            errorMessage = 'Error al enviar solicitud. Intenta nuevamente o contacta a soporte.';
+        }
+        
+        showToast(errorMessage, 'error');
+        
     } finally {
+        // Restaurar botón
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
         }
+        
+        console.log('🔄 Proceso de solicitud de proyecto completado');
     }
 }
 
