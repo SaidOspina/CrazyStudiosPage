@@ -1,2144 +1,1778 @@
 /**
- * dashboard.js - Parte 1: Inicialización y funciones básicas
- * Funcionalidades principales del dashboard para Crazy Studios
+ * Dashboard Cliente - Funcionalidad Principal
+ * Versión adaptada del dashboard de administrador para clientes
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar componentes UI
-    initDashboard();
+    console.log('🚀 Inicializando Dashboard Cliente...');
     
-    // Formatear la fecha actual
+    // Verificar autenticación y cargar datos del usuario
+    checkClientAuthentication();
+    
+    // Inicializar componentes del dashboard
+    initClientDashboard();
+    
+    // Configurar menú de usuario
+    setupClientUserMenu();
+    
+    // Configurar navegación de secciones
+    setupClientSectionNavigation();
+    
+    // Configurar quick actions
+    setupClientQuickActions();
+    
+    // Configurar clicks en estadísticas
+    setupClientStatisticsClicks();
+    
+    // Formatear fecha actual
     displayCurrentDate();
     
-    // Cargar datos del usuario
-    loadUserData();
+    // Cargar estadísticas dinámicas
+    loadClientDynamicStatistics();
     
-    // Cargar estadísticas
-    loadStatistics();
-    
-    // Inicializar vistas del dashboard según el rol
-    if (document.body.classList.contains('admin-dashboard')) {
-        initAdminDashboard();
-    } else {
-        initClientDashboard();
-    }
+    // Cargar datos del dashboard
+    loadDashboardData();
 });
 
 /**
- * Inicializa componentes básicos del dashboard
+ * Verifica si el usuario está autenticado y es cliente
  */
-function initDashboard() {
-    // Navegación de secciones
-    const sidebarLinks = document.querySelectorAll('.sidebar-menu li');
-    const dashboardSections = document.querySelectorAll('.dashboard-section');
+function checkClientAuthentication() {
+    console.log('🔐 Verificando autenticación de cliente...');
     
-    sidebarLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            // Quitar clase activa de todos los links
-            sidebarLinks.forEach(l => l.classList.remove('active'));
-            
-            // Agregar clase activa al link clickeado
-            this.classList.add('active');
-            
-            // Obtener la sección a mostrar
-            const section = this.getAttribute('data-section');
-            
-            // Ocultar todas las secciones
-            dashboardSections.forEach(s => s.classList.remove('active'));
-            
-            // Mostrar la sección seleccionada
-            document.getElementById(section).classList.add('active');
-        });
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    
+    if (!token || !userData) {
+        console.warn('❌ No hay datos de autenticación, redirigiendo al login');
+        window.location.href = '../login.html';
+        return;
+    }
+    
+    try {
+        const user = JSON.parse(userData);
+        
+        // Verificar que sea cliente (no administrador)
+        if (user.rol !== 'cliente') {
+            console.warn('❌ Usuario no es cliente, redirigiendo');
+            if (user.rol === 'admin' || user.rol === 'superadmin') {
+                window.location.href = 'dashboardAdministrador.html';
+            } else {
+                window.location.href = '../login.html';
+            }
+            return;
+        }
+        
+        console.log('✅ Usuario autenticado como cliente:', user.nombre);
+        
+        // Cargar datos del usuario en la interfaz
+        loadClientUserData(user);
+        
+    } catch (error) {
+        console.error('❌ Error al procesar datos de usuario:', error);
+        localStorage.clear();
+        window.location.href = '../login.html';
+    }
+}
+
+/**
+ * Carga los datos del usuario cliente en la interfaz
+ */
+function loadClientUserData(user) {
+    console.log('👤 Cargando datos del cliente en la interfaz...');
+    
+    // Actualizar nombre en el menú
+    const clientNameElement = document.getElementById('client-name');
+    const welcomeClientNameElement = document.getElementById('welcome-client-name');
+    
+    if (clientNameElement) {
+        clientNameElement.textContent = `${user.nombre} ${user.apellidos}`;
+    }
+    
+    if (welcomeClientNameElement) {
+        welcomeClientNameElement.textContent = user.nombre;
+    }
+    
+    // Guardar datos del usuario para uso posterior
+    window.currentUser = user;
+    
+    console.log('✅ Datos del cliente cargados correctamente');
+}
+
+/**
+ * Configura el menú de usuario (dropdown)
+ */
+function setupClientUserMenu() {
+    console.log('🔧 Configurando menú de usuario cliente...');
+    
+    const userMenu = document.querySelector('.user-menu.client-menu');
+    const userDropdown = document.getElementById('client-dropdown');
+    
+    if (!userMenu || !userDropdown) {
+        console.warn('⚠️ Elementos del menú de usuario no encontrados');
+        return;
+    }
+    
+    // Toggle del dropdown al hacer clic en el menú
+    userMenu.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('👆 Click en menú de usuario');
+        userDropdown.classList.toggle('active');
     });
     
-    // Menú de usuario
-    const userMenu = document.querySelector('.user-menu');
-    const userDropdown = document.getElementById('user-dropdown') || document.getElementById('admin-dropdown');
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!userMenu.contains(e.target) && !userDropdown.contains(e.target)) {
+            userDropdown.classList.remove('active');
+        }
+    });
     
-    if (userMenu && userDropdown) {
-        userMenu.addEventListener('click', function(e) {
+    // Configurar botones del dropdown
+    setupClientDropdownButtons();
+    
+    console.log('✅ Menú de usuario configurado');
+}
+
+/**
+ * Configura los botones del dropdown de usuario cliente
+ */
+function setupClientDropdownButtons() {
+    console.log('🔧 Configurando botones del dropdown cliente...');
+    
+    // Botón de perfil
+    const profileBtn = document.getElementById('client-profile-link');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            userDropdown.classList.toggle('active');
-            
-            // Cerrar el dropdown al hacer click fuera de él
-            document.addEventListener('click', function closeDropdown(e) {
-                if (!userMenu.contains(e.target) && !userDropdown.contains(e.target)) {
-                    userDropdown.classList.remove('active');
-                    document.removeEventListener('click', closeDropdown);
-                }
-            });
+            console.log('👤 Abriendo perfil de cliente');
+            openClientProfileModal();
         });
     }
     
-    // Cerrar sesión
-    const logoutBtn = document.getElementById('logout-btn') || document.getElementById('admin-logout-btn');
-    
+    // Botón de cerrar sesión
+    const logoutBtn = document.getElementById('client-logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            console.log('🚪 Iniciando cierre de sesión');
+            handleClientLogout();
+        });
+    }
+    
+    console.log('✅ Botones del dropdown configurados');
+}
+
+/**
+ * Abre el modal de perfil del cliente
+ */
+function openClientProfileModal() {
+    console.log('📝 Abriendo modal de perfil de cliente...');
+    createClientProfileModal();
+}
+
+/**
+ * Crea el modal de perfil con los datos del cliente
+ */
+function createClientProfileModal() {
+    const user = window.currentUser;
+    if (!user) {
+        console.error('❌ No hay datos de usuario disponibles');
+        showToast('Error: No se pudieron cargar los datos del usuario', 'error');
+        return;
+    }
+    
+    console.log('🔨 Creando modal de perfil...');
+    
+    // Verificar si ya existe un modal y eliminarlo
+    const existingModal = document.getElementById('client-profile-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modalHTML = `
+        <div class="modal active" id="client-profile-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-user"></i> Mi Perfil</h2>
+                    <button class="close-btn" id="close-client-profile-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="client-profile-update-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="client-profile-name">Nombre *</label>
+                                <input type="text" id="client-profile-name" value="${user.nombre || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="client-profile-lastname">Apellidos *</label>
+                                <input type="text" id="client-profile-lastname" value="${user.apellidos || ''}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="client-profile-email">Correo Electrónico *</label>
+                                <input type="email" id="client-profile-email" value="${user.correo || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="client-profile-phone">Teléfono</label>
+                                <input type="tel" id="client-profile-phone" value="${user.telefono || ''}" placeholder="Ej: +57 300 123 4567">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="client-profile-company">Empresa (Opcional)</label>
+                            <input type="text" id="client-profile-company" value="${user.empresa || ''}" placeholder="Nombre de tu empresa">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="client-profile-document-type">Tipo de Documento</label>
+                                <select id="client-profile-document-type">
+                                    <option value="CC" ${(user.tipoDocumento || 'CC') === 'CC' ? 'selected' : ''}>Cédula de Ciudadanía</option>
+                                    <option value="CE" ${user.tipoDocumento === 'CE' ? 'selected' : ''}>Cédula de Extranjería</option>
+                                    <option value="NIT" ${user.tipoDocumento === 'NIT' ? 'selected' : ''}>NIT</option>
+                                    <option value="PASAPORTE" ${user.tipoDocumento === 'PASAPORTE' ? 'selected' : ''}>Pasaporte</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="client-profile-document">Número de Documento</label>
+                                <input type="text" id="client-profile-document" value="${user.documento || ''}" placeholder="Número de documento">
+                            </div>
+                        </div>
+                        
+                        <div class="password-section">
+                            <h4 style="margin: 24px 0 16px 0; color: #ffffff; font-size: 16px;">
+                                <i class="fas fa-lock"></i> Cambiar Contraseña (Opcional)
+                            </h4>
+                            
+                            <div class="form-group">
+                                <label for="client-profile-current-password">Contraseña Actual</label>
+                                <div style="position: relative;">
+                                    <input type="password" id="client-profile-current-password" placeholder="Ingresa tu contraseña actual">
+                                    <button type="button" class="password-toggle-btn" data-target="client-profile-current-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="client-profile-new-password">Nueva Contraseña</label>
+                                    <div style="position: relative;">
+                                        <input type="password" id="client-profile-new-password" placeholder="Mínimo 6 caracteres">
+                                        <button type="button" class="password-toggle-btn" data-target="client-profile-new-password">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <small style="color: #999; font-size: 12px;">Deja vacío si no deseas cambiar la contraseña</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="client-profile-confirm-password">Confirmar Nueva Contraseña</label>
+                                    <div style="position: relative;">
+                                        <input type="password" id="client-profile-confirm-password" placeholder="Confirma la nueva contraseña">
+                                        <button type="button" class="password-toggle-btn" data-target="client-profile-confirm-password">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-info" style="background: rgba(33, 150, 243, 0.1); padding: 16px; border-radius: 8px; margin: 24px 0; border-left: 4px solid #2196F3;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <i class="fas fa-info-circle" style="color: #2196F3;"></i>
+                                <strong style="color: #ffffff;">Información Importante</strong>
+                            </div>
+                            <ul style="margin: 0; padding-left: 20px; color: #cccccc; font-size: 14px; line-height: 1.5;">
+                                <li>Los campos marcados con (*) son obligatorios</li>
+                                <li>Tu correo electrónico es usado para notificaciones importantes</li>
+                                <li>Solo cambia la contraseña si es necesario por seguridad</li>
+                                <li>Tus datos están protegidos y no se comparten con terceros</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="secondary-btn" id="cancel-client-profile-btn">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="primary-btn" id="save-client-profile-btn">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Insertar el modal en el DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Bloquear scroll del body
+    document.body.style.overflow = 'hidden';
+    
+    // Configurar eventos del modal después de que esté en el DOM
+    setTimeout(() => {
+        setupClientProfileModalEvents();
+    }, 100);
+    
+    console.log('✅ Modal de perfil creado y configurado');
+}
+
+/**
+ * Configura los eventos del modal de perfil del cliente
+ */
+function setupClientProfileModalEvents() {
+    console.log('🔧 Configurando eventos del modal de perfil...');
+    
+    const modal = document.getElementById('client-profile-modal');
+    const closeBtn = document.getElementById('close-client-profile-modal');
+    const cancelBtn = document.getElementById('cancel-client-profile-btn');
+    const form = document.getElementById('client-profile-update-form');
+    
+    if (!modal) {
+        console.error('❌ Modal no encontrado');
+        return;
+    }
+    
+    // Función para cerrar modal
+    function closeModal() {
+        console.log('🚪 Cerrando modal de perfil');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            if (modal && modal.parentNode) {
+                modal.remove();
+            }
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+    
+    // Eventos de cierre
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal();
+        });
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal();
+        });
+    }
+    
+    // Cerrar al hacer clic fuera del modal
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Cerrar con la tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+    
+    // Toggle de contraseñas
+    const passwordToggles = modal.querySelectorAll('.password-toggle-btn');
+    passwordToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
             
-            // Aquí iría la lógica para cerrar sesión con MongoDB
-            // Por ahora solo redireccionamos a la página de login
-            window.location.href = '../login.html';
-        });
-    }
-    
-    // Inicializar modales
-    initModals();
-    
-    // Inicializar tabs en vista de citas
-    initViewTabs();
-}
-
-/**
- * Muestra la fecha actual formateada
- */
-function displayCurrentDate() {
-    const currentDateElement = document.getElementById('current-date');
-    
-    if (currentDateElement) {
-        const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        currentDateElement.textContent = now.toLocaleDateString('es-ES', options);
-    }
-}
-
-/**
- * Carga los datos del usuario desde MongoDB
- */
-function loadUserData() {
-    // Simulación de datos de usuario
-    // En un entorno real, estos datos vendrían de la base de datos MongoDB
-    const userData = {
-        nombre: 'Juan',
-        apellidos: 'Pérez',
-        empresa: 'Empresa ABC',
-        rol: 'cliente'
-    };
-    
-    // Mostrar el nombre del usuario en el menú
-    const userNameElement = document.getElementById('user-name');
-    const adminNameElement = document.getElementById('admin-name');
-    const welcomeUserNameElement = document.getElementById('welcome-user-name');
-    const welcomeAdminNameElement = document.getElementById('welcome-admin-name');
-    
-    if (userNameElement) {
-        userNameElement.textContent = `${userData.nombre} ${userData.apellidos}`;
-    }
-    
-    if (adminNameElement) {
-        adminNameElement.textContent = `${userData.nombre} ${userData.apellidos}`;
-    }
-    
-    if (welcomeUserNameElement) {
-        welcomeUserNameElement.textContent = userData.nombre;
-    }
-    
-    if (welcomeAdminNameElement) {
-        welcomeAdminNameElement.textContent = userData.nombre;
-    }
-}
-
-/**
- * Carga las estadísticas del dashboard
- */
-function loadStatistics() {
-    // Simulación de estadísticas
-    // En un entorno real, estos datos vendrían de la base de datos MongoDB
-    if (document.body.classList.contains('admin-dashboard')) {
-        // Estadísticas de administrador
-        const stats = {
-            clients: 0,
-            projects: 0,
-            appointments: 0,
-            messages: 0
-        };
-        
-        const clientsCountElement = document.getElementById('clients-count');
-        const projectsCountElement = document.getElementById('projects-count');
-        const appointmentsCountElement = document.getElementById('appointments-count');
-        const messagesCountElement = document.getElementById('messages-count');
-        
-        if (clientsCountElement) clientsCountElement.textContent = stats.clients;
-        if (projectsCountElement) projectsCountElement.textContent = stats.projects;
-        if (appointmentsCountElement) appointmentsCountElement.textContent = stats.appointments;
-        if (messagesCountElement) messagesCountElement.textContent = stats.messages;
-    } else {
-        // Estadísticas de cliente
-        const stats = {
-            projects: 3,
-            appointments: 2,
-            messages: 5
-        };
-        
-        const projectsCountElement = document.getElementById('projects-count');
-        const appointmentsCountElement = document.getElementById('appointments-count');
-        const messagesCountElement = document.getElementById('messages-count');
-        
-        if (projectsCountElement) projectsCountElement.textContent = stats.projects;
-        if (appointmentsCountElement) appointmentsCountElement.textContent = stats.appointments;
-        if (messagesCountElement) messagesCountElement.textContent = stats.messages;
-    }
-}
-
-/**
- * Inicializa los modales
- */
-function initModals() {
-    // Funcionalidad para abrir modales
-    const modalTriggers = document.querySelectorAll('[data-modal]');
-    
-    modalTriggers.forEach(trigger => {
-        trigger.addEventListener('click', function() {
-            const modalId = this.getAttribute('data-modal');
-            openModal(modalId);
-        });
-    });
-    
-    // Cerrar modales con el botón de cierre
-    const closeButtons = document.querySelectorAll('.close-btn');
-    
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            closeModal(modal);
-        });
-    });
-    
-    // Cerrar modales haciendo clic fuera del contenido
-    const modals = document.querySelectorAll('.modal');
-    
-    modals.forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal(this);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         });
     });
     
-    // Configurar botones específicos para abrir modales
-    setupModalTriggers();
+    // Validación de contraseñas en tiempo real
+    const newPasswordInput = document.getElementById('client-profile-new-password');
+    const confirmPasswordInput = document.getElementById('client-profile-confirm-password');
+    
+    if (newPasswordInput && confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', function() {
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && newPassword !== confirmPassword) {
+                this.setCustomValidity('Las contraseñas no coinciden');
+                this.style.borderColor = '#f44336';
+            } else {
+                this.setCustomValidity('');
+                this.style.borderColor = '';
+            }
+        });
+    }
+    
+    // Envío del formulario
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleClientProfileUpdate(e);
+        });
+    }
+    
+    console.log('✅ Eventos del modal configurados correctamente');
 }
 
 /**
- * Configura los disparadores de modales
+ * Maneja la actualización del perfil del cliente
  */
-function setupModalTriggers() {
-    // Botón para nuevo proyecto
-    const newProjectBtn = document.getElementById('new-project-btn');
-    if (newProjectBtn) {
-        newProjectBtn.addEventListener('click', function() {
-            openModal('new-project-modal');
-        });
+async function handleClientProfileUpdate(e) {
+    console.log('💾 Iniciando actualización del perfil de cliente...');
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('#save-client-profile-btn');
+    
+    if (!submitBtn) {
+        console.error('❌ Botón de envío no encontrado');
+        return;
     }
     
-    // Botón para nueva cita
-    const newAppointmentBtn = document.getElementById('new-appointment-btn');
-    if (newAppointmentBtn) {
-        newAppointmentBtn.addEventListener('click', function() {
-            openModal('new-appointment-modal');
-        });
-    }
+    const originalText = submitBtn.innerHTML;
     
-    
-    // Botón para nuevo mensaje
-    const newMessageBtn = document.getElementById('new-message-btn');
-    if (newMessageBtn) {
-        newMessageBtn.addEventListener('click', function() {
-            openModal('new-message-modal');
-        });
-    }
-    
-    // Botones para ver detalles de proyecto
-    const viewProjectBtns = document.querySelectorAll('.project-actions .view-btn');
-    viewProjectBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            openModal('project-details-modal');
-        });
-    });
-    
-    // Botones para ver detalles de cita
-    const viewAppointmentBtns = document.querySelectorAll('.action-buttons .view-btn');
-    viewAppointmentBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            openModal('appointment-details-modal');
-        });
-    });
-}
-
-/**
- * Abre un modal por su ID
- */
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    
-    if (modal) {
-        modal.classList.add('active');
+    try {
+        // Cambiar estado del botón
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         
-        // Bloquear el scroll del body
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-/**
- * Cierra un modal
- */
-function closeModal(modal) {
-    modal.classList.remove('active');
-    
-    // Restaurar el scroll del body
-    document.body.style.overflow = 'auto';
-}
-
-/**
- * Inicializa las pestañas en la vista de citas
- */
-function initViewTabs() {
-    const viewTabs = document.querySelectorAll('.view-tab');
-    const calendarView = document.querySelector('.calendar-view');
-    const listView = document.querySelector('.list-view');
-    
-    if (viewTabs.length > 0 && calendarView && listView) {
-        viewTabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Quitar clase activa de todas las pestañas
-                viewTabs.forEach(t => t.classList.remove('active'));
-                
-                // Agregar clase activa a la pestaña clickeada
-                this.classList.add('active');
-                
-                // Mostrar la vista correspondiente
-                const view = this.getAttribute('data-view');
-                
-                if (view === 'calendar') {
-                    calendarView.classList.add('active');
-                    listView.classList.remove('active');
-                } else if (view === 'list') {
-                    listView.classList.add('active');
-                    calendarView.classList.remove('active');
-                }
-            });
+        // Recopilar datos del formulario
+        const formData = {
+            nombre: document.getElementById('client-profile-name')?.value?.trim() || '',
+            apellidos: document.getElementById('client-profile-lastname')?.value?.trim() || '',
+            correo: document.getElementById('client-profile-email')?.value?.trim() || '',
+            telefono: document.getElementById('client-profile-phone')?.value?.trim() || '',
+            empresa: document.getElementById('client-profile-company')?.value?.trim() || '',
+            tipoDocumento: document.getElementById('client-profile-document-type')?.value || 'CC',
+            documento: document.getElementById('client-profile-document')?.value?.trim() || '',
+        };
+        
+        const currentPassword = document.getElementById('client-profile-current-password')?.value || '';
+        const newPassword = document.getElementById('client-profile-new-password')?.value || '';
+        const confirmPassword = document.getElementById('client-profile-confirm-password')?.value || '';
+        
+        console.log('📋 Datos del formulario recopilados:', {
+            ...formData,
+            hasCurrentPassword: !!currentPassword,
+            hasNewPassword: !!newPassword
         });
-    }
-}
-
-/**
- * Muestra un mensaje toast
- */
-function showToast(message, type = 'info') {
-    const toastContainer = document.getElementById('toast-container');
-    
-    if (!toastContainer) return;
-    
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    
-    let icon = '';
-    switch (type) {
-        case 'success':
-            icon = '<i class="fas fa-check-circle toast-icon"></i>';
-            break;
-        case 'error':
-            icon = '<i class="fas fa-times-circle toast-icon"></i>';
-            break;
-        case 'warning':
-            icon = '<i class="fas fa-exclamation-triangle toast-icon"></i>';
-            break;
-        default:
-            icon = '<i class="fas fa-info-circle toast-icon"></i>';
-    }
-    
-    toast.innerHTML = `
-        ${icon}
-        <div class="toast-message">${message}</div>
-        <button class="toast-close">&times;</button>
-    `;
-    
-    toastContainer.appendChild(toast);
-    
-    // Cerrar el toast al hacer clic en el botón de cierre
-    const closeBtn = toast.querySelector('.toast-close');
-    closeBtn.addEventListener('click', function() {
-        toast.classList.add('closing');
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    });
-    
-    // Cerrar automáticamente después de 5 segundos
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.classList.add('closing');
+        
+        // Validar campos obligatorios
+        if (!formData.nombre || !formData.apellidos || !formData.correo) {
+            throw new Error('Nombre, apellidos y correo son obligatorios');
+        }
+        
+        // Validar email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.correo)) {
+            throw new Error('Por favor, introduce un email válido');
+        }
+        
+        // Validar contraseñas si se proporcionaron
+        if (newPassword || confirmPassword || currentPassword) {
+            if (!currentPassword) {
+                throw new Error('Debes introducir tu contraseña actual para cambiarla');
+            }
+            if (!newPassword) {
+                throw new Error('Debes introducir una nueva contraseña');
+            }
+            if (newPassword !== confirmPassword) {
+                throw new Error('Las nuevas contraseñas no coinciden');
+            }
+            if (newPassword.length < 6) {
+                throw new Error('La nueva contraseña debe tener al menos 6 caracteres');
+            }
+            
+            // Agregar contraseñas a los datos
+            formData.currentPassword = currentPassword;
+            formData.password = newPassword;
+        }
+        
+        console.log('✅ Validación completada, enviando datos al servidor...');
+        
+        // Enviar datos al servidor
+        const token = localStorage.getItem('authToken');
+        const userId = window.currentUser._id;
+        
+        if (!token || !userId) {
+            throw new Error('Datos de autenticación no encontrados');
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        console.log('🌐 Enviando petición a:', `${API_BASE}/api/users/${userId}`);
+        
+        const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        console.log('📡 Respuesta del servidor:', response.status);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            console.error('❌ Error del servidor:', error);
+            throw new Error(error.message || 'Error al actualizar perfil');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Perfil actualizado exitosamente:', data);
+        
+        // Actualizar datos locales
+        const updatedUser = { ...window.currentUser, ...data.data };
+        localStorage.setItem('userData', JSON.stringify(updatedUser));
+        window.currentUser = updatedUser;
+        
+        // Actualizar interfaz
+        loadClientUserData(updatedUser);
+        
+        // Mostrar mensaje de éxito
+        showToast('Perfil actualizado correctamente', 'success');
+        
+        // Cerrar modal
+        const modal = document.getElementById('client-profile-modal');
+        if (modal) {
+            modal.classList.remove('active');
             setTimeout(() => {
-                toast.remove();
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                }
+                document.body.style.overflow = 'auto';
             }, 300);
         }
-    }, 5000);
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar perfil:', error);
+        showToast(error.message || 'Error al actualizar perfil', 'error');
+    } finally {
+        // Restaurar botón
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
 }
-/**
- * dashboard.js - Parte 2: Funciones específicas para el cliente
- * Funcionalidades para el dashboard de cliente de Crazy Studios
- */
 
 /**
- * Inicializa las funcionalidades específicas del dashboard de cliente
+ * Maneja el cierre de sesión del cliente
  */
-function initClientDashboard() {
+function handleClientLogout() {
+    console.log('🚪 Iniciando proceso de cierre de sesión...');
+    
+    // Mostrar confirmación
+    const confirmed = confirm('¿Estás seguro de que deseas cerrar sesión?');
+    
+    if (confirmed) {
+        console.log('✅ Cierre de sesión confirmado');
+        
+        try {
+            // Limpiar datos de autenticación
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            
+            // Limpiar datos adicionales si existen
+            localStorage.removeItem('clientProjects');
+            localStorage.removeItem('clientAppointments');
+            localStorage.removeItem('clientMessages');
+            
+            console.log('🧹 Datos locales limpiados');
+            
+            // Mostrar mensaje de despedida
+            showToast('Sesión cerrada correctamente. ¡Hasta pronto!', 'success');
+            
+            // Redirigir al login después de un breve delay
+            setTimeout(() => {
+                window.location.href = '../login.html';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ Error durante el cierre de sesión:', error);
+            // Aún así redirigir por seguridad
+            window.location.href = '../login.html';
+        }
+    } else {
+        console.log('❌ Cierre de sesión cancelado');
+    }
+}
+
+/**
+ * Configura las quick actions del dropdown
+ */
+function setupClientQuickActions() {
+    console.log('🔧 Configurando quick actions del cliente...');
+    
+    const quickActionsBtn = document.querySelector('.quick-actions .primary-btn');
+    const dropdown = document.querySelector('.quick-actions .dropdown');
+    
+    if (!quickActionsBtn || !dropdown) {
+        console.warn('⚠️ Elementos de quick actions no encontrados');
+        return;
+    }
+    
+    // Toggle del dropdown de quick actions
+    quickActionsBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('👆 Click en quick actions');
+        dropdown.classList.toggle('active');
+    });
+    
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!dropdown.contains(e.target)) {
+            dropdown.classList.remove('active');
+        }
+    });
+    
+    // Configurar acciones específicas
+    setupClientQuickActionButtons();
+    
+    console.log('✅ Quick actions configuradas');
+}
+
+/**
+ * Configura los botones específicos de quick actions del cliente
+ */
+function setupClientQuickActionButtons() {
+    console.log('🔧 Configurando botones de quick actions...');
+    
+    const requestProjectBtn = document.getElementById('request-project');
+    const scheduleAppointmentBtn = document.getElementById('schedule-appointment');
+    const sendMessageBtn = document.getElementById('send-message');
+    
+    if (requestProjectBtn) {
+        requestProjectBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('📋 Solicitar proyecto desde quick actions');
+            
+            const dropdown = document.querySelector('.quick-actions .dropdown');
+            if (dropdown) dropdown.classList.remove('active');
+            
+            // Ir a la sección de proyectos y abrir modal de solicitud
+            switchToClientSection('projects');
+            setTimeout(() => {
+                openRequestProjectModal();
+            }, 300);
+        });
+    }
+    
+    if (scheduleAppointmentBtn) {
+        scheduleAppointmentBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('📅 Agendar cita desde quick actions');
+            
+            const dropdown = document.querySelector('.quick-actions .dropdown');
+            if (dropdown) dropdown.classList.remove('active');
+            
+            // Ir a la sección de citas y abrir modal de agendamiento
+            switchToClientSection('appointments');
+            setTimeout(() => {
+                openScheduleAppointmentModal();
+            }, 300);
+        });
+    }
+    
+    if (sendMessageBtn) {
+        sendMessageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('💬 Enviar mensaje desde quick actions');
+            
+            const dropdown = document.querySelector('.quick-actions .dropdown');
+            if (dropdown) dropdown.classList.remove('active');
+            
+            // Ir a la sección de mensajes y abrir modal de nuevo mensaje
+            switchToClientSection('messages');
+            setTimeout(() => {
+                openSendMessageModal();
+            }, 300);
+        });
+    }
+    
+    console.log('✅ Botones de quick actions configurados');
+}
+
+/**
+ * Configura clicks en las tarjetas de estadísticas
+ */
+function setupClientStatisticsClicks() {
+    console.log('🔧 Configurando clicks en estadísticas...');
+    
+    // Click en tarjeta de proyectos
+    const projectsCard = document.querySelector('.stat-card .projects-icon')?.closest('.stat-card');
+    if (projectsCard) {
+        projectsCard.style.cursor = 'pointer';
+        projectsCard.title = 'Ver mis proyectos';
+        projectsCard.addEventListener('click', function() {
+            console.log('📋 Click en tarjeta de proyectos');
+            switchToClientSection('projects');
+        });
+    }
+    
+    // Click en tarjeta de citas
+    const appointmentsCard = document.querySelector('.stat-card .appointments-icon')?.closest('.stat-card');
+    if (appointmentsCard) {
+        appointmentsCard.style.cursor = 'pointer';
+        appointmentsCard.title = 'Ver mis citas';
+        appointmentsCard.addEventListener('click', function() {
+            console.log('📅 Click en tarjeta de citas');
+            switchToClientSection('appointments');
+        });
+    }
+    
+    // Click en tarjeta de mensajes
+    const messagesCard = document.querySelector('.stat-card .messages-icon')?.closest('.stat-card');
+    if (messagesCard) {
+        messagesCard.style.cursor = 'pointer';
+        messagesCard.title = 'Ver mis mensajes';
+        messagesCard.addEventListener('click', function() {
+            console.log('💬 Click en tarjeta de mensajes');
+            switchToClientSection('messages');
+        });
+    }
+    
+    console.log('✅ Clicks en estadísticas configurados');
+}
+
+/**
+ * Cambia a una sección específica del dashboard cliente
+ */
+function switchToClientSection(sectionId) {
+    console.log('🔄 Cambiando a sección:', sectionId);
+    
+    // Quitar clase activa de todos los links del sidebar
+    const sidebarLinks = document.querySelectorAll('.sidebar-menu li');
+    sidebarLinks.forEach(l => l.classList.remove('active'));
+    
+    // Agregar clase activa al link correspondiente
+    const targetLink = document.querySelector(`[data-section="${sectionId}"]`);
+    if (targetLink) {
+        targetLink.classList.add('active');
+    }
+    
+    // Ocultar todas las secciones
+    const dashboardSections = document.querySelectorAll('.dashboard-section');
+    dashboardSections.forEach(s => s.classList.remove('active'));
+    
+    // Mostrar la sección seleccionada
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        
+        // Inicializar módulo específico si es necesario
+        setTimeout(() => {
+            switch(sectionId) {
+                case 'overview':
+                    loadDashboardData();
+                    break;
+                case 'projects':
+                    loadClientProjects();
+                    break;
+                case 'appointments':
+                    loadClientAppointments();
+                    break;
+                case 'messages':
+                    loadClientMessages();
+                    break;
+                case 'billing':
+                    loadClientBilling();
+                    break;
+                default:
+                    console.log(`Sección ${sectionId} cargada`);
+            }
+        }, 150);
+    } else {
+        console.error(`❌ Sección ${sectionId} no encontrada`);
+    }
+}
+
+/**
+ * Configura la navegación entre secciones
+ */
+function setupClientSectionNavigation() {
+    console.log('🔧 Configurando navegación de secciones...');
+    
+    const sidebarLinks = document.querySelectorAll('.sidebar-menu li');
+    
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const section = this.getAttribute('data-section');
+            console.log('👆 Click en sidebar:', section);
+            
+            if (section) {
+                switchToClientSection(section);
+            }
+        });
+    });
+    
+    console.log('✅ Navegación de secciones configurada');
+}
+
+/**
+ * Carga estadísticas dinámicas del cliente
+ */
+async function loadClientDynamicStatistics() {
+    console.log('📊 Cargando estadísticas dinámicas del cliente...');
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('⚠️ No hay token de autenticación');
+            loadClientStaticStatistics();
+            return;
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        // Cargar estadísticas en paralelo
+        await Promise.all([
+            loadClientProjectsStatistics(API_BASE, token),
+            loadClientAppointmentsStatistics(API_BASE, token),
+            loadClientMessagesStatistics(API_BASE, token),
+            loadClientMembershipTime()
+        ]);
+        
+        console.log('✅ Estadísticas dinámicas cargadas');
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas dinámicas:', error);
+        loadClientStaticStatistics();
+    }
+}
+
+/**
+ * Carga estadísticas de proyectos del cliente
+ */
+async function loadClientProjectsStatistics(API_BASE, token) {
+    try {
+        console.log('📋 Cargando estadísticas de proyectos...');
+        
+        const response = await fetch(`${API_BASE}/api/projects?cliente=${window.currentUser._id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const projects = data.data || [];
+            
+            // Actualizar contador
+            const projectsCount = document.getElementById('client-projects-count');
+            if (projectsCount) {
+                projectsCount.textContent = projects.length;
+            }
+            
+            // Actualizar descripción con proyectos activos
+            const activeProjects = projects.filter(p => 
+                ['iniciado', 'desarrollo inicial', 'desarrollo medio', 'pago procesado'].includes(p.estado)
+            ).length;
+            
+            const projectsDescription = document.querySelector('.projects-icon')?.closest('.stat-card')?.querySelector('.stat-description');
+            if (projectsDescription) {
+                projectsDescription.textContent = `${activeProjects} en desarrollo`;
+            }
+            
+            console.log('✅ Estadísticas de proyectos cargadas:', {
+                total: projects.length,
+                activos: activeProjects
+            });
+            
+        } else {
+            console.warn('⚠️ No se pudieron cargar estadísticas de proyectos');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas de proyectos:', error);
+    }
+}
+
+/**
+ * Carga estadísticas de citas del cliente
+ */
+async function loadClientAppointmentsStatistics(API_BASE, token) {
+    try {
+        console.log('📅 Cargando estadísticas de citas...');
+        
+        const response = await fetch(`${API_BASE}/api/appointments?usuario=${window.currentUser._id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const appointments = data.data || [];
+            
+            // Filtrar citas futuras
+            const now = new Date();
+            const upcomingAppointments = appointments.filter(apt => {
+                const aptDate = new Date(apt.fecha);
+                return aptDate >= now && (apt.estado === 'pendiente' || apt.estado === 'confirmada');
+            });
+            
+            // Actualizar contador
+            const appointmentsCount = document.getElementById('client-appointments-count');
+            if (appointmentsCount) {
+                appointmentsCount.textContent = upcomingAppointments.length;
+            }
+            
+            const appointmentsDescription = document.querySelector('.appointments-icon')?.closest('.stat-card')?.querySelector('.stat-description');
+            if (appointmentsDescription) {
+                appointmentsDescription.textContent = upcomingAppointments.length > 0 ? 'próximas' : 'ninguna programada';
+            }
+            
+            console.log('✅ Estadísticas de citas cargadas:', {
+                total: appointments.length,
+                proximas: upcomingAppointments.length
+            });
+            
+        } else {
+            console.warn('⚠️ No se pudieron cargar estadísticas de citas');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas de citas:', error);
+    }
+}
+
+/**
+ * Carga estadísticas de mensajes del cliente
+ */
+async function loadClientMessagesStatistics(API_BASE, token) {
+    try {
+        console.log('💬 Cargando estadísticas de mensajes...');
+        
+        const response = await fetch(`${API_BASE}/api/messages/conversations`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const conversations = data.data || [];
+            
+            // Para clientes, debería haber solo una conversación
+            let unreadMessages = 0;
+            if (conversations.length > 0) {
+                unreadMessages = conversations[0].mensajesNoLeidos || 0;
+            }
+            
+            // Actualizar contador
+            const messagesCount = document.getElementById('client-messages-count');
+            if (messagesCount) {
+                messagesCount.textContent = unreadMessages;
+            }
+            
+            const messagesDescription = document.querySelector('.messages-icon')?.closest('.stat-card')?.querySelector('.stat-description');
+            if (messagesDescription) {
+                messagesDescription.textContent = unreadMessages > 0 ? 'sin leer' : 'al día';
+            }
+            
+            console.log('✅ Estadísticas de mensajes cargadas:', {
+                conversaciones: conversations.length,
+                noLeidos: unreadMessages
+            });
+            
+        } else {
+            console.warn('⚠️ No se pudieron cargar estadísticas de mensajes');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas de mensajes:', error);
+    }
+}
+
+/**
+ * Calcula el tiempo como cliente
+ */
+function loadClientMembershipTime() {
+    try {
+        console.log('⏰ Calculando tiempo como cliente...');
+        
+        const user = window.currentUser;
+        if (!user || !user.fechaRegistro) {
+            console.warn('⚠️ No hay fecha de registro disponible');
+            return;
+        }
+        
+        const registrationDate = new Date(user.fechaRegistro);
+        const now = new Date();
+        const diffTime = Math.abs(now - registrationDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // Actualizar contador
+        const memberTimeElement = document.getElementById('client-member-time');
+        if (memberTimeElement) {
+            memberTimeElement.textContent = diffDays;
+        }
+        
+        console.log('✅ Tiempo como cliente calculado:', diffDays, 'días');
+        
+    } catch (error) {
+        console.error('❌ Error al calcular tiempo como cliente:', error);
+    }
+}
+
+/**
+ * Carga estadísticas estáticas como fallback
+ */
+function loadClientStaticStatistics() {
+    console.log('📊 Cargando estadísticas estáticas...');
+    
+    const stats = {
+        projects: 0,
+        appointments: 0,
+        messages: 0,
+        memberTime: 0
+    };
+    
+    // Actualizar elementos
+    const projectsCount = document.getElementById('client-projects-count');
+    const appointmentsCount = document.getElementById('client-appointments-count');
+    const messagesCount = document.getElementById('client-messages-count');
+    const memberTimeCount = document.getElementById('client-member-time');
+    
+    if (projectsCount) projectsCount.textContent = stats.projects;
+    if (appointmentsCount) appointmentsCount.textContent = stats.appointments;
+    if (messagesCount) messagesCount.textContent = stats.messages;
+    if (memberTimeCount) memberTimeCount.textContent = stats.memberTime;
+}
+
+/**
+ * Carga datos del dashboard
+ */
+function loadDashboardData() {
+    console.log('📊 Cargando datos del dashboard...');
+    
     // Cargar proyectos recientes
     loadRecentProjects();
     
     // Cargar citas próximas
     loadUpcomingAppointments();
     
-    // Configurar eventos para botones de "Ver todos"
-    setupViewAllButtons();
-    
-    // Inicializar formularios de proyectos y citas
-    setupProjectForm();
-    setupAppointmentForm();
-    
-    // Inicializar funcionalidades de la sección de mensajes
-    initClientMessages();
-    
-    // Inicializar configuración del perfil
-    initProfileSettings();
+    // Cargar actividad reciente
+    loadRecentActivity();
 }
 
 /**
- * Carga los proyectos recientes del cliente
- * En un entorno real, estos datos vendrían de MongoDB
+ * Placeholder functions para cargar datos específicos
  */
 function loadRecentProjects() {
-    const recentProjectsList = document.getElementById('recent-projects-list');
-    const projectsLoading = document.getElementById('projects-loading');
-    
-    if (!recentProjectsList) return;
-    
-    // Simular carga de datos (en una aplicación real, aquí harías la petición a MongoDB)
-    setTimeout(function() {
-        // Ocultar el spinner de carga
-        if (projectsLoading) {
-            projectsLoading.style.display = 'none';
-        }
-        
-        // Datos de ejemplo (vendrían de MongoDB)
-        const projects = [
-            {
-                id: 1,
-                title: 'E-commerce Fashion Store',
-                category: 'Desarrollo Web',
-                status: 'desarrollo medio',
-                progressPercent: 65,
-                startDate: '15/03/2025',
-                endDate: '15/06/2025'
-            },
-            {
-                id: 2,
-                title: 'Campaña Digital Restaurante',
-                category: 'Marketing Digital',
-                status: 'iniciado',
-                progressPercent: 25,
-                startDate: '01/05/2025',
-                endDate: '01/07/2025'
-            }
-        ];
-        
-        // Generar HTML para cada proyecto
-        projects.forEach(project => {
-            const projectCard = document.createElement('div');
-            projectCard.className = 'project-card';
-            projectCard.innerHTML = `
-                <div class="project-header">
-                    <span class="project-category">${project.category}</span>
-                    <span class="project-status" data-status="${project.status}">${formatStatus(project.status)}</span>
-                </div>
-                <h3 class="project-title">${project.title}</h3>
-                <div class="project-progress">
-                    <div class="progress-bar">
-                        <div class="progress" style="width: ${project.progressPercent}%;"></div>
-                    </div>
-                    <span class="progress-text">${project.progressPercent}%</span>
-                </div>
-                <div class="project-dates">
-                    <p><i class="far fa-calendar-alt"></i> Inicio: ${project.startDate}</p>
-                    <p><i class="fas fa-calendar-check"></i> Estimado: ${project.endDate}</p>
-                </div>
-                <div class="project-actions">
-                    <button class="action-btn view-btn" title="Ver detalles" data-project-id="${project.id}"><i class="fas fa-eye"></i></button>
-                </div>
-            `;
-            
-            recentProjectsList.appendChild(projectCard);
-            
-            // Agregar evento para ver detalles
-            const viewBtn = projectCard.querySelector('.view-btn');
-            viewBtn.addEventListener('click', function() {
-                openModal('project-details-modal');
-                loadProjectDetails(project.id);
-            });
-        });
-    }, 1000);
+    console.log('📋 Cargando proyectos recientes...');
+    // Implementar carga de proyectos recientes
 }
 
-/**
- * Carga las citas próximas del cliente
- */
 function loadUpcomingAppointments() {
-    const upcomingAppointmentsList = document.getElementById('upcoming-appointments-list');
-    const appointmentsLoading = document.getElementById('appointments-loading');
-    
-    if (!upcomingAppointmentsList) return;
-    
-    // Simular carga de datos
-    setTimeout(function() {
-        // Ocultar el spinner de carga
-        if (appointmentsLoading) {
-            appointmentsLoading.style.display = 'none';
-        }
-        
-        // Datos de ejemplo
-        const appointments = [
-            {
-                id: 1,
-                type: 'seguimiento-proyecto',
-                date: '16/05/2025',
-                time: '10:00 AM',
-                status: 'confirmada',
-                project: 'E-commerce Fashion Store'
-            },
-            {
-                id: 2,
-                type: 'consulta-general',
-                date: '20/05/2025',
-                time: '11:30 AM',
-                status: 'pendiente',
-                project: null
-            }
-        ];
-        
-        // Generar HTML para cada cita
-        appointments.forEach(appointment => {
-            const appointmentCard = document.createElement('div');
-            appointmentCard.className = 'appointment-card';
-            appointmentCard.innerHTML = `
-                <div class="appointment-header">
-                    <span class="appointment-type" data-type="${appointment.type}">${formatAppointmentType(appointment.type)}</span>
-                    <span class="status-badge ${appointment.status}">${formatAppointmentStatus(appointment.status)}</span>
-                </div>
-                <div class="appointment-details">
-                    <p><i class="far fa-calendar-alt"></i> ${appointment.date} | ${appointment.time}</p>
-                    ${appointment.project ? `<p><i class="fas fa-project-diagram"></i> Proyecto: ${appointment.project}</p>` : ''}
-                </div>
-                <div class="appointment-actions">
-                    <button class="action-btn view-btn" title="Ver detalles" data-appointment-id="${appointment.id}"><i class="fas fa-eye"></i></button>
-                </div>
-            `;
-            
-            upcomingAppointmentsList.appendChild(appointmentCard);
-            
-            // Agregar evento para ver detalles
-            const viewBtn = appointmentCard.querySelector('.view-btn');
-            viewBtn.addEventListener('click', function() {
-                openModal('appointment-details-modal');
-                loadAppointmentDetails(appointment.id);
-            });
-        });
-    }, 1000);
+    console.log('📅 Cargando citas próximas...');
+    // Implementar carga de citas próximas
 }
 
-/**
- * Configura los botones de "Ver todos"
- */
-function setupViewAllButtons() {
-    const viewAllProjects = document.getElementById('view-all-projects');
-    const viewAllAppointments = document.getElementById('view-all-appointments');
-    
-    if (viewAllProjects) {
-        viewAllProjects.addEventListener('click', function(e) {
-            e.preventDefault();
-            const projectsTab = document.querySelector('.sidebar-menu li[data-section="projects"]');
-            if (projectsTab) projectsTab.click();
-        });
-    }
-    
-    if (viewAllAppointments) {
-        viewAllAppointments.addEventListener('click', function(e) {
-            e.preventDefault();
-            const appointmentsTab = document.querySelector('.sidebar-menu li[data-section="appointments"]');
-            if (appointmentsTab) appointmentsTab.click();
-        });
-    }
+function loadRecentActivity() {
+    console.log('📈 Cargando actividad reciente...');
+    // Implementar carga de actividad reciente
 }
 
-/**
- * Configura el formulario de nuevo proyecto
- */
-function setupProjectForm() {
-    const newProjectForm = document.getElementById('new-project-form');
-    
-    if (!newProjectForm) return;
-    
-    newProjectForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Recopilar datos del formulario
-        const projectData = {
-            name: document.getElementById('project-name').value,
-            description: document.getElementById('project-description').value,
-            category: document.getElementById('project-category').value,
-            files: document.getElementById('project-files').files
-        };
-        
-        // En una aplicación real, aquí enviarías los datos a MongoDB
-        console.log('Datos del proyecto a guardar:', projectData);
-        
-        // Simulación de éxito
-        showToast('Proyecto solicitado con éxito', 'success');
-        
-        // Cerrar el modal y resetear el formulario
-        closeModal(this.closest('.modal'));
-        this.reset();
-    });
-    
-    // Manejar el botón de cancelar
-    const closeProjectModal = document.getElementById('close-project-modal');
-    if (closeProjectModal) {
-        closeProjectModal.addEventListener('click', function() {
-            closeModal(this.closest('.modal'));
-            newProjectForm.reset();
-        });
-    }
-}
-
-/**
- * Configura el formulario de nueva cita
- */
-function setupAppointmentForm() {
-    const newAppointmentForm = document.getElementById('new-appointment-form');
-    
-    if (!newAppointmentForm) return;
-    
-    // Manejar cambio en el tipo de cita para mostrar/ocultar selector de proyecto
-    const appointmentType = document.getElementById('appointment-type');
-    const projectContainer = document.getElementById('project-select-container');
-    
-    if (appointmentType && projectContainer) {
-        appointmentType.addEventListener('change', function() {
-            projectContainer.style.display = this.value === 'seguimiento-proyecto' ? 'block' : 'none';
-        });
-    }
-    
-    // Cargar proyectos del cliente para el selector
-    loadClientProjects();
-    
-    // Configurar fechas disponibles
-    setupAppointmentDate();
-    
-    // Manejar envío del formulario
-    newAppointmentForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Recopilar datos del formulario
-        const appointmentData = {
-            type: appointmentType.value,
-            project: document.getElementById('appointment-project')?.value || null,
-            date: document.getElementById('appointment-date').value,
-            time: document.getElementById('appointment-time').value,
-            notes: document.getElementById('appointment-notes').value
-        };
-        
-        // En una aplicación real, aquí enviarías los datos a MongoDB
-        console.log('Datos de la cita a guardar:', appointmentData);
-        
-        // Simulación de éxito
-        showToast('Cita agendada con éxito', 'success');
-        
-        // Cerrar el modal y resetear el formulario
-        closeModal(this.closest('.modal'));
-        this.reset();
-        if (projectContainer) projectContainer.style.display = 'none';
-    });
-    
-    // Manejar el botón de cancelar
-    const closeAppointmentModal = document.getElementById('close-appointment-modal');
-    if (closeAppointmentModal) {
-        closeAppointmentModal.addEventListener('click', function() {
-            closeModal(this.closest('.modal'));
-            newAppointmentForm.reset();
-            if (projectContainer) projectContainer.style.display = 'none';
-        });
-    }
-}
-
-/**
- * Carga los proyectos del cliente para el selector de citas
- */
 function loadClientProjects() {
-    const projectSelect = document.getElementById('appointment-project');
-    
-    if (!projectSelect) return;
-    
-    // Simulación de proyectos (en una aplicación real, estos vendrían de MongoDB)
-    const projects = [
-        { id: 1, title: 'E-commerce Fashion Store' },
-        { id: 2, title: 'Campaña Digital Restaurante' }
-    ];
-    
-    // Añadir opciones al selector
-    projects.forEach(project => {
-        const option = document.createElement('option');
-        option.value = project.id;
-        option.textContent = project.title;
-        projectSelect.appendChild(option);
-    });
+    console.log('📋 Cargando proyectos del cliente...');
+    // Implementar carga de proyectos del cliente
+}
+
+function loadClientAppointments() {
+    console.log('📅 Cargando citas del cliente...');
+    // Implementar carga de citas del cliente
+}
+
+function loadClientMessages() {
+    console.log('💬 Cargando mensajes del cliente...');
+    // Implementar carga de mensajes del cliente
+}
+
+function loadClientBilling() {
+    console.log('💰 Cargando facturación del cliente...');
+    // Implementar carga de datos de facturación
 }
 
 /**
- * Configura el campo de fecha para citas
+ * Placeholder functions para modals
  */
-function setupAppointmentDate() {
-    const dateInput = document.getElementById('appointment-date');
-    
-    if (!dateInput) return;
-    
-    // Establecer fecha mínima (mañana)
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    dateInput.min = formatDateForInput(tomorrow);
-    
-    // Establecer fecha máxima (1 mes adelante)
-    const maxDate = new Date();
-    maxDate.setMonth(maxDate.getMonth() + 1);
-    dateInput.max = formatDateForInput(maxDate);
-    
-    // Establecer valor predeterminado (mañana)
-    dateInput.value = formatDateForInput(tomorrow);
+function openRequestProjectModal() {
+    console.log('📋 Abriendo modal de solicitud de proyecto...');
+    showToast('Funcionalidad de solicitud de proyecto próximamente', 'info');
+}
+
+function openScheduleAppointmentModal() {
+    console.log('📅 Abriendo modal de agendar cita...');
+    showToast('Funcionalidad de agendar cita próximamente', 'info');
+}
+
+function openSendMessageModal() {
+    console.log('💬 Abriendo modal de enviar mensaje...');
+    showToast('Funcionalidad de mensajes próximamente', 'info');
 }
 
 /**
- * Inicializa las funcionalidades de mensajes para el cliente
+ * Inicializa el dashboard del cliente
  */
-function initClientMessages() {
-    const messagesSection = document.getElementById('messages');
-    if (!messagesSection) return;
+function initClientDashboard() {
+    console.log('🚀 Dashboard de cliente inicializado');
     
-    // Cargar lista de mensajes
-    loadClientMessagesList();
-    
-    // Manejar selección de mensaje
-    setupMessageSelection();
-    
-    // Manejar respuesta de mensajes
-    setupMessageReply();
+    // Configurar botones adicionales
+    setupAdditionalButtons();
 }
 
 /**
- * Inicializa la sección de configuración de perfil
+ * Configura botones adicionales del dashboard
  */
-function initProfileSettings() {
-    const settingsSection = document.getElementById('settings');
-    if (!settingsSection) return;
-    
-    // Cargar datos del perfil
-    loadProfileData();
-    
-    // Configurar formulario de perfil
-    setupProfileForm();
-    
-    // Configurar formulario de cambio de contraseña
-    setupPasswordForm();
-    
-    // Configurar preferencias de notificaciones
-    setupNotificationPreferences();
-}
-
-/**
- * Formatea un estado de proyecto para mostrar al usuario
- */
-function formatStatus(status) {
-    const statusMap = {
-        'cotizacion': 'Cotización',
-        'pago procesado': 'Pago Procesado',
-        'iniciado': 'Iniciado',
-        'desarrollo inicial': 'Desarrollo Inicial',
-        'desarrollo medio': 'Desarrollo Medio',
-        'finalizado': 'Finalizado'
-    };
-    
-    return statusMap[status] || status;
-}
-
-/**
- * Formatea un tipo de cita para mostrar al usuario
- */
-function formatAppointmentType(type) {
-    const typeMap = {
-        'consulta-general': 'Consulta General',
-        'plan-personalizado': 'Plan Personalizado',
-        'seguimiento-proyecto': 'Seguimiento de Proyecto'
-    };
-    
-    return typeMap[type] || type;
-}
-
-/**
- * Formatea un estado de cita para mostrar al usuario
- */
-function formatAppointmentStatus(status) {
-    const statusMap = {
-        'pendiente': 'Pendiente',
-        'confirmada': 'Confirmada',
-        'cancelada': 'Cancelada',
-        'completada': 'Completada'
-    };
-    
-    return statusMap[status] || status;
-}
-
-/**
- * Formatea una fecha para usar en inputs type="date"
- */
-function formatDateForInput(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
-}
-
-/**
- * dashboard.js - Parte 3: Funciones específicas para el administrador
- * Funcionalidades para el dashboard de administrador de Crazy Studios
- */
-
-/**
- * Inicializa las funcionalidades específicas del dashboard de administrador
- */
-function initAdminDashboard() {
-    // Inicializar las secciones principales
-    initClientsSection();
-    initProjectsSection();
-    initAppointmentsSection();
-    initMessagesSection();
-    initReportsSection();
-    initSettingsSection();
-    
-    // Inicializar gráficos del panel general
-    initDashboardCharts();
-    
-    // Configurar dropdown de crear nuevo
-    setupCreateNewDropdown();
-}
-
-/**
- * Configura el dropdown para crear elementos nuevos
- */
-function setupCreateNewDropdown() {
-    const createClientBtn = document.getElementById('create-client');
-    const createProjectBtn = document.getElementById('create-project');
-    const createAppointmentBtn = document.getElementById('create-appointment');
-    
-    if (createClientBtn) {
-        createClientBtn.addEventListener('click', function(e) {
+function setupAdditionalButtons() {
+    // Botón de solicitar proyecto
+    const requestProjectBtn = document.getElementById('request-new-project-btn');
+    if (requestProjectBtn) {
+        requestProjectBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            openModal('add-client-modal');
+            openRequestProjectModal();
         });
     }
     
-    if (createProjectBtn) {
-        createProjectBtn.addEventListener('click', function(e) {
+    // Botón de agendar cita
+    const scheduleAppointmentBtn = document.getElementById('schedule-new-appointment-btn');
+    if (scheduleAppointmentBtn) {
+        scheduleAppointmentBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            openModal('add-project-modal');
+            openScheduleAppointmentModal();
         });
     }
     
-    if (createAppointmentBtn) {
-        createAppointmentBtn.addEventListener('click', function(e) {
+    // Botón de nuevo mensaje
+    const newMessageBtn = document.getElementById('client-new-message-btn');
+    if (newMessageBtn) {
+        newMessageBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            openModal('add-appointment-modal');
+            openSendMessageModal();
+        });
+    }
+    
+    // Botón de iniciar conversación
+    const startConversationBtn = document.getElementById('start-client-conversation-btn');
+    if (startConversationBtn) {
+        startConversationBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openSendMessageModal();
+        });
+    }
+    
+    // Botón de refrescar mensajes
+    const refreshMessagesBtn = document.getElementById('client-refresh-messages-btn');
+    if (refreshMessagesBtn) {
+        refreshMessagesBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadClientMessages();
+            showToast('Mensajes actualizados', 'success');
         });
     }
 }
 
 /**
- * Inicializa los gráficos del panel de administrador
+ * Muestra la fecha actual
  */
-function initDashboardCharts() {
-    // En una aplicación real, aquí cargarías los datos desde MongoDB
-    // y utilizarías una biblioteca de gráficos como Chart.js
-    
-    console.log('Inicializando gráficos del dashboard');
-    
-    // Ejemplo de datos para los gráficos
-    const projectStatusData = {
-        labels: ['Cotización', 'Pago Procesado', 'Iniciado', 'Desarrollo Inicial', 'Desarrollo Medio', 'Finalizado'],
-        values: [5, 3, 8, 12, 10, 5]
-    };
-    
-    const clientRegistrationData = {
-        labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo'],
-        values: [15, 25, 30, 28, 24]
-    };
-    
-    // Simular carga de gráficos
-    renderDummyCharts(projectStatusData, clientRegistrationData);
+function displayCurrentDate() {
+    const dateElement = document.getElementById('current-date');
+    if (dateElement) {
+        const now = new Date();
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        dateElement.textContent = now.toLocaleDateString('es-ES', options);
+    }
 }
 
 /**
- * Renderiza gráficos de ejemplo en el dashboard
- * Nota: En una aplicación real, se usaría Chart.js u otra biblioteca
+ * Muestra mensajes toast
  */
-function renderDummyCharts(projectStatusData, clientRegistrationData) {
-    const projectsChart = document.getElementById('projects-status-chart');
-    const clientsChart = document.getElementById('clients-register-chart');
+function showToast(message, type = 'info') {
+    console.log(`🍞 Toast ${type}:`, message);
     
-    if (projectsChart) {
-        projectsChart.innerHTML = `
-            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <p style="text-align: center; margin: 0 0 10px;">Gráfico de Proyectos por Estado</p>
-                <div style="display: flex; width: 100%; height: 150px; align-items: flex-end; justify-content: space-around;">
-                    ${projectStatusData.labels.map((label, index) => `
-                        <div style="display: flex; flex-direction: column; align-items: center; width: ${100 / projectStatusData.labels.length}%;">
-                            <div style="background: linear-gradient(to top, var(--primary-color), var(--secondary-color)); width: 30px; height: ${projectStatusData.values[index] * 5}px; border-radius: 3px 3px 0 0;"></div>
-                            <span style="font-size: 0.7rem; margin-top: 5px; text-align: center;">${label}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
+    // Crear contenedor de toast si no existe
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container';
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            pointer-events: none;
         `;
+        document.body.appendChild(toastContainer);
     }
     
-    if (clientsChart) {
-        clientsChart.innerHTML = `
-            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <p style="text-align: center; margin: 0 0 10px;">Registro de Clientes por Mes</p>
-                <div style="display: flex; width: 100%; height: 150px; align-items: flex-end; justify-content: space-around;">
-                    ${clientRegistrationData.labels.map((label, index) => `
-                        <div style="display: flex; flex-direction: column; align-items: center; width: ${100 / clientRegistrationData.labels.length}%;">
-                            <div style="background: linear-gradient(to top, var(--secondary-color), var(--primary-color)); width: 30px; height: ${clientRegistrationData.values[index] * 3}px; border-radius: 3px 3px 0 0;"></div>
-                            <span style="font-size: 0.7rem; margin-top: 5px; text-align: center;">${label}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
-}
-
-/**
- * Inicializa la sección de clientes
- */
-function initClientsSection() {
-    const clientsSection = document.getElementById('clients');
-    if (!clientsSection) return;
+    // Crear toast
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+        background: ${getToastColor(type)};
+        color: white;
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideInRight 0.3s ease;
+        max-width: 350px;
+        min-width: 280px;
+        font-size: 14px;
+        line-height: 1.4;
+        pointer-events: all;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    `;
     
-    // Cargar tabla de clientes
-    loadClientsTable();
+    const icon = getToastIcon(type);
+    toast.innerHTML = `
+        <i class="fas fa-${icon}" style="font-size: 16px; flex-shrink: 0;"></i>
+        <span style="flex: 1;">${message}</span>
+        <button style="background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s;">
+            <i class="fas fa-times" style="font-size: 12px;"></i>
+        </button>
+    `;
     
-    // Configurar filtros de clientes
-    setupClientFilters();
+    // Agregar barra de progreso
+    const progressBar = document.createElement('div');
+    progressBar.style.cssText = `
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: rgba(255,255,255,0.3);
+        width: 100%;
+        animation: progressShrink 4s linear;
+    `;
+    toast.appendChild(progressBar);
     
-    // Configurar formulario para añadir cliente
-    setupAddClientForm();
+    toastContainer.appendChild(toast);
     
-    // Configurar botones de acción de clientes
-    setupClientActions();
-}
-
-/**
- * Carga la tabla de clientes
- */
-function loadClientsTable() {
-    const clientsTable = document.querySelector('#clients-table tbody');
-    if (!clientsTable) return;
-    
-    // Simulación de carga (en una aplicación real, se obtendría de MongoDB)
-    const clients = [
-        {
-            id: 1,
-            nombre: 'Juan Pérez',
-            email: 'juan.perez@email.com',
-            telefono: '+57 300 123 4567',
-            empresa: 'Empresa ABC',
-            documento: 'CC: 1234567890',
-            proyectos: 3,
-            fechaRegistro: '10/04/2025'
-        },
-        {
-            id: 2,
-            nombre: 'María López',
-            email: 'maria.lopez@email.com',
-            telefono: '+57 310 987 6543',
-            empresa: 'Empresa XYZ',
-            documento: 'CC: 0987654321',
-            proyectos: 2,
-            fechaRegistro: '15/04/2025'
-        },
-        {
-            id: 3,
-            nombre: 'Carlos Rodríguez',
-            email: 'carlos.rodriguez@email.com',
-            telefono: '+57 320 456 7890',
-            empresa: 'Tech Innovate',
-            documento: 'CC: 5678901234',
-            proyectos: 1,
-            fechaRegistro: '05/05/2025'
-        },
-        {
-            id: 4,
-            nombre: 'Ana González',
-            email: 'ana.gonzalez@email.com',
-            telefono: '+57 315 789 0123',
-            empresa: 'Boutique La Moda',
-            documento: 'CC: 9012345678',
-            proyectos: 0,
-            fechaRegistro: '12/05/2025'
-        }
-    ];
-    
-    // Generar filas de la tabla
-    clientsTable.innerHTML = clients.map(client => `
-        <tr>
-            <td>${client.nombre}</td>
-            <td>${client.email}</td>
-            <td>${client.telefono}</td>
-            <td>${client.empresa}</td>
-            <td>${client.documento}</td>
-            <td><span class="badge">${client.proyectos}</span></td>
-            <td>${client.fechaRegistro}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" title="Ver detalles" data-client-id="${client.id}"><i class="fas fa-eye"></i></button>
-                    <button class="action-btn edit-btn" title="Editar" data-client-id="${client.id}"><i class="fas fa-edit"></i></button>
-                    <button class="action-btn delete-btn" title="Eliminar" data-client-id="${client.id}"><i class="fas fa-trash"></i></button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-/**
- * Configura los filtros para la tabla de clientes
- */
-function setupClientFilters() {
-    const clientSearch = document.getElementById('client-search');
-    const clientSearchBtn = document.getElementById('client-search-btn');
-    const clientFilterProjects = document.getElementById('client-filter-projects');
-    const clientFilterDate = document.getElementById('client-filter-date');
-    
-    if (clientSearchBtn) {
-        clientSearchBtn.addEventListener('click', function() {
-            filterClients();
-        });
-    }
-    
-    if (clientSearch) {
-        clientSearch.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                filterClients();
-            }
-        });
-    }
-    
-    if (clientFilterProjects) {
-        clientFilterProjects.addEventListener('change', filterClients);
-    }
-    
-    if (clientFilterDate) {
-        clientFilterDate.addEventListener('change', filterClients);
-    }
-    
-    function filterClients() {
-        // En una aplicación real, aquí filtrarías los clientes según los criterios
-        console.log('Filtrando clientes...');
-        
-        const searchTerm = clientSearch ? clientSearch.value : '';
-        const projectsFilter = clientFilterProjects ? clientFilterProjects.value : 'all';
-        const dateFilter = clientFilterDate ? clientFilterDate.value : 'all';
-        
-        console.log({
-            searchTerm,
-            projectsFilter,
-            dateFilter
-        });
-        
-        // Simular refresco de datos
-        loadClientsTable();
-        
-        // Mostrar toast
-        showToast('Filtros aplicados', 'info');
-    }
-}
-
-/**
- * Configura el formulario para añadir cliente
- */
-function setupAddClientForm() {
-    const addClientForm = document.getElementById('add-client-form');
-    if (!addClientForm) return;
-    
-    addClientForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Simulación de envío de datos (en una aplicación real, se enviaría a MongoDB)
-        console.log('Añadiendo nuevo cliente...');
-        
-        // Mostrar toast de éxito
-        showToast('Cliente añadido correctamente', 'success');
-        
-        // Cerrar modal y resetear formulario
-        closeModal(this.closest('.modal'));
-        this.reset();
-        
-        // Recargar tabla de clientes
-        loadClientsTable();
+    // Configurar cierre manual
+    const closeBtn = toast.querySelector('button');
+    closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        removeToast(toast);
     });
-}
-
-/**
- * Configura las acciones para la tabla de clientes
- */
-function setupClientActions() {
-    // Configurar después de cargar la tabla
-    document.addEventListener('click', function(e) {
-        const target = e.target.closest('.action-btn');
-        
-        if (!target) return;
-        
-        const clientId = target.getAttribute('data-client-id');
-        
-        if (target.classList.contains('view-btn')) {
-            // Ver detalles del cliente
-            openModal('client-details-modal');
-            // En una aplicación real, cargarías los datos del cliente
-            console.log('Ver cliente:', clientId);
-            
-        } else if (target.classList.contains('edit-btn')) {
-            // Editar cliente
-            console.log('Editar cliente:', clientId);
-            
-        } else if (target.classList.contains('delete-btn')) {
-            // Eliminar cliente
-            if (confirm('¿Está seguro de que desea eliminar este cliente?')) {
-                console.log('Eliminar cliente:', clientId);
-                showToast('Cliente eliminado correctamente', 'success');
-                loadClientsTable();
-            }
-        }
+    
+    // Cerrar al hacer click en el toast
+    toast.addEventListener('click', function() {
+        removeToast(toast);
     });
+    
+    // Eliminar automáticamente después de 4 segundos
+    setTimeout(() => {
+        removeToast(toast);
+    }, 4000);
 }
 
 /**
- * Inicializa la sección de proyectos
+ * Obtiene el color del toast según el tipo
  */
-function initProjectsSection() {
-    const projectsSection = document.getElementById('projects');
-    if (!projectsSection) return;
-    
-    // Cargar tarjetas de proyectos
-    loadProjectsCards();
-    
-    // Configurar filtros de proyectos
-    setupProjectFilters();
-    
-    // Configurar formulario para añadir proyecto
-    setupAddProjectForm();
-}
-
-/**
- * Carga las tarjetas de proyectos
- */
-function loadProjectsCards() {
-    const projectCards = document.querySelector('.project-cards');
-    if (!projectCards) return;
-    
-    // Simulación de carga (en una aplicación real, se obtendría de MongoDB)
-    const projects = [
-        {
-            id: 1,
-            title: 'E-commerce Fashion Store',
-            category: 'Desarrollo Web',
-            client: 'Juan Pérez - Empresa ABC',
-            status: 'desarrollo medio',
-            progress: 65,
-            startDate: '15/03/2025',
-            endDate: '15/06/2025'
-        },
-        {
-            id: 2,
-            title: 'Campaña Digital Restaurante Gourmet',
-            category: 'Marketing Digital',
-            client: 'María López - Empresa XYZ',
-            status: 'iniciado',
-            progress: 25,
-            startDate: '01/05/2025',
-            endDate: '01/07/2025'
-        },
-        {
-            id: 3,
-            title: 'Rebranding Completo Startup',
-            category: 'Diseño Gráfico',
-            client: 'Carlos Rodríguez - Tech Innovate',
-            status: 'cotizacion',
-            progress: 5,
-            startDate: '10/05/2025',
-            endDate: 'Por definir'
-        },
-        {
-            id: 4,
-            title: 'Optimización SEO Clínica Dental',
-            category: 'SEO',
-            client: 'Alejandro Herrera - Dental Care',
-            status: 'finalizado',
-            progress: 100,
-            startDate: '10/01/2025',
-            endDate: '20/04/2025'
-        },
-        {
-            id: 5,
-            title: 'Gestión Instagram Boutique Moda',
-            category: 'Redes Sociales',
-            client: 'Ana González - Boutique La Moda',
-            status: 'desarrollo inicial',
-            progress: 15,
-            startDate: '05/05/2025',
-            endDate: '05/07/2025'
-        },
-        {
-            id: 6,
-            title: 'Portal Inmobiliario Premium',
-            category: 'Desarrollo Web',
-            client: 'Roberto Sánchez - Inmobiliaria RS',
-            status: 'pago procesado',
-            progress: 10,
-            startDate: '12/05/2025',
-            endDate: '12/08/2025'
-        }
-    ];
-    
-    // Generar tarjetas
-    projectCards.innerHTML = projects.map(project => `
-        <div class="project-card">
-            <div class="project-header">
-                <span class="project-category">${project.category}</span>
-                <span class="project-status" data-status="${project.status}">${formatStatus(project.status)}</span>
-            </div>
-            <h3 class="project-title">${project.title}</h3>
-            <p class="project-client"><i class="fas fa-user"></i> ${project.client}</p>
-            <div class="project-progress">
-                <div class="progress-bar">
-                    <div class="progress" style="width: ${project.progress}%;"></div>
-                </div>
-                <span class="progress-text">${project.progress}%</span>
-            </div>
-            <div class="project-dates">
-                <p><i class="far fa-calendar-alt"></i> Inicio: ${project.startDate}</p>
-                <p><i class="fas fa-calendar-check"></i> Estimado: ${project.endDate}</p>
-            </div>
-            <div class="project-actions">
-                <button class="action-btn view-btn" title="Ver detalles" data-project-id="${project.id}"><i class="fas fa-eye"></i></button>
-                <button class="action-btn edit-btn" title="Editar" data-project-id="${project.id}"><i class="fas fa-edit"></i></button>
-                <button class="action-btn delete-btn" title="Eliminar" data-project-id="${project.id}"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-    
-    // Configurar acciones de los proyectos
-    setupProjectActions();
-}
-
-/**
- * Configura los filtros de proyectos
- */
-function setupProjectFilters() {
-    const projectSearch = document.getElementById('project-search');
-    const projectSearchBtn = document.getElementById('project-search-btn');
-    const projectFilterStatus = document.getElementById('project-filter-status');
-    const projectFilterCategory = document.getElementById('project-filter-category');
-    const projectFilterDate = document.getElementById('project-filter-date');
-    
-    // Función de filtrado
-    function filterProjects() {
-        // En una aplicación real, aquí filtrarías los proyectos
-        console.log('Filtrando proyectos...');
-        
-        // Simular refresco de datos
-        loadProjectsCards();
-        
-        // Mostrar toast
-        showToast('Filtros aplicados', 'info');
+function getToastColor(type) {
+    switch(type) {
+        case 'success': return 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+        case 'error': return 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
+        case 'warning': return 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)';
+        case 'info': return 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)';
+        default: return 'linear-gradient(135deg, #607D8B 0%, #455A64 100%)';
     }
-    
-    // Configurar eventos de filtrado
-    if (projectSearchBtn) {
-        projectSearchBtn.addEventListener('click', filterProjects);
+}
+
+/**
+ * Obtiene el icono del toast según el tipo
+ */
+function getToastIcon(type) {
+    switch(type) {
+        case 'success': return 'check-circle';
+        case 'error': return 'times-circle';
+        case 'warning': return 'exclamation-triangle';
+        case 'info': return 'info-circle';
+        default: return 'bell';
     }
-    
-    if (projectSearch) {
-        projectSearch.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                filterProjects();
+}
+
+/**
+ * Remueve un toast de la pantalla
+ */
+function removeToast(toast) {
+    if (toast && toast.parentNode) {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            if (toast && toast.parentNode) {
+                toast.remove();
             }
-        });
+        }, 300);
+    }
+}
+
+// Exponer funciones globalmente para uso en otros módulos
+window.showToast = showToast;
+window.switchToClientSection = switchToClientSection;
+window.loadClientDynamicStatistics = loadClientDynamicStatistics;
+
+// CSS adicional para el dashboard cliente
+const clientDashboardStyles = document.createElement('style');
+clientDashboardStyles.textContent = `
+    /* Estilos específicos para el dashboard cliente */
+    
+    /* Animaciones para toast */
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
     
-    if (projectFilterStatus) {
-        projectFilterStatus.addEventListener('change', filterProjects);
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
     }
     
-    if (projectFilterCategory) {
-        projectFilterCategory.addEventListener('change', filterProjects);
+    @keyframes progressShrink {
+        from { width: 100%; }
+        to { width: 0%; }
     }
     
-    if (projectFilterDate) {
-        projectFilterDate.addEventListener('change', filterProjects);
-    }
-}
-
-/**
- * Configura las acciones de los proyectos
- */
-function setupProjectActions() {
-    document.addEventListener('click', function(e) {
-        const target = e.target.closest('.project-actions .action-btn');
-        
-        if (!target) return;
-        
-        const projectId = target.getAttribute('data-project-id');
-        
-        if (target.classList.contains('view-btn')) {
-            // Ver detalles del proyecto
-            openModal('project-details-modal');
-            console.log('Ver proyecto:', projectId);
-            
-        } else if (target.classList.contains('edit-btn')) {
-            // Editar proyecto
-            console.log('Editar proyecto:', projectId);
-            
-        } else if (target.classList.contains('delete-btn')) {
-            // Eliminar proyecto
-            if (confirm('¿Está seguro de que desea eliminar este proyecto?')) {
-                console.log('Eliminar proyecto:', projectId);
-                showToast('Proyecto eliminado correctamente', 'success');
-                loadProjectsCards();
-            }
-        }
-    });
-}
-
-/**
- * Inicializa la sección de citas
- */
-function initAppointmentsSection() {
-    const appointmentsSection = document.getElementById('appointments');
-    if (!appointmentsSection) return;
-    
-    // Configurar pestañas de vista
-    setupAppointmentViewTabs();
-    
-    // Inicializar calendario
-    initCalendar();
-    
-    // Cargar tabla de citas
-    loadAppointmentsTable();
-    
-    // Configurar filtros de citas
-    setupAppointmentFilters();
-}
-
-/**
- * Configurar pestañas de vista para citas
- */
-function setupAppointmentViewTabs() {
-    const viewTabs = document.querySelectorAll('.view-tab');
-    const calendarView = document.querySelector('.calendar-view');
-    const listView = document.querySelector('.list-view');
-    
-    viewTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            viewTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            const view = this.getAttribute('data-view');
-            
-            if (view === 'calendar') {
-                calendarView.classList.add('active');
-                listView.classList.remove('active');
-            } else {
-                listView.classList.add('active');
-                calendarView.classList.remove('active');
-            }
-        });
-    });
-}
-
-/**
- * Inicializar calendario
- */
-function initCalendar() {
-    // En una aplicación real, aquí implementarías la lógica del calendario
-    console.log('Inicializando calendario...');
-    
-    // Configurar navegación del calendario
-    const prevMonthBtn = document.getElementById('prev-month-btn');
-    const nextMonthBtn = document.getElementById('next-month-btn');
-    const calendarTitle = document.getElementById('calendar-title');
-    
-    if (prevMonthBtn && nextMonthBtn && calendarTitle) {
-        // Variables del calendario
-        let currentMonth = new Date().getMonth();
-        let currentYear = new Date().getFullYear();
-        
-        // Actualizar título
-        updateCalendarTitle();
-        
-        // Event listeners
-        prevMonthBtn.addEventListener('click', function() {
-            currentMonth--;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
-            updateCalendarTitle();
-        });
-        
-        nextMonthBtn.addEventListener('click', function() {
-            currentMonth++;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
-            updateCalendarTitle();
-        });
-        
-        function updateCalendarTitle() {
-            const date = new Date(currentYear, currentMonth, 1);
-            const options = { month: 'long', year: 'numeric' };
-            calendarTitle.textContent = date.toLocaleDateString('es-ES', options);
-        }
-    }
-}
-
-/**
- * Cargar tabla de citas
- */
-function loadAppointmentsTable() {
-    const appointmentsTable = document.querySelector('#appointments-table tbody');
-    if (!appointmentsTable) return;
-    
-    // Simulación de carga
-    const appointments = [
-        {
-            id: 1,
-            client: 'Juan Pérez',
-            type: 'Seguimiento de Proyecto',
-            date: '16/05/2025',
-            time: '10:00 AM',
-            status: 'confirmada',
-            project: 'E-commerce Fashion Store'
-        },
-        {
-            id: 2,
-            client: 'María López',
-            type: 'Consulta General',
-            date: '17/05/2025',
-            time: '2:30 PM',
-            status: 'pendiente',
-            project: '-'
-        },
-        {
-            id: 3,
-            client: 'Carlos Rodríguez',
-            type: 'Plan Personalizado',
-            date: '15/05/2025',
-            time: '11:00 AM',
-            status: 'completada',
-            project: '-'
-        },
-        {
-            id: 4,
-            client: 'Ana González',
-            type: 'Consulta General',
-            date: '15/05/2025',
-            time: '9:30 AM',
-            status: 'cancelada',
-            project: '-'
-        }
-    ];
-    
-    // Generar filas
-    appointmentsTable.innerHTML = appointments.map(appointment => `
-        <tr>
-            <td>${appointment.client}</td>
-            <td>${appointment.type}</td>
-            <td>${appointment.date}</td>
-            <td>${appointment.time}</td>
-            <td><span class="status-badge ${appointment.status}">${formatAppointmentStatus(appointment.status)}</span></td>
-            <td>${appointment.project}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" title="Ver detalles" data-appointment-id="${appointment.id}"><i class="fas fa-eye"></i></button>
-                    <button class="action-btn edit-btn" title="Editar" data-appointment-id="${appointment.id}"><i class="fas fa-edit"></i></button>
-                    <button class="action-btn delete-btn" title="Eliminar" data-appointment-id="${appointment.id}"><i class="fas fa-trash"></i></button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-/**
- * Formatear estado de cita
- */
-function formatAppointmentStatus(status) {
-    const statusMap = {
-        'pendiente': 'Pendiente',
-        'confirmada': 'Confirmada',
-        'cancelada': 'Cancelada',
-        'completada': 'Completada'
-    };
-    
-    return statusMap[status] || status;
-}
-
-/**
- * Configura los filtros de citas
- */
-function setupAppointmentFilters() {
-    const appointmentSearch = document.getElementById('appointment-search');
-    const appointmentSearchBtn = document.getElementById('appointment-search-btn');
-    const appointmentFilterType = document.getElementById('appointment-filter-type');
-    const appointmentFilterStatus = document.getElementById('appointment-filter-status');
-    const appointmentDateFilter = document.getElementById('appointment-date-filter');
-    
-    // Función de filtrado
-    function filterAppointments() {
-        console.log('Filtrando citas...');
-        loadAppointmentsTable();
-        showToast('Filtros aplicados', 'info');
+    /* Estilos para las tarjetas de estadísticas clickeables */
+    .stat-card:hover {
+        transform: translateY(-3px);
+        transition: transform 0.3s ease;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
     
-    // Configurar eventos
-    if (appointmentSearchBtn) {
-        appointmentSearchBtn.addEventListener('click', filterAppointments);
+    .stat-card {
+        transition: all 0.3s ease;
+        cursor: default;
     }
     
-    if (appointmentFilterType) {
-        appointmentFilterType.addEventListener('change', filterAppointments);
+    .stat-card[title] {
+        cursor: pointer;
     }
     
-    if (appointmentFilterStatus) {
-        appointmentFilterStatus.addEventListener('change', filterAppointments);
+    /* Estilos mejorados para el dropdown de quick actions */
+    .dropdown {
+        position: relative;
     }
     
-    if (appointmentDateFilter) {
-        appointmentDateFilter.addEventListener('change', filterAppointments);
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 8px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        min-width: 220px;
+        overflow: hidden;
+        transform: translateY(-10px);
+        opacity: 0;
+        transition: all 0.3s ease;
     }
-}
-
-/**
- * Inicializa la sección de mensajes
- */
-function initMessagesSection() {
-    // En una aplicación real, aquí implementarías la gestión de mensajes
-    console.log('Inicializando sección de mensajes...');
-}
-
-/**
- * Inicializa la sección de informes
- */
-function initReportsSection() {
-    // En una aplicación real, aquí implementarías la generación de informes
-    console.log('Inicializando sección de informes...');
-}
-
-/**
- * Inicializa la sección de configuración
- */
-function initSettingsSection() {
-    // En una aplicación real, aquí implementarías la gestión de configuración
-    console.log('Inicializando sección de configuración...');
     
-    // Inicializar pestañas de configuración
-    initSettingsTabs();
-}
-
-/**
- * Inicializa las pestañas en la sección de configuración
- */
-function initSettingsTabs() {
-    const settingsNav = document.querySelectorAll('.settings-nav li');
-    const settingsPanels = document.querySelectorAll('.settings-panel');
+    .dropdown.active .dropdown-menu {
+        display: block;
+        transform: translateY(0);
+        opacity: 1;
+    }
     
-    if (settingsNav.length > 0 && settingsPanels.length > 0) {
-        settingsNav.forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Quitar la clase activa de todas las pestañas
-                settingsNav.forEach(t => t.classList.remove('active'));
-                
-                // Añadir clase activa a la pestaña seleccionada
-                this.classList.add('active');
-                
-                // Mostrar el panel correspondiente
-                const panel = this.getAttribute('data-setting');
-                
-                // Ocultar todos los paneles
-                settingsPanels.forEach(p => p.classList.remove('active'));
-                
-                // Mostrar el panel seleccionado
-                document.getElementById(`${panel}-settings`).classList.add('active');
-            });
-        });
+    .dropdown-menu a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        color: #ffffff;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #333;
     }
-}
-
-/**
- * OPERACIONES DE USUARIOS
- */
-
-/**
- * Obtiene un usuario por su correo electrónico
- * @param {string} email - Correo electrónico del usuario
- * @returns {Promise<Object|null>} - Datos del usuario o null si no existe
- */
-async function getUserByEmail(email) {
-    try {
-        const database = await connectToDatabase();
-        const user = await database.collection('users').findOne({ correo: email });
-        return user;
-    } catch (error) {
-        console.error('Error al obtener usuario por email:', error);
-        throw error;
+    
+    .dropdown-menu a:last-child {
+        border-bottom: none;
     }
-}
-
-/**
- * Obtiene un usuario por su ID
- * @param {string} userId - ID del usuario
- * @returns {Promise<Object|null>} - Datos del usuario o null si no existe
- */
-async function getUserById(userId) {
-    try {
-        const database = await connectToDatabase();
-        const user = await database.collection('users').findOne({ _id: new ObjectId(userId) });
-        return user;
-    } catch (error) {
-        console.error('Error al obtener usuario por ID:', error);
-        throw error;
+    
+    .dropdown-menu a:hover {
+        background-color: #2a2a2a;
+        transform: translateX(4px);
     }
-}
-
-/**
- * Crea un nuevo usuario
- * @param {Object} userData - Datos del usuario
- * @returns {Promise<Object>} - Usuario creado
- */
-async function createUser(userData) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Verificar si el correo ya existe
-        const existingUser = await getUserByEmail(userData.correo);
-        if (existingUser) {
-            throw new Error('Ya existe un usuario con este correo electrónico');
-        }
-        
-        // Añadir fecha de registro
-        userData.fechaRegistro = new Date();
-        
-        const result = await database.collection('users').insertOne(userData);
-        return { _id: result.insertedId, ...userData };
-    } catch (error) {
-        console.error('Error al crear usuario:', error);
-        throw error;
+    
+    .dropdown-menu a i {
+        width: 18px;
+        text-align: center;
+        color: var(--primary-color, #5accc9);
+        font-size: 14px;
     }
-}
-
-/**
- * Actualiza un usuario existente
- * @param {string} userId - ID del usuario
- * @param {Object} updateData - Datos a actualizar
- * @returns {Promise<Object>} - Usuario actualizado
- */
-async function updateUser(userId, updateData) {
-    try {
-        const database = await connectToDatabase();
-        
-        // No permitir actualizar el correo a uno ya existente
-        if (updateData.correo) {
-            const existingUser = await getUserByEmail(updateData.correo);
-            if (existingUser && existingUser._id.toString() !== userId) {
-                throw new Error('Ya existe un usuario con este correo electrónico');
-            }
-        }
-        
-        await database.collection('users').updateOne(
-            { _id: new ObjectId(userId) },
-            { $set: updateData }
-        );
-        
-        return await getUserById(userId);
-    } catch (error) {
-        console.error('Error al actualizar usuario:', error);
-        throw error;
+    
+    /* Estilos mejorados para el botón de quick actions */
+    .quick-actions .primary-btn {
+        background: linear-gradient(135deg, var(--primary-color, #5accc9) 0%, var(--secondary-color, #40b4fb) 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        color: var(--dark-blue, #001e3c);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(90, 204, 201, 0.3);
+        cursor: pointer;
     }
-}
-
-/**
- * Elimina un usuario
- * @param {string} userId - ID del usuario
- * @returns {Promise<boolean>} - true si se eliminó correctamente
- */
-async function deleteUser(userId) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Eliminar usuario
-        const result = await database.collection('users').deleteOne({ _id: new ObjectId(userId) });
-        
-        // También eliminar sus citas
-        await database.collection('appointments').deleteMany({ usuario: new ObjectId(userId) });
-        
-        // No eliminamos proyectos, solo actualizamos el campo cliente a null
-        await database.collection('projects').updateMany(
-            { cliente: new ObjectId(userId) },
-            { $set: { cliente: null } }
-        );
-        
-        return result.deletedCount > 0;
-    } catch (error) {
-        console.error('Error al eliminar usuario:', error);
-        throw error;
+    
+    .quick-actions .primary-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(90, 204, 201, 0.4);
     }
-}
-
-/**
- * Obtiene todos los usuarios con paginación
- * @param {Object} options - Opciones de filtrado y paginación
- * @returns {Promise<Object>} - Lista de usuarios y total
- */
-async function getUsers(options = {}) {
-    try {
-        const database = await connectToDatabase();
-        
-        const { page = 1, limit = 10, filter = {}, sort = { fechaRegistro: -1 } } = options;
-        const skip = (page - 1) * limit;
-        
-        const users = await database.collection('users')
-            .find(filter)
-            .sort(sort)
-            .skip(skip)
-            .limit(limit)
-            .toArray();
-        
-        const total = await database.collection('users').countDocuments(filter);
-        
-        return {
-            users,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        };
-    } catch (error) {
-        console.error('Error al obtener usuarios:', error);
-        throw error;
+    
+    /* Estilos para modales */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
+        transition: all 0.3s ease;
     }
-}
-
-/**
- * OPERACIONES DE PROYECTOS
- */
-
-/**
- * Obtiene un proyecto por su ID
- * @param {string} projectId - ID del proyecto
- * @returns {Promise<Object|null>} - Datos del proyecto o null si no existe
- */
-async function getProjectById(projectId) {
-    try {
-        const database = await connectToDatabase();
-        const project = await database.collection('projects').findOne({ _id: new ObjectId(projectId) });
-        return project;
-    } catch (error) {
-        console.error('Error al obtener proyecto por ID:', error);
-        throw error;
+    
+    .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
     }
-}
-
-/**
- * Crea un nuevo proyecto
- * @param {Object} projectData - Datos del proyecto
- * @returns {Promise<Object>} - Proyecto creado
- */
-async function createProject(projectData) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Si hay un cliente, convertir el ID a ObjectId
-        if (projectData.cliente) {
-            projectData.cliente = new ObjectId(projectData.cliente);
-        }
-        
-        // Fechas de creación y actualización
-        projectData.fechaCreacion = new Date();
-        projectData.fechaActualizacion = new Date();
-        
-        // Estado inicial por defecto
-        if (!projectData.estado) {
-            projectData.estado = 'cotizacion';
-        }
-        
-        // Porcentaje de progreso inicial
-        if (!projectData.porcentajeProgreso) {
-            projectData.porcentajeProgreso = 0;
-        }
-        
-        const result = await database.collection('projects').insertOne(projectData);
-        
-        // Si hay un cliente, actualizar la referencia en el usuario
-        if (projectData.cliente) {
-            await database.collection('users').updateOne(
-                { _id: projectData.cliente },
-                { $push: { proyectos: result.insertedId } }
-            );
-        }
-        
-        return { _id: result.insertedId, ...projectData };
-    } catch (error) {
-        console.error('Error al crear proyecto:', error);
-        throw error;
+    
+    .modal-content {
+        background-color: #1e1e1e;
+        padding: 0;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid #333;
     }
-}
-
-/**
- * Actualiza un proyecto existente
- * @param {string} projectId - ID del proyecto
- * @param {Object} updateData - Datos a actualizar
- * @returns {Promise<Object>} - Proyecto actualizado
- */
-async function updateProject(projectId, updateData) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Convertir cliente a ObjectId si existe
-        if (updateData.cliente) {
-            updateData.cliente = new ObjectId(updateData.cliente);
+    
+    @keyframes modalSlideIn {
+        from {
+            transform: scale(0.8) translateY(-50px);
+            opacity: 0;
         }
-        
-        // Actualizar fecha de actualización
-        updateData.fechaActualizacion = new Date();
-        
-        // Obtener proyecto actual para verificar si cambió el cliente
-        const currentProject = await getProjectById(projectId);
-        
-        await database.collection('projects').updateOne(
-            { _id: new ObjectId(projectId) },
-            { $set: updateData }
-        );
-        
-        // Si cambió el cliente, actualizar referencias en usuarios
-        if (updateData.cliente && currentProject.cliente && 
-            updateData.cliente.toString() !== currentProject.cliente.toString()) {
-            
-            // Quitar referencia del cliente anterior
-            await database.collection('users').updateOne(
-                { _id: currentProject.cliente },
-                { $pull: { proyectos: new ObjectId(projectId) } }
-            );
-            
-            // Añadir referencia al nuevo cliente
-            await database.collection('users').updateOne(
-                { _id: updateData.cliente },
-                { $push: { proyectos: new ObjectId(projectId) } }
-            );
+        to {
+            transform: scale(1) translateY(0);
+            opacity: 1;
         }
-        
-        return await getProjectById(projectId);
-    } catch (error) {
-        console.error('Error al actualizar proyecto:', error);
-        throw error;
     }
-}
-
-/**
- * Elimina un proyecto
- * @param {string} projectId - ID del proyecto
- * @returns {Promise<boolean>} - true si se eliminó correctamente
- */
-async function deleteProject(projectId) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Obtener proyecto para quitar referencias
-        const project = await getProjectById(projectId);
-        
-        if (project && project.cliente) {
-            // Quitar referencia en el usuario
-            await database.collection('users').updateOne(
-                { _id: project.cliente },
-                { $pull: { proyectos: new ObjectId(projectId) } }
-            );
-        }
-        
-        // Eliminar citas relacionadas con el proyecto
-        await database.collection('appointments').deleteMany({ proyecto: new ObjectId(projectId) });
-        
-        // Eliminar el proyecto
-        const result = await database.collection('projects').deleteOne({ _id: new ObjectId(projectId) });
-        
-        return result.deletedCount > 0;
-    } catch (error) {
-        console.error('Error al eliminar proyecto:', error);
-        throw error;
+    
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
+        border-radius: 12px 12px 0 0;
     }
-}
-
-/**
- * Obtiene proyectos con paginación y filtros
- * @param {Object} options - Opciones de filtrado y paginación
- * @returns {Promise<Object>} - Lista de proyectos y total
- */
-async function getProjects(options = {}) {
-    try {
-        const database = await connectToDatabase();
-        
-        const { page = 1, limit = 10, filter = {}, sort = { fechaCreacion: -1 } } = options;
-        const skip = (page - 1) * limit;
-        
-        // Convertir filtro de cliente a ObjectId si existe
-        if (filter.cliente) {
-            filter.cliente = new ObjectId(filter.cliente);
-        }
-        
-        const projects = await database.collection('projects')
-            .find(filter)
-            .sort(sort)
-            .skip(skip)
-            .limit(limit)
-            .toArray();
-        
-        const total = await database.collection('projects').countDocuments(filter);
-        
-        return {
-            projects,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        };
-    } catch (error) {
-        console.error('Error al obtener proyectos:', error);
-        throw error;
+    
+    .modal-header h2 {
+        margin: 0;
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
-}
-
-/**
- * OPERACIONES DE CITAS
- */
-
-/**
- * Obtiene una cita por su ID
- * @param {string} appointmentId - ID de la cita
- * @returns {Promise<Object|null>} - Datos de la cita o null si no existe
- */
-async function getAppointmentById(appointmentId) {
-    try {
-        const database = await connectToDatabase();
-        const appointment = await database.collection('appointments').findOne({ _id: new ObjectId(appointmentId) });
-        return appointment;
-    } catch (error) {
-        console.error('Error al obtener cita por ID:', error);
-        throw error;
+    
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #999;
+        padding: 8px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s ease;
     }
-}
-
-/**
- * Crea una nueva cita
- * @param {Object} appointmentData - Datos de la cita
- * @returns {Promise<Object>} - Cita creada
- */
-async function createAppointment(appointmentData) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Convertir IDs a ObjectId
-        if (appointmentData.usuario) {
-            appointmentData.usuario = new ObjectId(appointmentData.usuario);
-        }
-        
-        if (appointmentData.proyecto) {
-            appointmentData.proyecto = new ObjectId(appointmentData.proyecto);
-        }
-        
-        // Convertir fecha a objeto Date
-        if (appointmentData.fecha && typeof appointmentData.fecha === 'string') {
-            appointmentData.fecha = new Date(appointmentData.fecha);
-        }
-        
-        // Estado por defecto
-        if (!appointmentData.estado) {
-            appointmentData.estado = 'pendiente';
-        }
-        
-        const result = await database.collection('appointments').insertOne(appointmentData);
-        
-        // Si hay un usuario, actualizar sus citas
-        if (appointmentData.usuario) {
-            await database.collection('users').updateOne(
-                { _id: appointmentData.usuario },
-                { $push: { citas: result.insertedId } }
-            );
-        }
-        
-        return { _id: result.insertedId, ...appointmentData };
-    } catch (error) {
-        console.error('Error al crear cita:', error);
-        throw error;
+    
+    .close-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        transform: scale(1.1);
     }
-}
-
-/**
- * Actualiza una cita existente
- * @param {string} appointmentId - ID de la cita
- * @param {Object} updateData - Datos a actualizar
- * @returns {Promise<Object>} - Cita actualizada
- */
-async function updateAppointment(appointmentId, updateData) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Convertir IDs a ObjectId
-        if (updateData.usuario) {
-            updateData.usuario = new ObjectId(updateData.usuario);
-        }
-        
-        if (updateData.proyecto) {
-            updateData.proyecto = new ObjectId(updateData.proyecto);
-        }
-        
-        // Convertir fecha a objeto Date
-        if (updateData.fecha && typeof updateData.fecha === 'string') {
-            updateData.fecha = new Date(updateData.fecha);
-        }
-        
-        // Obtener cita actual para verificar cambios en el usuario
-        const currentAppointment = await getAppointmentById(appointmentId);
-        
-        await database.collection('appointments').updateOne(
-            { _id: new ObjectId(appointmentId) },
-            { $set: updateData }
-        );
-        
-        // Si cambió el usuario, actualizar referencias
-        if (updateData.usuario && currentAppointment.usuario &&
-            updateData.usuario.toString() !== currentAppointment.usuario.toString()) {
-            
-            // Quitar referencia del usuario anterior
-            await database.collection('users').updateOne(
-                { _id: currentAppointment.usuario },
-                { $pull: { citas: new ObjectId(appointmentId) } }
-            );
-            
-            // Añadir referencia al nuevo usuario
-            await database.collection('users').updateOne(
-                { _id: updateData.usuario },
-                { $push: { citas: new ObjectId(appointmentId) } }
-            );
-        }
-        
-        return await getAppointmentById(appointmentId);
-    } catch (error) {
-        console.error('Error al actualizar cita:', error);
-        throw error;
+    
+    .modal-body {
+        padding: 24px;
     }
-}
-
-/**
- * Elimina una cita
- * @param {string} appointmentId - ID de la cita
- * @returns {Promise<boolean>} - true si se eliminó correctamente
- */
-async function deleteAppointment(appointmentId) {
-    try {
-        const database = await connectToDatabase();
-        
-        // Obtener cita para quitar referencias
-        const appointment = await getAppointmentById(appointmentId);
-        
-        if (appointment && appointment.usuario) {
-            // Quitar referencia en el usuario
-            await database.collection('users').updateOne(
-                { _id: appointment.usuario },
-                { $pull: { citas: new ObjectId(appointmentId) } }
-            );
-        }
-        
-        // Eliminar la cita
-        const result = await database.collection('appointments').deleteOne({ _id: new ObjectId(appointmentId) });
-        
-        return result.deletedCount > 0;
-    } catch (error) {
-        console.error('Error al eliminar cita:', error);
-        throw error;
+    
+    /* Estilos para formularios */
+    .form-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
     }
-}
-
-/**
- * Obtiene citas con paginación y filtros
- * @param {Object} options - Opciones de filtrado y paginación
- * @returns {Promise<Object>} - Lista de citas y total
- */
-async function getAppointments(options = {}) {
-    try {
-        const database = await connectToDatabase();
-        
-        const { page = 1, limit = 10, filter = {}, sort = { fecha: 1 } } = options;
-        const skip = (page - 1) * limit;
-        
-        // Convertir filtros de IDs a ObjectId
-        if (filter.usuario) {
-            filter.usuario = new ObjectId(filter.usuario);
-        }
-        
-        if (filter.proyecto) {
-            filter.proyecto = new ObjectId(filter.proyecto);
-        }
-        
-        // Filtro por fecha
-        if (filter.fechaInicio && filter.fechaFin) {
-            filter.fecha = {
-                $gte: new Date(filter.fechaInicio),
-                $lte: new Date(filter.fechaFin)
-            };
-            
-            delete filter.fechaInicio;
-            delete filter.fechaFin;
-        } else if (filter.fechaInicio) {
-            filter.fecha = { $gte: new Date(filter.fechaInicio) };
-            delete filter.fechaInicio;
-        } else if (filter.fechaFin) {
-            filter.fecha = { $lte: new Date(filter.fechaFin) };
-            delete filter.fechaFin;
-        }
-        
-        const appointments = await database.collection('appointments')
-            .find(filter)
-            .sort(sort)
-            .skip(skip)
-            .limit(limit)
-            .toArray();
-        
-        const total = await database.collection('appointments').countDocuments(filter);
-        
-        return {
-            appointments,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        };
-    } catch (error) {
-        console.error('Error al obtener citas:', error);
-        throw error;
+    
+    .form-group {
+        flex: 1;
+        margin-bottom: 16px;
     }
-}
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #ffffff;
+        font-size: 14px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #333;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+        background-color: #2a2a2a;
+        color: #ffffff;
+        transition: all 0.2s ease;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-color, #5accc9);
+        box-shadow: 0 0 0 3px rgba(90, 204, 201, 0.1);
+        background-color: #333;
+    }
+    
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+        color: #999;
+    }
+    
+    /* Botones de toggle para contraseñas */
+    .password-toggle-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .password-toggle-btn:hover {
+        color: var(--primary-color, #5accc9);
+        background-color: rgba(90, 204, 201, 0.1);
+    }
+    
+    /* Sección de contraseña */
+    .password-section {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #333;
+        margin: 20px 0;
+    }
+    
+    /* Información de formulario */
+    .form-info {
+        background: rgba(33, 150, 243, 0.1);
+        padding: 16px;
+        border-radius: 8px;
+        margin: 24px 0;
+        border-left: 4px solid #2196F3;
+    }
+    
+    .form-info ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #cccccc;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    .form-info li {
+        margin-bottom: 4px;
+    }
+    
+    /* Acciones de formulario */
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding-top: 24px;
+        border-top: 1px solid #333;
+        margin-top: 24px;
+    }
+    
+    .primary-btn, .secondary-btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .primary-btn {
+        background: linear-gradient(135deg, var(--primary-color, #5accc9) 0%, var(--secondary-color, #40b4fb) 100%);
+        color: var(--dark-blue, #001e3c);
+        box-shadow: 0 2px 10px rgba(90, 204, 201, 0.3);
+    }
+    
+    .primary-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(90, 204, 201, 0.4);
+    }
+    
+    .primary-btn:disabled {
+        background: #666;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        color: #ccc;
+    }
+    
+    .secondary-btn {
+        background-color: #444;
+        color: white;
+        border: 1px solid #555;
+    }
+    
+    .secondary-btn:hover {
+        background-color: #555;
+        transform: translateY(-1px);
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: var(--primary-color, #5accc9);
+        font-size: 18px;
+    }
+    
+    .loading-spinner i {
+        margin-right: 12px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .modal-content {
+            width: 95%;
+            margin: 20px;
+        }
+        
+        .modal-header,
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+        
+        .primary-btn, .secondary-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .dropdown-menu {
+            min-width: 200px;
+        }
+    }
+`;
+
+document.head.appendChild(clientDashboardStyles);
+
+console.log('✅ Dashboard Cliente - JavaScript cargado completamente');
