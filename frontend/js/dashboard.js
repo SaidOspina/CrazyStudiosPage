@@ -1101,7 +1101,8 @@ function loadRecentActivity() {
 
 function loadClientProjects() {
     console.log('📋 Cargando proyectos del cliente...');
-    // Implementar carga de proyectos del cliente
+    // Implementar carga de proyectos del cliente3
+    initClientProjectsModule();
 }
 
 function loadClientAppointments() {
@@ -1151,14 +1152,6 @@ function initClientDashboard() {
  * Configura botones adicionales del dashboard
  */
 function setupAdditionalButtons() {
-    // Botón de solicitar proyecto
-    const requestProjectBtn = document.getElementById('request-new-project-btn');
-    if (requestProjectBtn) {
-        requestProjectBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            openRequestProjectModal();
-        });
-    }
     
     // Botón de agendar cita
     const scheduleAppointmentBtn = document.getElementById('schedule-new-appointment-btn');
