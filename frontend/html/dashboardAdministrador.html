@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="../css/modulClients.css">
     <link rel="stylesheet" href="../css/modulMessages.css">
+    <link rel="stylesheet" href="../css/modulReports.css">
     <link rel="stylesheet" href="../css/modulAppoinment.css">
     <link rel="stylesheet" href="../css/dashboardAdministrador.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -842,222 +843,65 @@
         <!-- Reports Section -->
         <section id="reports" class="dashboard-section">
             <div class="section-header">
-                <h2>Informes</h2>
+                <h2>Generador de Informes</h2>
                 <div class="report-actions">
-                    <select id="report-type">
-                        <option value="clients">Clientes</option>
-                        <option value="projects">Proyectos</option>
-                        <option value="appointments">Citas</option>
-                        <option value="finances">Finanzas</option>
-                    </select>
-                    <button class="primary-btn" id="generate-report-btn">
-                        <i class="fas fa-file-export"></i> Generar Informe
+                    <button class="secondary-btn" id="clear-report-btn">
+                        <i class="fas fa-trash"></i> Limpiar
+                    </button>
+                    <button class="primary-btn" id="export-report-btn" disabled>
+                        <i class="fas fa-download"></i> Exportar Informe
                     </button>
                 </div>
             </div>
             
             <div class="reports-container">
-                <!-- Report Filters -->
-                <div class="report-filters">
-                    <div class="filter-group">
-                        <label for="report-date-range">Periodo</label>
-                        <select id="report-date-range">
-                            <option value="this-month">Este Mes</option>
-                            <option value="last-month">Mes Anterior</option>
-                            <option value="this-quarter">Este Trimestre</option>
-                            <option value="last-quarter">Trimestre Anterior</option>
-                            <option value="this-year">Este Año</option>
-                            <option value="last-year">Año Anterior</option>
-                            <option value="custom">Personalizado</option>
-                        </select>
-                    </div>
+                <!-- Configuración del Informe -->
+                <div class="report-config-card">
+                    <h3><i class="fas fa-cog"></i> Configuración del Informe</h3>
                     
-                    <div class="filter-group custom-date-range" style="display: none;">
-                        <label for="report-start-date">Desde</label>
-                        <input type="date" id="report-start-date">
-                    </div>
-                    
-                    <div class="filter-group custom-date-range" style="display: none;">
-                        <label for="report-end-date">Hasta</label>
-                        <input type="date" id="report-end-date">
-                    </div>
-                    
-                    <div class="filter-group">
-                        <button class="secondary-btn" id="apply-filters-btn">
-                            <i class="fas fa-filter"></i> Aplicar Filtros
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Report Charts -->
-                <div class="report-charts">
-                    <div class="report-card">
-                        <h3>Nuevos Clientes</h3>
-                        <div class="stat-number">24</div>
-                        <div class="stat-comparison">
-                            <span class="positive"><i class="fas fa-arrow-up"></i> 12%</span> vs mes anterior
-                        </div>
-                        <div class="chart-container" id="new-clients-chart">
-                            <canvas></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="report-card">
-                        <h3>Proyectos Completados</h3>
-                        <div class="stat-number">18</div>
-                        <div class="stat-comparison">
-                            <span class="positive"><i class="fas fa-arrow-up"></i> 5%</span> vs mes anterior
-                        </div>
-                        <div class="chart-container" id="completed-projects-chart">
-                            <canvas></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="report-card">
-                        <h3>Citas Programadas</h3>
-                        <div class="stat-number">42</div>
-                        <div class="stat-comparison">
-                            <span class="negative"><i class="fas fa-arrow-down"></i> 3%</span> vs mes anterior
-                        </div>
-                        <div class="chart-container" id="scheduled-appointments-chart">
-                            <canvas></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="report-card">
-                        <h3>Ingresos Totales</h3>
-                        <div class="stat-number">$42,890</div>
-                        <div class="stat-comparison">
-                            <span class="positive"><i class="fas fa-arrow-up"></i> 18%</span> vs mes anterior
-                        </div>
-                        <div class="chart-container" id="total-revenue-chart">
-                            <canvas></canvas>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="report-details">
-                    <div class="report-tabs">
-                        <button class="report-tab active" data-tab="summary">Resumen</button>
-                        <button class="report-tab" data-tab="details">Detalles</button>
-                        <button class="report-tab" data-tab="comparison">Comparativa</button>
-                    </div>
-                    
-                    <div class="report-tab-content">
-                        <!-- Summary Tab -->
-                        <div class="tab-pane active" id="summary-tab">
-                            <div class="summary-cards">
-                                <div class="summary-card">
-                                    <h4>Top Categorías de Proyectos</h4>
-                                    <div class="chart-container" id="project-categories-chart">
-                                        <canvas></canvas>
-                                    </div>
-                                </div>
-                                
-                                <div class="summary-card">
-                                    <h4>Distribución de Proyectos por Estado</h4>
-                                    <div class="chart-container" id="project-status-chart">
-                                        <canvas></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="summary-tables">
-                                <div class="summary-table">
-                                    <h4>Top Clientes por Ingresos</h4>
-                                    <table class="data-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Cliente</th>
-                                                <th>Proyectos</th>
-                                                <th>Ingresos</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Juan Pérez - Empresa ABC</td>
-                                                <td>3</td>
-                                                <td>$12,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Roberto Sánchez - Inmobiliaria RS</td>
-                                                <td>1</td>
-                                                <td>$9,800</td>
-                                            </tr>
-                                            <tr>
-                                                <td>María López - Empresa XYZ</td>
-                                                <td>2</td>
-                                                <td>$7,350</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Carlos Rodríguez - Tech Innovate</td>
-                                                <td>1</td>
-                                                <td>$5,200</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Alejandro Herrera - Dental Care</td>
-                                                <td>1</td>
-                                                <td>$4,800</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-                                <div class="summary-table">
-                                    <h4>Proyectos Recientes</h4>
-                                    <table class="data-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Proyecto</th>
-                                                <th>Cliente</th>
-                                                <th>Estado</th>
-                                                <th>Fecha</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>Gestión Instagram Boutique Moda</td>
-                                                <td>Ana González</td>
-                                                <td><span class="status-badge" data-status="desarrollo inicial">Desarrollo Inicial</span></td>
-                                                <td>05/05/2025</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Campaña Digital Restaurante Gourmet</td>
-                                                <td>María López</td>
-                                                <td><span class="status-badge" data-status="iniciado">Iniciado</span></td>
-                                                <td>01/05/2025</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Portal Inmobiliario Premium</td>
-                                                <td>Roberto Sánchez</td>
-                                                <td><span class="status-badge" data-status="pago procesado">Pago Procesado</span></td>
-                                                <td>12/05/2025</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Rebranding Completo Startup</td>
-                                                <td>Carlos Rodríguez</td>
-                                                <td><span class="status-badge" data-status="cotizacion">Cotización</span></td>
-                                                <td>10/05/2025</td>
-                                            </tr>
-                                            <tr>
-                                                <td>E-commerce Fashion Store</td>
-                                                <td>Juan Pérez</td>
-                                                <td><span class="status-badge" data-status="desarrollo medio">Desarrollo Medio</span></td>
-                                                <td>15/03/2025</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                    <div class="config-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="report-type-select">Tipo de Informe</label>
+                                <select id="report-type-select" required>
+                                    <option value="">Seleccionar tipo de informe</option>
+                                    <option value="projects">Informe de Proyectos</option>
+                                    <option value="appointments">Informe de Citas</option>
+                                </select>
                             </div>
                         </div>
                         
-                        <!-- Details Tab -->
-                        <div class="tab-pane" id="details-tab">
-                            <div class="details-filters">
-                                <div class="filter-group">
-                                    <label for="details-category">Categoría</label>
-                                    <select id="details-category">
-                                        <option value="all">Todas</option>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="report-start-date">Fecha de Inicio</label>
+                                <input type="date" id="report-start-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="report-end-date">Fecha de Fin</label>
+                                <input type="date" id="report-end-date" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Filtros específicos para proyectos -->
+                        <div class="project-filters" id="project-filters" style="display: none;">
+                            <h4><i class="fas fa-filter"></i> Filtros de Proyectos</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="project-status-filter">Estado del Proyecto</label>
+                                    <select id="project-status-filter">
+                                        <option value="">Todos los estados</option>
+                                        <option value="cotizacion">Cotización</option>
+                                        <option value="pago procesado">Pago Procesado</option>
+                                        <option value="iniciado">Iniciado</option>
+                                        <option value="desarrollo inicial">Desarrollo Inicial</option>
+                                        <option value="desarrollo medio">Desarrollo Medio</option>
+                                        <option value="finalizado">Finalizado</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="project-category-filter">Categoría</label>
+                                    <select id="project-category-filter">
+                                        <option value="">Todas las categorías</option>
                                         <option value="web-development">Desarrollo Web</option>
                                         <option value="ecommerce">Tienda Online</option>
                                         <option value="marketing-digital">Marketing Digital</option>
@@ -1067,172 +911,107 @@
                                         <option value="design">Diseño Gráfico</option>
                                     </select>
                                 </div>
-                                
-                                <div class="filter-group">
-                                    <label for="details-status">Estado</label>
-                                    <select id="details-status">
-                                        <option value="all">Todos</option>
-                                        <option value="cotizacion">Cotización</option>
-                                        <option value="pago procesado">Pago Procesado</option>
-                                        <option value="iniciado">Iniciado</option>
-                                        <option value="desarrollo inicial">Desarrollo Inicial</option>
-                                        <option value="desarrollo medio">Desarrollo Medio</option>
-                                        <option value="finalizado">Finalizado</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <button class="secondary-btn" id="apply-details-filters-btn">
-                                        <i class="fas fa-filter"></i> Aplicar
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="details-table-container">
-                                <table class="data-table" id="details-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Proyecto</th>
-                                            <th>Cliente</th>
-                                            <th>Categoría</th>
-                                            <th>Estado</th>
-                                            <th>Inicio</th>
-                                            <th>Fin Estimado</th>
-                                            <th>Progreso</th>
-                                            <th>Ingresos</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Rows will be loaded dynamically -->
-                                        <tr>
-                                            <td>E-commerce Fashion Store</td>
-                                            <td>Juan Pérez</td>
-                                            <td>Tienda Online</td>
-                                            <td><span class="status-badge" data-status="desarrollo medio">Desarrollo Medio</span></td>
-                                            <td>15/03/2025</td>
-                                            <td>15/06/2025</td>
-                                            <td>
-                                                <div class="progress-bar small">
-                                                    <div class="progress" style="width: 65%;"></div>
-                                                </div>
-                                                <span>65%</span>
-                                            </td>
-                                            <td>$8,500</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Campaña Digital Restaurante Gourmet</td>
-                                            <td>María López</td>
-                                            <td>Marketing Digital</td>
-                                            <td><span class="status-badge" data-status="iniciado">Iniciado</span></td>
-                                            <td>01/05/2025</td>
-                                            <td>01/07/2025</td>
-                                            <td>
-                                                <div class="progress-bar small">
-                                                    <div class="progress" style="width: 25%;"></div>
-                                                </div>
-                                                <span>25%</span>
-                                            </td>
-                                            <td>$3,200</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Rebranding Completo Startup</td>
-                                            <td>Carlos Rodríguez</td>
-                                            <td>Branding</td>
-                                            <td><span class="status-badge" data-status="cotizacion">Cotización</span></td>
-                                            <td>10/05/2025</td>
-                                            <td>-</td>
-                                            <td>
-                                                <div class="progress-bar small">
-                                                    <div class="progress" style="width: 5%;"></div>
-                                                </div>
-                                                <span>5%</span>
-                                            </td>
-                                            <td>$0</td>
-                                        </tr>
-                                        <!-- More rows would go here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <div class="export-actions">
-                                <button class="secondary-btn">
-                                    <i class="fas fa-file-csv"></i> Exportar CSV
-                                </button>
-                                <button class="secondary-btn">
-                                    <i class="fas fa-file-excel"></i> Exportar Excel
-                                </button>
-                                <button class="secondary-btn">
-                                    <i class="fas fa-file-pdf"></i> Exportar PDF
-                                </button>
                             </div>
                         </div>
                         
-                        <!-- Comparison Tab -->
-                        <div class="tab-pane" id="comparison-tab">
-                            <div class="comparison-filters">
-                                <div class="filter-group">
-                                    <label for="comparison-metric">Métrica</label>
-                                    <select id="comparison-metric">
-                                        <option value="revenue">Ingresos</option>
-                                        <option value="clients">Clientes Nuevos</option>
-                                        <option value="projects">Proyectos</option>
-                                        <option value="appointments">Citas</option>
+                        <!-- Filtros específicos para citas -->
+                        <div class="appointment-filters" id="appointment-filters" style="display: none;">
+                            <h4><i class="fas fa-filter"></i> Filtros de Citas</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="appointment-type-filter">Tipo de Cita</label>
+                                    <select id="appointment-type-filter">
+                                        <option value="">Todos los tipos</option>
+                                        <option value="consulta-general">Consulta General</option>
+                                        <option value="plan-personalizado">Plan Personalizado</option>
+                                        <option value="seguimiento-proyecto">Seguimiento de Proyecto</option>
                                     </select>
                                 </div>
-                                
-                                <div class="filter-group">
-                                    <label for="comparison-period">Comparar con</label>
-                                    <select id="comparison-period">
-                                        <option value="previous-period">Periodo Anterior</option>
-                                        <option value="same-period-last-year">Mismo Periodo Año Anterior</option>
-                                        <option value="custom">Personalizado</option>
+                                <div class="form-group">
+                                    <label for="appointment-status-filter">Estado de la Cita</label>
+                                    <select id="appointment-status-filter">
+                                        <option value="">Todos los estados</option>
+                                        <option value="pendiente">Pendiente</option>
+                                        <option value="confirmada">Confirmada</option>
+                                        <option value="cancelada">Cancelada</option>
+                                        <option value="completada">Completada</option>
                                     </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <button class="secondary-btn" id="apply-comparison-btn">
-                                        <i class="fas fa-sync"></i> Actualizar
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="comparison-chart-container">
-                                <h4>Comparativa: <span id="comparison-title">Ingresos vs Periodo Anterior</span></h4>
-                                <div class="chart-container" id="comparison-chart">
-                                    <canvas></canvas>
-                                </div>
-                            </div>
-                            
-                            <div class="comparison-summary">
-                                <div class="summary-box">
-                                    <h4>Resumen</h4>
-                                    <p>En el periodo actual, los ingresos han aumentado un <strong class="positive">18%</strong> respecto al periodo anterior, pasando de <strong>$36,350</strong> a <strong>$42,890</strong>.</p>
-                                    <p>Las categorías con mayor crecimiento han sido <strong>Marketing Digital</strong> (+32%) y <strong>Desarrollo Web</strong> (+24%).</p>
-                                    <p>El número de proyectos ha aumentado un <strong class="positive">15%</strong>, mientras que el valor medio por proyecto ha crecido un <strong class="positive">3%</strong>.</p>
-                                </div>
-                                
-                                <div class="comparison-metrics">
-                                    <div class="metric-card">
-                                        <h5>Periodo Actual</h5>
-                                        <div class="metric-value">$42,890</div>
-                                        <p>Mayo 2025</p>
-                                    </div>
-                                    
-                                    <div class="metric-card">
-                                        <h5>Periodo Anterior</h5>
-                                        <div class="metric-value">$36,350</div>
-                                        <p>Abril 2025</p>
-                                    </div>
-                                    
-                                    <div class="metric-card">
-                                        <h5>Variación</h5>
-                                        <div class="metric-value positive">+$6,540</div>
-                                        <p class="positive">+18%</p>
-                                    </div>
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="primary-btn" id="generate-report-btn">
+                                <i class="fas fa-chart-bar"></i> Generar Informe
+                            </button>
+                        </div>
                     </div>
+                </div>
+                
+                <!-- Área de Resultados -->
+                <div class="report-results" id="report-results" style="display: none;">
+                    <div class="results-header">
+                        <h3 id="results-title"><i class="fas fa-chart-line"></i> Resultados del Informe</h3>
+                        <div class="results-info">
+                            <span class="results-count" id="results-count">0 registros encontrados</span>
+                            <span class="results-period" id="results-period"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Resumen Estadístico -->
+                    <div class="report-summary" id="report-summary">
+                        <!-- Resumen será generado dinámicamente -->
+                    </div>
+                    
+                    <!-- Tabla de Datos -->
+                    <div class="report-table-container">
+                        <div class="table-responsive">
+                            <table class="data-table" id="report-data-table">
+                                <thead id="report-table-head">
+                                    <!-- Headers serán generados dinámicamente -->
+                                </thead>
+                                <tbody id="report-table-body">
+                                    <!-- Datos serán generados dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Opciones de Exportación -->
+                    <div class="export-options">
+                        <h4><i class="fas fa-download"></i> Exportar Datos</h4>
+                        <div class="export-buttons">
+                            <button class="secondary-btn" id="export-csv-btn">
+                                <i class="fas fa-file-csv"></i> Exportar CSV
+                            </button>
+                            <button class="secondary-btn" id="export-excel-btn">
+                                <i class="fas fa-file-excel"></i> Exportar Excel
+                            </button>
+                            <button class="secondary-btn" id="export-pdf-btn">
+                                <i class="fas fa-file-pdf"></i> Exportar PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Estado de Carga -->
+                <div class="loading-state" id="loading-state" style="display: none;">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <p>Generando informe...</p>
+                </div>
+                
+                <!-- Estado Vacío -->
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <div class="empty-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>No se encontraron datos</h3>
+                    <p>No hay registros que coincidan con los criterios seleccionados para el período especificado.</p>
+                    <button class="primary-btn" id="adjust-filters-btn">
+                        <i class="fas fa-filter"></i> Ajustar Filtros
+                    </button>
                 </div>
             </div>
         </section>  
@@ -1298,5 +1077,6 @@
     <script src="../js/modulProjects.js"></script>
     <script src="../js/modulAppointments.js"></script>
     <script src="../js/modulMessages.js"></script>
+    <script src="../js/modulReports.js"></script>
 </body>
 </html>

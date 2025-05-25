@@ -264,6 +264,19 @@ function switchToSection(sectionId) {
                 case 'messages':
                     console.log('Módulo de mensajes - próximamente');
                     break;
+                
+                case 'reports':
+                    console.log('🎯 Iniciando carga de módulo de reportes...');
+                    
+                    // Verificar si las funciones están disponibles
+                    if (typeof initReportsModule === 'function') {
+                        console.log('✅ Función initReportsModule encontrada');
+                        initReportsModule();
+                    } else {
+                        console.log('⚠️ Función de reportes no disponible, cargando módulo...');
+                        loadReportsModule();
+                    }
+                    break;
                     
                 default:
                     console.log(`Sección ${sectionId} cargada`);
@@ -342,7 +355,16 @@ function setupSectionNavigation() {
                             case 'messages':
                                 console.log('Módulo de mensajes - próximamente');
                                 break;
-                                
+                            case 'reports':
+                                if (typeof initReportsModule === 'function') {
+                                    console.log('Inicializando módulo de reportes...');
+                                    initReportsModule();
+                                } else {
+                                    console.error('Función initReportsModule no disponible');
+                                    console.log('Verificando disponibilidad del módulo...');
+                                    loadReportsModule();
+                                }
+                                break;
                             default:
                                 console.log(`Sección ${section} cargada`);
                         }
@@ -1190,6 +1212,71 @@ function showToast(message, type = 'info') {
 // Exponer funciones globalmente para que puedan ser usadas por otros módulos
 window.showToast = showToast;
 window.switchToSection = switchToSection;
+
+function loadReportsModule() {
+    console.log('🔄 Intentando cargar módulo de reportes...');
+    
+    // Verificar si ya existe el script
+    const existingScript = document.querySelector('script[src*="modulReports"]');
+    if (existingScript) {
+        console.log('⚠️ Script de reportes ya existe');
+        
+        // Esperar un poco más y reintentar inicialización
+        setTimeout(() => {
+            if (typeof initReportsModule === 'function') {
+                console.log('✅ Reintentando inicialización de reportes...');
+                initReportsModule();
+                showToast('Módulo de reportes inicializado', 'success');
+            } else {
+                console.log('❌ Función aún no disponible, recargando script...');
+                existingScript.remove();
+                loadReportsModuleScript();
+            }
+        }, 1000);
+        return;
+    }
+    
+    loadReportsModuleScript();
+}
+
+/**
+ * Carga el script del módulo de reportes
+ */
+function loadReportsModuleScript() {
+    console.log('📜 Cargando script modulReports.js...');
+    
+    // Crear y cargar el script dinámicamente
+    const script = document.createElement('script');
+    script.src = '../js/modulReports.js?v=' + Date.now(); // Cache busting
+    script.type = 'text/javascript';
+    
+    script.onload = function() {
+        console.log('✅ Script modulReports.js cargado exitosamente');
+        
+        // Esperar un momento para que se ejecuten las definiciones de funciones
+        setTimeout(() => {
+            if (typeof initReportsModule === 'function') {
+                console.log('🎯 Inicializando módulo de reportes...');
+                initReportsModule();
+                showToast('Módulo de reportes cargado correctamente', 'success');
+            } else {
+                console.error('❌ Funciones de reportes aún no disponibles después de cargar');
+                showToast('Error: Funciones del módulo no disponibles', 'error');
+                
+                // Debug: mostrar qué funciones están disponibles
+                console.log('Funciones disponibles en window:', Object.keys(window).filter(key => key.includes('report') || key.includes('Report')));
+            }
+        }, 500);
+    };
+    
+    script.onerror = function() {
+        console.error('❌ Error al cargar el módulo de reportes');
+        showToast('Error al cargar módulo de reportes. Verifica que el archivo modulReports.js exista.', 'error');
+    };
+    
+    document.head.appendChild(script);
+}
+
 
 // CSS adicional para los estilos mejorados
 const additionalStyles = document.createElement('style');

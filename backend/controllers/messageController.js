@@ -21,6 +21,9 @@ exports.getConversations = async (req, res) => {
             // Administradores ven todas las conversaciones
             const pipeline = [
                 {
+                    $match: { archivado: { $ne: true } } // Excluir mensajes archivados
+                },
+                {
                     $sort: { fechaCreacion: -1 }
                 },
                 {

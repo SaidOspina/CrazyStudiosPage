@@ -35,6 +35,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes); // ✅ ESTA LÍNEA ES IMPORTANTE
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 // Ruta principal (SPA)
 app.get('*', (req, res) => {

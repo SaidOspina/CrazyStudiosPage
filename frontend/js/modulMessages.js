@@ -257,7 +257,7 @@ async function loadConversations() {
         
         console.log('🔗 Haciendo petición a:', `${API_BASE}/api/messages/conversations`);
         
-        const response = await fetch(`${API_BASE}/api/messages/conversations`, {
+        const response = await fetch(`${API_BASE}/api/messages/conversations?archived=false`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -2126,6 +2126,8 @@ window.initMessagesModuleComplete = function() {
     console.log('🚀 Inicializando módulo completo de mensajes...');
     initMessagesModule();
 };
+
+
 
 // Función para abrir nuevo mensaje desde quick actions
 window.openNewMessageFromQuickAction = function() {
