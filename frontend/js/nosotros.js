@@ -5,20 +5,20 @@ document.addEventListener('DOMContentLoaded', function() {
         {
             content: '"Crazy Studios transformó completamente nuestra presencia digital. Su enfoque estratégico y su atención personalizada nos han ayudado a aumentar nuestras ventas en un 150% en apenas 6 meses. No podríamos estar más satisfechos."',
             author: 'María López',
-            position: 'Gerente de Marketing, Empresa ABC',
-            image: '/api/placeholder/60/60'
+            position: 'Gerente de Marketing, Surtidora Institucional S.A.S',
+            image: '../img/logo_Emp1.png'
         },
         {
             content: '"El equipo de Crazy Studios ha sido fundamental en el crecimiento de nuestro negocio online. Su conocimiento técnico y su creatividad son excepcionales. Han superado todas nuestras expectativas."',
             author: 'Juan Rodríguez',
-            position: 'CEO, Startup XYZ',
-            image: '/api/placeholder/60/60'
+            position: 'CEO, Supermasas',
+            image: '../img/logo_Emp2.png'
         },
         {
             content: '"Elegir a Crazy Studios fue la mejor decisión para nuestro negocio. Su enfoque integral y su capacidad para entender nuestras necesidades específicas han hecho toda la diferencia. Recomendamos sus servicios sin reservas."',
             author: 'Carolina Martínez',
-            position: 'Directora, Empresa 123',
-            image: '/api/placeholder/60/60'
+            position: 'Directora, San Angel Gold',
+            image: '../img/logo_Emp3.png'
         }
     ];
     
