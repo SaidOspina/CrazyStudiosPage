@@ -1,5 +1,5 @@
 /**
- * MÓDULO DE MENSAJES - SISTEMA COMPLETO DE COMUNICACIÓN
+ * MÓDULO DE MENSAJES - SISTEMA COMPLETO DE COMUNICACIÓN CORREGIDO
  * Permite comunicación entre clientes y administradores con notificaciones por email
  */
 
@@ -32,232 +32,6 @@ function initMessagesModule() {
     console.log('✅ Módulo de mensajes inicializado');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Configurar botones adicionales del header
-    setupMessagesHeaderButtons();
-    
-    // Configurar FAB para móvil
-    setupFloatingActionButton();
-    
-    // Configurar atajos de teclado
-    setupKeyboardShortcuts();
-    
-    // Configurar notificaciones del navegador
-    setupBrowserNotifications();
-});
-
-/**
- * Configura los botones del header de mensajes
- */
-function setupMessagesHeaderButtons() {
-    const refreshBtn = document.getElementById('refresh-messages-btn');
-    const startConversationBtn = document.getElementById('start-new-conversation-btn');
-    
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            if (typeof loadConversations === 'function') {
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
-                this.disabled = true;
-                
-                loadConversations().finally(() => {
-                    setTimeout(() => {
-                        this.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
-                        this.disabled = false;
-                    }, 500);
-                });
-            }
-        });
-    }
-    
-    if (startConversationBtn) {
-        startConversationBtn.addEventListener('click', function() {
-            if (typeof openNewMessageModal === 'function') {
-                openNewMessageModal();
-            }
-        });
-    }
-}
-
-/**
- * Configura el Floating Action Button para móvil
- */
-function setupFloatingActionButton() {
-    const fabBtn = document.getElementById('fab-new-message');
-    
-    if (fabBtn) {
-        fabBtn.addEventListener('click', function() {
-            if (typeof openNewMessageModal === 'function') {
-                openNewMessageModal();
-            }
-        });
-        
-        // Mostrar/ocultar según el scroll
-        let lastScrollTop = 0;
-        const messagesList = document.querySelector('.messages-list');
-        
-        if (messagesList) {
-            messagesList.addEventListener('scroll', function() {
-                const scrollTop = this.scrollTop;
-                
-                if (scrollTop > lastScrollTop && scrollTop > 100) {
-                    // Scrolling down - hide FAB
-                    fabBtn.style.transform = 'scale(0)';
-                } else {
-                    // Scrolling up - show FAB
-                    fabBtn.style.transform = 'scale(1)';
-                }
-                
-                lastScrollTop = scrollTop;
-            });
-        }
-    }
-}
-
-/**
- * Configura atajos de teclado para mensajes
- */
-function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', function(e) {
-        // Solo activar en la sección de mensajes
-        const messagesSection = document.getElementById('messages');
-        if (!messagesSection || !messagesSection.classList.contains('active')) {
-            return;
-        }
-        
-        // Ctrl/Cmd + N - Nuevo mensaje
-        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-            e.preventDefault();
-            if (typeof openNewMessageModal === 'function') {
-                openNewMessageModal();
-            }
-        }
-        
-        // Ctrl/Cmd + R - Actualizar
-        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-            e.preventDefault();
-            if (typeof loadConversations === 'function') {
-                loadConversations();
-            }
-        }
-        
-        // Escape - Cerrar modales
-        if (e.key === 'Escape') {
-            const activeModal = document.querySelector('.modal.active');
-            if (activeModal) {
-                const closeBtn = activeModal.querySelector('.close-btn');
-                if (closeBtn) {
-                    closeBtn.click();
-                }
-            }
-        }
-        
-        // Enter en textarea - Enviar mensaje (Ctrl/Cmd + Enter)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            const activeTextarea = document.querySelector('textarea:focus');
-            if (activeTextarea) {
-                const form = activeTextarea.closest('form');
-                if (form) {
-                    const submitBtn = form.querySelector('button[type="submit"], .primary-btn');
-                    if (submitBtn && !submitBtn.disabled) {
-                        submitBtn.click();
-                    }
-                }
-            }
-        }
-    });
-}
-
-/**
- * Configura notificaciones del navegador
- */
-function setupBrowserNotifications() {
-    // Solicitar permiso para notificaciones
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
-}
-
-/**
- * Muestra notificación del navegador
- */
-function showBrowserNotification(title, options = {}) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification(title, {
-            icon: '../img/logo.png',
-            badge: '../img/logo.png',
-            tag: 'crazy-studios-message',
-            requireInteraction: false,
-            ...options
-        });
-        
-        // Auto cerrar después de 5 segundos
-        setTimeout(() => {
-            notification.close();
-        }, 5000);
-        
-        return notification;
-    }
-}
-
-/**
- * Crea efecto de partículas para notificaciones
- */
-function createNotificationParticles(element) {
-    const rect = element.getBoundingClientRect();
-    const particleCount = 6;
-    
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'notification-particle';
-        particle.style.left = (rect.left + Math.random() * rect.width) + 'px';
-        particle.style.top = (rect.top + Math.random() * rect.height) + 'px';
-        
-        document.body.appendChild(particle);
-        
-        // Remover partícula después de la animación
-        setTimeout(() => {
-            if (particle && particle.parentNode) {
-                particle.parentNode.removeChild(particle);
-            }
-        }, 2000);
-    }
-}
-
-/**
- * Maneja errores de conexión
- */
-function handleConnectionError() {
-    const messagesContainer = document.querySelector('.messages-container');
-    if (messagesContainer) {
-        const errorHTML = `
-            <div class="error-state">
-                <i class="fas fa-wifi-slash"></i>
-                <h3>Error de Conexión</h3>
-                <p>No se pudo conectar con el servidor. Verifica tu conexión a internet.</p>
-                <button class="retry-btn" onclick="retryConnection()">
-                    <i class="fas fa-redo"></i> Reintentar
-                </button>
-            </div>
-        `;
-        messagesContainer.innerHTML = errorHTML;
-    }
-}
-
-/**
- * Reintenta la conexión
- */
-function retryConnection() {
-    if (typeof loadConversations === 'function') {
-        loadConversations();
-    }
-}
-
-// Exponer funciones globalmente
-window.handleConnectionError = handleConnectionError;
-window.retryConnection = retryConnection;
-window.showBrowserNotification = showBrowserNotification;
-window.createNotificationParticles = createNotificationParticles;
-
 /**
  * Configura la interfaz según el rol del usuario
  */
@@ -288,8 +62,9 @@ function setupAdminMessagesInterface() {
     // Configurar pestañas de mensajes
     setupMessageTabs();
     
-    // Cargar lista de conversaciones
-    loadConversationsList();
+    // ✅ CORREGIDO: Cambiar función inexistente por la correcta
+    // La función loadConversations() ya carga y renderiza las conversaciones
+    console.log('📋 Interfaz de administrador configurada - las conversaciones se cargarán automáticamente');
 }
 
 /**
@@ -452,10 +227,21 @@ function setupMessageActions() {
 }
 
 /**
- * Carga la lista de conversaciones
+ * ✅ CORREGIDO: Carga las conversaciones y maneja errores correctamente
  */
 async function loadConversations() {
     console.log('📨 Cargando conversaciones...');
+    
+    // Mostrar indicador de carga
+    const messagesList = document.getElementById('messages-list');
+    if (messagesList) {
+        messagesList.innerHTML = `
+            <div class="loading-messages">
+                <div class="loading-spinner"></div>
+                Cargando conversaciones...
+            </div>
+        `;
+    }
     
     try {
         const token = localStorage.getItem('authToken');
@@ -469,19 +255,44 @@ async function loadConversations() {
             ? 'http://localhost:3000' 
             : '';
         
+        console.log('🔗 Haciendo petición a:', `${API_BASE}/api/messages/conversations`);
+        
         const response = await fetch(`${API_BASE}/api/messages/conversations`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
+        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+        
         if (!response.ok) {
-            throw new Error('Error al cargar conversaciones');
+            // ✅ CORREGIDO: Mejor manejo de errores HTTP
+            if (response.status === 404) {
+                // La ruta no existe, mostrar mensaje específico
+                throw new Error('Endpoint de mensajes no encontrado. Verifica que el servidor esté configurado correctamente.');
+            } else if (response.status === 401) {
+                throw new Error('No autorizado. Token de autenticación inválido.');
+            } else if (response.status === 500) {
+                throw new Error('Error interno del servidor');
+            } else {
+                const errorText = await response.text();
+                console.error('Error del servidor:', errorText);
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+        }
+        
+        // ✅ CORREGIDO: Verificar si la respuesta es JSON válido
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const textResponse = await response.text();
+            console.error('❌ Respuesta no es JSON:', textResponse);
+            throw new Error('El servidor no devolvió una respuesta JSON válida');
         }
         
         const data = await response.json();
-        console.log('✅ Conversaciones cargadas:', data);
+        console.log('✅ Conversaciones recibidas:', data);
         
         messagesData = data.data || [];
         
@@ -491,13 +302,54 @@ async function loadConversations() {
             // Para clientes, cargar directamente su conversación
             if (messagesData.length > 0) {
                 selectConversation(messagesData[0]._id);
+            } else {
+                showNoConversationsMessage();
             }
         }
         
     } catch (error) {
         console.error('❌ Error al cargar conversaciones:', error);
-        showToast('Error al cargar conversaciones', 'error');
-        showSampleConversationsData();
+        
+        // ✅ CORREGIDO: Mostrar mensaje de error más específico
+        if (messagesList) {
+            messagesList.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ff6b6b; margin-bottom: 16px;"></i>
+                    <h3>Error al cargar conversaciones</h3>
+                    <p style="color: #999; margin-bottom: 20px;">${error.message}</p>
+                    <button class="retry-btn primary-btn" onclick="loadConversations()">
+                        <i class="fas fa-redo"></i> Intentar de nuevo
+                    </button>
+                    <button class="secondary-btn" onclick="showSampleConversationsData()" style="margin-left: 10px;">
+                        <i class="fas fa-eye"></i> Ver datos de ejemplo
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Mostrar toast con error
+        if (typeof showToast === 'function') {
+            showToast(`Error al cargar conversaciones: ${error.message}`, 'error');
+        }
+    }
+}
+
+/**
+ * ✅ NUEVO: Muestra mensaje cuando no hay conversaciones
+ */
+function showNoConversationsMessage() {
+    const messageContent = document.querySelector('.message-content');
+    if (messageContent) {
+        messageContent.innerHTML = `
+            <div class="no-conversation">
+                <i class="fas fa-comments" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
+                <h3>No hay conversaciones</h3>
+                <p>Aún no tienes mensajes. Las conversaciones aparecerán aquí cuando recibas o envíes mensajes.</p>
+                <button class="primary-btn" onclick="openNewMessageModal()">
+                    <i class="fas fa-plus"></i> Iniciar Nueva Conversación
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -513,6 +365,9 @@ function renderConversationsList(conversations) {
             <div class="no-messages">
                 <i class="fas fa-envelope-open" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
                 <p>No hay conversaciones</p>
+                <button class="primary-btn" onclick="openNewMessageModal()" style="margin-top: 15px;">
+                    <i class="fas fa-plus"></i> Nueva conversación
+                </button>
             </div>
         `;
         return;
@@ -528,7 +383,9 @@ function renderConversationsList(conversations) {
         return `
             <div class="message-item ${unreadClass}" data-conversation-id="${conv._id}" onclick="selectConversation('${conv._id}')">
                 <div class="message-sender">
-                    <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                    <div class="sender-avatar-placeholder">
+                        ${(clientInfo.nombre || 'U').charAt(0).toUpperCase()}
+                    </div>
                     <div class="sender-info">
                         <h4>${clientInfo.nombre || 'Cliente'} ${clientInfo.apellidos || ''}</h4>
                         <p class="message-time">${timeAgo}</p>
@@ -571,6 +428,16 @@ async function selectConversation(conversationId) {
 async function loadConversationMessages(conversationId) {
     console.log('📨 Cargando mensajes de conversación:', conversationId);
     
+    const messageContent = document.querySelector('.message-content');
+    if (messageContent) {
+        messageContent.innerHTML = `
+            <div class="loading-conversation">
+                <div class="loading-spinner"></div>
+                <p>Cargando mensajes...</p>
+            </div>
+        `;
+    }
+    
     try {
         const token = localStorage.getItem('authToken');
         
@@ -585,12 +452,13 @@ async function loadConversationMessages(conversationId) {
         const response = await fetch(`${API_BASE}/api/messages/messages/${conversationId}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
         if (!response.ok) {
-            throw new Error('Error al cargar mensajes');
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
@@ -609,7 +477,23 @@ async function loadConversationMessages(conversationId) {
         
     } catch (error) {
         console.error('❌ Error al cargar mensajes:', error);
-        showToast('Error al cargar mensajes', 'error');
+        
+        if (messageContent) {
+            messageContent.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ff6b6b; margin-bottom: 16px;"></i>
+                    <h3>Error al cargar mensajes</h3>
+                    <p style="color: #999; margin-bottom: 20px;">${error.message}</p>
+                    <button class="retry-btn primary-btn" onclick="loadConversationMessages('${conversationId}')">
+                        <i class="fas fa-redo"></i> Intentar de nuevo
+                    </button>
+                </div>
+            `;
+        }
+        
+        if (typeof showToast === 'function') {
+            showToast('Error al cargar mensajes', 'error');
+        }
     }
 }
 
@@ -753,16 +637,27 @@ async function sendReply(conversationId) {
     const attachmentInput = document.getElementById('message-attachment');
     
     if (!textarea) {
-        showToast('Error: No se encontró el campo de mensaje', 'error');
+        if (typeof showToast === 'function') {
+            showToast('Error: No se encontró el campo de mensaje', 'error');
+        }
         return;
     }
     
     const mensaje = textarea.value.trim();
     
     if (!mensaje) {
-        showToast('Por favor escribe un mensaje', 'warning');
+        if (typeof showToast === 'function') {
+            showToast('Por favor escribe un mensaje', 'warning');
+        }
         textarea.focus();
         return;
+    }
+    
+    // Cambiar estado del botón de envío
+    const sendButton = document.querySelector('.reply-actions .primary-btn');
+    if (sendButton) {
+        sendButton.disabled = true;
+        sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
     }
     
     try {
@@ -815,11 +710,21 @@ async function sendReply(conversationId) {
         // Recargar lista de conversaciones
         await loadConversations();
         
-        showToast('Mensaje enviado correctamente', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Mensaje enviado correctamente', 'success');
+        }
         
     } catch (error) {
         console.error('❌ Error al enviar mensaje:', error);
-        showToast(error.message || 'Error al enviar mensaje', 'error');
+        if (typeof showToast === 'function') {
+            showToast(error.message || 'Error al enviar mensaje', 'error');
+        }
+    } finally {
+        // Restaurar botón
+        if (sendButton) {
+            sendButton.disabled = false;
+            sendButton.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Respuesta';
+        }
     }
 }
 
@@ -1016,7 +921,9 @@ async function loadClientsForNewMessage() {
         
     } catch (error) {
         console.error('Error al cargar clientes:', error);
-        showToast('Error al cargar lista de clientes', 'error');
+        if (typeof showToast === 'function') {
+            showToast('Error al cargar lista de clientes', 'error');
+        }
     }
 }
 
@@ -1058,7 +965,9 @@ async function handleSendNewMessage(e, closeModal) {
             await sendIndividualMessage(formData);
         }
         
-        showToast('Mensaje enviado correctamente', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Mensaje enviado correctamente', 'success');
+        }
         
         // Recargar conversaciones
         await loadConversations();
@@ -1068,7 +977,9 @@ async function handleSendNewMessage(e, closeModal) {
         
     } catch (error) {
         console.error('❌ Error al enviar mensaje:', error);
-        showToast(error.message || 'Error al enviar mensaje', 'error');
+        if (typeof showToast === 'function') {
+            showToast(error.message || 'Error al enviar mensaje', 'error');
+        }
     } finally {
         // Restaurar botón
         if (submitBtn) {
@@ -1114,7 +1025,9 @@ async function sendIndividualMessage(messageData) {
 async function sendGroupMessage(messageData) {
     // TODO: Implementar envío de mensajes grupales
     console.log('📢 Enviando mensaje grupal:', messageData);
-    showToast('Funcionalidad de mensajes grupales próximamente', 'info');
+    if (typeof showToast === 'function') {
+        showToast('Funcionalidad de mensajes grupales próximamente', 'info');
+    }
 }
 
 /**
@@ -1138,7 +1051,9 @@ function saveDraft() {
     }
     
     localStorage.setItem('messageDrafts', JSON.stringify(drafts));
-    showToast('Borrador guardado', 'success');
+    if (typeof showToast === 'function') {
+        showToast('Borrador guardado', 'success');
+    }
 }
 
 /**
@@ -1203,11 +1118,15 @@ async function markConversationAsRead(conversationId) {
         // Recargar conversaciones para actualizar contadores
         await loadConversations();
         
-        showToast('Mensajes marcados como leídos', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Mensajes marcados como leídos', 'success');
+        }
         
     } catch (error) {
         console.error('❌ Error al marcar como leído:', error);
-        showToast('Error al marcar mensajes como leídos', 'error');
+        if (typeof showToast === 'function') {
+            showToast('Error al marcar mensajes como leídos', 'error');
+        }
     }
 }
 
@@ -1217,15 +1136,48 @@ async function markConversationAsRead(conversationId) {
 async function archiveConversation(conversationId) {
     console.log('📦 Archivando conversación:', conversationId);
     
-    if (!confirm('¿Estás seguro de que deseas archivar esta conversación?')) {
+    if (!confirm('¿Estás seguro de que deseas archivar esta conversación?\n\nLa conversación se moverá a la sección de archivados pero podrás restaurarla más tarde.')) {
         return;
     }
     
     try {
-        // TODO: Implementar archivado en el backend
-        showToast('Conversación archivada', 'success');
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
         
-        // Recargar conversaciones
+        // Mostrar indicador de carga
+        const archiveBtn = document.querySelector(`[onclick="archiveConversation('${conversationId}')"]`);
+        if (archiveBtn) {
+            archiveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            archiveBtn.disabled = true;
+        }
+        
+        console.log('📤 Enviando petición de archivo...');
+        
+        const response = await fetch(`${API_BASE}/api/messages/archive/${conversationId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('📡 Respuesta del servidor:', response.status);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Error al archivar conversación');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Conversación archivada:', data);
+        
+        if (typeof showToast === 'function') {
+            showToast(`Conversación archivada correctamente. ${data.data.mensajesArchivados} mensajes archivados.`, 'success');
+        }
+        
+        // Recargar conversaciones para actualizar la lista
         await loadConversations();
         
         // Limpiar vista de mensaje actual
@@ -1233,15 +1185,431 @@ async function archiveConversation(conversationId) {
         if (messageContent) {
             messageContent.innerHTML = `
                 <div class="no-conversation">
-                    <i class="fas fa-archive" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
-                    <p>Conversación archivada</p>
+                    <i class="fas fa-archive" style="font-size: 48px; color: #28a745; margin-bottom: 16px;"></i>
+                    <h3>Conversación Archivada</h3>
+                    <p>La conversación ha sido archivada correctamente.</p>
+                    <p style="color: #999; font-size: 14px;">Puedes encontrarla en la sección "Archivados"</p>
+                    <div style="margin-top: 20px;">
+                        <button class="primary-btn" onclick="loadArchivedConversations()">
+                            <i class="fas fa-archive"></i> Ver Archivados
+                        </button>
+                        <button class="secondary-btn" onclick="loadConversations()" style="margin-left: 10px;">
+                            <i class="fas fa-inbox"></i> Volver a Entrada
+                        </button>
+                    </div>
                 </div>
             `;
         }
         
+        // Actualizar contador de mensajes archivados si existe
+        updateArchivedCounter();
+        
     } catch (error) {
         console.error('❌ Error al archivar conversación:', error);
-        showToast('Error al archivar conversación', 'error');
+        if (typeof showToast === 'function') {
+            showToast(`Error al archivar conversación: ${error.message}`, 'error');
+        }
+    } finally {
+        // Restaurar botón
+        const archiveBtn = document.querySelector(`[onclick="archiveConversation('${conversationId}')"]`);
+        if (archiveBtn) {
+            archiveBtn.innerHTML = '<i class="fas fa-archive"></i>';
+            archiveBtn.disabled = false;
+        }
+    }
+}
+
+/**
+ * Restaura una conversación archivada - NUEVA FUNCIÓN
+ */
+async function restoreConversation(conversationId) {
+    console.log('📤 Restaurando conversación:', conversationId);
+    
+    if (!confirm('¿Deseas restaurar esta conversación?\n\nLa conversación volverá a aparecer en tu bandeja de entrada.')) {
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/messages/restore/${conversationId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Error al restaurar conversación');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Conversación restaurada:', data);
+        
+        if (typeof showToast === 'function') {
+            showToast(`Conversación restaurada correctamente. ${data.data.mensajesRestaurados} mensajes restaurados.`, 'success');
+        }
+        
+        // Recargar conversaciones archivadas
+        await loadArchivedConversations();
+        
+    } catch (error) {
+        console.error('❌ Error al restaurar conversación:', error);
+        if (typeof showToast === 'function') {
+            showToast(`Error al restaurar conversación: ${error.message}`, 'error');
+        }
+    }
+}
+
+/**
+ * Carga conversaciones archivadas - NUEVA FUNCIÓN
+ */
+async function loadArchivedConversations() {
+    console.log('📦 Cargando conversaciones archivadas...');
+    
+    const messagesList = document.getElementById('messages-list');
+    if (messagesList) {
+        messagesList.innerHTML = `
+            <div class="loading-messages">
+                <div class="loading-spinner"></div>
+                Cargando conversaciones archivadas...
+            </div>
+        `;
+    }
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/messages/archived`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al cargar conversaciones archivadas');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Conversaciones archivadas cargadas:', data);
+        
+        const archivedConversations = data.data || [];
+        renderArchivedConversationsList(archivedConversations);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar conversaciones archivadas:', error);
+        
+        if (messagesList) {
+            messagesList.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ff6b6b; margin-bottom: 16px;"></i>
+                    <h3>Error al cargar archivados</h3>
+                    <p style="color: #999; margin-bottom: 20px;">${error.message}</p>
+                    <button class="retry-btn primary-btn" onclick="loadArchivedConversations()">
+                        <i class="fas fa-redo"></i> Intentar de nuevo
+                    </button>
+                    <button class="secondary-btn" onclick="loadConversations()" style="margin-left: 10px;">
+                        <i class="fas fa-inbox"></i> Volver a Entrada
+                    </button>
+                </div>
+            `;
+        }
+        
+        if (typeof showToast === 'function') {
+            showToast('Error al cargar conversaciones archivadas', 'error');
+        }
+    }
+}
+
+/**
+ * Renderiza la lista de conversaciones archivadas - NUEVA FUNCIÓN
+ */
+function renderArchivedConversationsList(conversations) {
+    const messagesList = document.getElementById('messages-list');
+    if (!messagesList) return;
+    
+    if (conversations.length === 0) {
+        messagesList.innerHTML = `
+            <div class="no-messages">
+                <i class="fas fa-archive" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
+                <h3>No hay conversaciones archivadas</h3>
+                <p>Las conversaciones archivadas aparecerán aquí.</p>
+                <button class="secondary-btn" onclick="loadConversations()" style="margin-top: 15px;">
+                    <i class="fas fa-inbox"></i> Volver a Entrada
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    const conversationsHTML = conversations.map(conv => {
+        const clientInfo = conv.clienteInfo || {};
+        const archivedBy = conv.archivadoPorInfo || {};
+        const archivedDate = conv.fechaArchivado ? formatTimeAgo(new Date(conv.fechaArchivado)) : '';
+        
+        return `
+            <div class="message-item archived" data-conversation-id="${conv._id}">
+                <div class="message-sender">
+                    <div class="sender-avatar-placeholder">
+                        ${(clientInfo.nombre || 'C').charAt(0).toUpperCase()}
+                    </div>
+                    <div class="sender-info">
+                        <h4>${clientInfo.nombre || 'Cliente'} ${clientInfo.apellidos || ''}</h4>
+                        <p class="message-time">Archivado ${archivedDate}</p>
+                    </div>
+                    <span class="archived-badge">ARCHIVADO</span>
+                </div>
+                <p class="message-subject">${conv.totalMensajes} mensajes archivados</p>
+                <p class="message-preview">Archivado por: ${archivedBy.nombre || 'Admin'} ${archivedBy.apellidos || ''}</p>
+                <div class="archived-actions">
+                    <button class="action-btn restore-btn" onclick="restoreConversation('${conv._id}')" title="Restaurar conversación">
+                        <i class="fas fa-undo"></i
+                    </button>
+                    <button class="action-btn view-btn" onclick="viewArchivedConversation('${conv._id}')" title="Ver mensajes">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    messagesList.innerHTML = `
+        <div class="archived-header">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #333; background-color: #1a1a1a;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-archive" style="color: #28a745;"></i>
+                    <span style="font-weight: 600; color: white;">Conversaciones Archivadas (${conversations.length})</span>
+                </div>
+                <button class="secondary-btn" onclick="loadConversations()" style="padding: 6px 12px; font-size: 12px;">
+                    <i class="fas fa-inbox"></i> Volver a Entrada
+                </button>
+            </div>
+        </div>
+        ${conversationsHTML}
+    `;
+}
+
+/**
+ * Ve una conversación archivada (solo lectura) - NUEVA FUNCIÓN
+ */
+async function viewArchivedConversation(conversationId) {
+    console.log('👁️ Viendo conversación archivada:', conversationId);
+    
+    // Marcar como activa en la lista
+    const messageItems = document.querySelectorAll('.message-item');
+    messageItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-conversation-id') === conversationId) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Cargar mensajes (solo lectura)
+    await loadArchivedConversationMessages(conversationId);
+}
+
+/**
+ * Carga mensajes de una conversación archivada - NUEVA FUNCIÓN
+ */
+async function loadArchivedConversationMessages(conversationId) {
+    console.log('📨 Cargando mensajes archivados:', conversationId);
+    
+    const messageContent = document.querySelector('.message-content');
+    if (messageContent) {
+        messageContent.innerHTML = `
+            <div class="loading-conversation">
+                <div class="loading-spinner"></div>
+                <p>Cargando mensajes archivados...</p>
+            </div>
+        `;
+    }
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/messages/messages/${conversationId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const messages = data.data || [];
+        
+        // Renderizar mensajes en modo solo lectura
+        renderArchivedConversationMessages(messages, conversationId);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar mensajes archivados:', error);
+        
+        if (messageContent) {
+            messageContent.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ff6b6b; margin-bottom: 16px;"></i>
+                    <h3>Error al cargar mensajes</h3>
+                    <p style="color: #999; margin-bottom: 20px;">${error.message}</p>
+                    <button class="retry-btn primary-btn" onclick="loadArchivedConversationMessages('${conversationId}')">
+                        <i class="fas fa-redo"></i> Intentar de nuevo
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+/**
+ * Renderiza mensajes archivados (solo lectura) - NUEVA FUNCIÓN
+ */
+function renderArchivedConversationMessages(messages, conversationId) {
+    const messageContent = document.querySelector('.message-content');
+    if (!messageContent) return;
+    
+    const clientInfo = messages.find(msg => !msg.esDeAdmin)?.remitenteInfo || {};
+    const latestMessage = messages[messages.length - 1];
+    
+    // Header para conversación archivada
+    const messageHeader = `
+        <div class="message-header archived-header">
+            <div class="message-details">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <i class="fas fa-archive" style="color: #28a745;"></i>
+                    <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">ARCHIVADO</span>
+                </div>
+                <h3 class="message-content-subject">Conversación con ${clientInfo.nombre || 'Cliente'} ${clientInfo.apellidos || ''}</h3>
+                <div class="message-meta">
+                    <p class="message-content-from">Cliente: ${clientInfo.nombre || 'Sin nombre'} ${clientInfo.apellidos || ''}</p>
+                    <p class="message-content-time">${formatDateTime(new Date(latestMessage.fechaCreacion))}</p>
+                </div>
+            </div>
+            <div class="message-actions">
+                <button class="action-btn restore-btn" onclick="restoreConversation('${conversationId}')" title="Restaurar conversación">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="action-btn" onclick="loadArchivedConversations()" title="Volver a archivados">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Renderizar mensajes
+    const messagesHTML = messages.map(message => {
+        const senderInfo = message.remitenteInfo || {};
+        const isAdmin = message.esDeAdmin;
+        const messageClass = isAdmin ? 'admin-message' : 'client-message';
+        const senderName = isAdmin 
+            ? `${senderInfo.nombre || 'Admin'} ${senderInfo.apellidos || ''}` 
+            : `${senderInfo.nombre || 'Cliente'} ${senderInfo.apellidos || ''}`;
+        
+        return `
+            <div class="message-bubble ${messageClass} archived-message">
+                <div class="message-sender-name">${senderName}</div>
+                <div class="message-text">${message.mensaje}</div>
+                <div class="message-time">${formatDateTime(new Date(message.fechaCreacion))}</div>
+            </div>
+        `;
+    }).join('');
+    
+    const messageBody = `
+        <div class="message-body conversation-view archived-conversation">
+            ${messagesHTML}
+        </div>
+    `;
+    
+    // Aviso de solo lectura en lugar del formulario de respuesta
+    const readOnlyNotice = `
+        <div class="archived-notice">
+            <div style="text-align: center; padding: 20px; background-color: #1a1a1a; border-top: 1px solid #333;">
+                <i class="fas fa-archive" style="font-size: 24px; color: #28a745; margin-bottom: 10px;"></i>
+                <h4 style="color: white; margin: 0 0 8px 0;">Conversación Archivada</h4>
+                <p style="color: #999; margin: 0 0 15px 0; font-size: 14px;">
+                    Esta conversación está archivada y es de solo lectura.
+                </p>
+                <button class="primary-btn" onclick="restoreConversation('${conversationId}')">
+                    <i class="fas fa-undo"></i> Restaurar para Responder
+                </button>
+            </div>
+        </div>
+    `;
+    
+    messageContent.innerHTML = messageHeader + messageBody + readOnlyNotice;
+    
+    // Scroll al último mensaje
+    setTimeout(() => {
+        const messageBody = document.querySelector('.message-body');
+        if (messageBody) {
+            messageBody.scrollTop = messageBody.scrollHeight;
+        }
+    }, 100);
+}
+
+/**
+ * Actualiza el contador de mensajes archivados - NUEVA FUNCIÓN
+ */
+async function updateArchivedCounter() {
+    try {
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/messages/archived`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const archivedCount = data.count || 0;
+            
+            // Actualizar badge en la pestaña de archivados
+            const archivedTab = document.querySelector('[data-tab="archived"]');
+            if (archivedTab) {
+                const existingBadge = archivedTab.querySelector('.archived-count');
+                if (existingBadge) {
+                    existingBadge.remove();
+                }
+                
+                if (archivedCount > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'archived-count';
+                    badge.style.cssText = `
+                        background: #28a745;
+                        color: white;
+                        border-radius: 10px;
+                        padding: 2px 6px;
+                        font-size: 10px;
+                        font-weight: 600;
+                        margin-left: 5px;
+                    `;
+                    badge.textContent = archivedCount;
+                    archivedTab.appendChild(badge);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error al actualizar contador de archivados:', error);
     }
 }
 
@@ -1257,7 +1625,9 @@ async function deleteConversation(conversationId) {
     
     try {
         // TODO: Implementar eliminación en el backend
-        showToast('Conversación eliminada', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Conversación eliminada', 'success');
+        }
         
         // Recargar conversaciones
         await loadConversations();
@@ -1275,7 +1645,9 @@ async function deleteConversation(conversationId) {
         
     } catch (error) {
         console.error('❌ Error al eliminar conversación:', error);
-        showToast('Error al eliminar conversación', 'error');
+        if (typeof showToast === 'function') {
+            showToast('Error al eliminar conversación', 'error');
+        }
     }
 }
 
@@ -1309,36 +1681,35 @@ function searchMessages() {
     
     renderConversationsList(filteredConversations);
     
-    if (filteredConversations.length === 0) {
+    if (filteredConversations.length === 0 && typeof showToast === 'function') {
         showToast(`No se encontraron resultados para "${searchTerm}"`, 'info');
     }
 }
 
 /**
- * Filtra mensajes por pestaña
+ * Actualizar la función filterMessagesByTab para manejar archivados
  */
 function filterMessagesByTab(tabType) {
     console.log('🔄 Filtrando mensajes por pestaña:', tabType);
     
-    let filteredData = [];
-    
     switch (tabType) {
         case 'inbox':
-            filteredData = messagesData.filter(conv => !conv.archived);
+            loadConversations();
             break;
         case 'sent':
             // TODO: Implementar mensajes enviados
-            filteredData = [];
+            if (typeof showToast === 'function') {
+                showToast('Funcionalidad de mensajes enviados próximamente', 'info');
+            }
             break;
         case 'archived':
-            filteredData = messagesData.filter(conv => conv.archived);
+            loadArchivedConversations();
             break;
         default:
-            filteredData = messagesData;
+            loadConversations();
     }
-    
-    renderConversationsList(filteredData);
 }
+
 
 /**
  * Muestra datos de ejemplo cuando falla la carga
@@ -1352,7 +1723,7 @@ function showSampleConversationsData() {
     messagesList.innerHTML = `
         <div class="message-item unread" onclick="showSampleConversation()">
             <div class="message-sender">
-                <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                <div class="sender-avatar-placeholder">J</div>
                 <div class="sender-info">
                     <h4>Juan Pérez</h4>
                     <p class="message-time">Hace 2 horas</p>
@@ -1365,7 +1736,7 @@ function showSampleConversationsData() {
         
         <div class="message-item" onclick="showSampleConversation()">
             <div class="message-sender">
-                <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                <div class="sender-avatar-placeholder">A</div>
                 <div class="sender-info">
                     <h4>Ana González</h4>
                     <p class="message-time">Ayer</p>
@@ -1560,7 +1931,194 @@ function cleanupMessagesModule() {
 }
 
 /**
- * Funciones públicas para uso externo
+ * ✅ CONFIGURACIÓN DE EVENTOS DEL DOM
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar botones adicionales del header
+    setupMessagesHeaderButtons();
+    
+    // Configurar FAB para móvil
+    setupFloatingActionButton();
+    
+    // Configurar atajos de teclado
+    setupKeyboardShortcuts();
+    
+    // Configurar notificaciones del navegador
+    setupBrowserNotifications();
+});
+
+/**
+ * Configura los botones del header de mensajes
+ */
+function setupMessagesHeaderButtons() {
+    const refreshBtn = document.getElementById('refresh-messages-btn');
+    const startConversationBtn = document.getElementById('start-new-conversation-btn');
+    
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+            this.disabled = true;
+            
+            loadConversations().finally(() => {
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
+                    this.disabled = false;
+                }, 500);
+            });
+        });
+    }
+    
+    if (startConversationBtn) {
+        startConversationBtn.addEventListener('click', function() {
+            openNewMessageModal();
+        });
+    }
+}
+
+/**
+ * Configura el Floating Action Button para móvil
+ */
+function setupFloatingActionButton() {
+    const fabBtn = document.getElementById('fab-new-message');
+    
+    if (fabBtn) {
+        fabBtn.addEventListener('click', function() {
+            openNewMessageModal();
+        });
+        
+        // Mostrar/ocultar según el scroll
+        let lastScrollTop = 0;
+        const messagesList = document.querySelector('.messages-list');
+        
+        if (messagesList) {
+            messagesList.addEventListener('scroll', function() {
+                const scrollTop = this.scrollTop;
+                
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    // Scrolling down - hide FAB
+                    fabBtn.style.transform = 'scale(0)';
+                } else {
+                    // Scrolling up - show FAB
+                    fabBtn.style.transform = 'scale(1)';
+                }
+                
+                lastScrollTop = scrollTop;
+            });
+        }
+    }
+}
+
+/**
+ * Configura atajos de teclado para mensajes
+ */
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Solo activar en la sección de mensajes
+        const messagesSection = document.getElementById('messages');
+        if (!messagesSection || !messagesSection.classList.contains('active')) {
+            return;
+        }
+        
+        // Ctrl/Cmd + N - Nuevo mensaje
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            openNewMessageModal();
+        }
+        
+        // Ctrl/Cmd + R - Actualizar
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            loadConversations();
+        }
+        
+        // Escape - Cerrar modales
+        if (e.key === 'Escape') {
+            const activeModal = document.querySelector('.modal.active');
+            if (activeModal) {
+                const closeBtn = activeModal.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.click();
+                }
+            }
+        }
+        
+        // Enter en textarea - Enviar mensaje (Ctrl/Cmd + Enter)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            const activeTextarea = document.querySelector('textarea:focus');
+            if (activeTextarea) {
+                const form = activeTextarea.closest('form');
+                if (form) {
+                    const submitBtn = form.querySelector('button[type="submit"], .primary-btn');
+                    if (submitBtn && !submitBtn.disabled) {
+                        submitBtn.click();
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Configura notificaciones del navegador
+ */
+function setupBrowserNotifications() {
+    // Solicitar permiso para notificaciones
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
+/**
+ * Muestra notificación del navegador
+ */
+function showBrowserNotification(title, options = {}) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const notification = new Notification(title, {
+            icon: '../img/logo.png',
+            badge: '../img/logo.png',
+            tag: 'crazy-studios-message',
+            requireInteraction: false,
+            ...options
+        });
+        
+        // Auto cerrar después de 5 segundos
+        setTimeout(() => {
+            notification.close();
+        }, 5000);
+        
+        return notification;
+    }
+}
+
+/**
+ * Maneja errores de conexión
+ */
+function handleConnectionError() {
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+        const errorHTML = `
+            <div class="error-state">
+                <i class="fas fa-wifi-slash"></i>
+                <h3>Error de Conexión</h3>
+                <p>No se pudo conectar con el servidor. Verifica tu conexión a internet.</p>
+                <button class="retry-btn" onclick="retryConnection()">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
+            </div>
+        `;
+        messagesContainer.innerHTML = errorHTML;
+    }
+}
+
+/**
+ * Reintenta la conexión
+ */
+function retryConnection() {
+    loadConversations();
+}
+
+/**
+ * ✅ FUNCIONES PÚBLICAS PARA USO EXTERNO
  */
 
 // Función para inicializar desde el dashboard principal
@@ -1583,6 +2141,11 @@ window.openNewMessageFromQuickAction = function() {
 };
 
 // Funciones globales para botones
+window.restoreConversation = restoreConversation;
+window.loadArchivedConversations = loadArchivedConversations;
+window.viewArchivedConversation = viewArchivedConversation;
+window.loadArchivedConversationMessages = loadArchivedConversationMessages;
+window.updateArchivedCounter = updateArchivedCounter;
 window.selectConversation = selectConversation;
 window.markConversationAsRead = markConversationAsRead;
 window.archiveConversation = archiveConversation;
@@ -1590,6 +2153,12 @@ window.deleteConversation = deleteConversation;
 window.sendReply = sendReply;
 window.clearReply = clearReply;
 window.showSampleConversation = showSampleConversation;
+window.showSampleConversationsData = showSampleConversationsData;
+window.openNewMessageModal = openNewMessageModal;
+window.loadConversations = loadConversations;
+window.handleConnectionError = handleConnectionError;
+window.retryConnection = retryConnection;
+window.showBrowserNotification = showBrowserNotification;
 
 // Inicialización automática cuando se carga la sección
 document.addEventListener('DOMContentLoaded', function() {
@@ -1626,3 +2195,218 @@ window.addEventListener('beforeunload', function() {
 });
 
 console.log('✅ Módulo de mensajes cargado completamente');
+
+/**
+ * ✅ ESTILOS CSS ADICIONALES PARA EL MÓDULO DE MENSAJES
+ */
+const messagesStyles = document.createElement('style');
+messagesStyles.textContent = `
+    /* Estilos mejorados para el módulo de mensajes */
+    
+    .loading-spinner {
+        border: 3px solid #333;
+        border-top: 3px solid var(--primary-color, #007bff);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .sender-avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    
+    .message-bubble {
+        margin-bottom: 15px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        max-width: 80%;
+    }
+    
+    .message-bubble.client-message {
+        background-color: #2a2a2a;
+        margin-left: 0;
+        margin-right: auto;
+        border-bottom-left-radius: 4px;
+    }
+    
+    .message-bubble.admin-message {
+        background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
+        color: white;
+        margin-left: auto;
+        margin-right: 0;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .message-sender-name {
+        font-size: 12px;
+        font-weight: 600;
+        opacity: 0.8;
+        margin-bottom: 5px;
+    }
+    
+    .message-text {
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+    
+    .message-time {
+        font-size: 11px;
+        opacity: 0.6;
+        margin-top: 5px;
+    }
+    
+    .error-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+    }
+    
+    .error-state i {
+        font-size: 48px;
+        color: #ff6b6b;
+        margin-bottom: 16px;
+    }
+    
+    .error-state h3 {
+        color: #fff;
+        margin-bottom: 10px;
+    }
+    
+    .retry-btn {
+        background: var(--primary-color, #007bff);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 10px 5px;
+        transition: all 0.2s ease;
+    }
+    
+    .retry-btn:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+    }
+    
+    .loading-conversation {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px;
+        color: #999;
+    }
+    
+    .unread-badge {
+        background: var(--primary-color, #007bff);
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        min-width: 18px;
+        text-align: center;
+    }
+    
+    .message-item.unread {
+        background-color: rgba(0, 123, 255, 0.1);
+        border-left: 3px solid var(--primary-color, #007bff);
+    }
+    
+    .message-item:hover {
+        background-color: #2a2a2a;
+        transform: translateX(2px);
+        transition: all 0.2s ease;
+    }
+    
+    .message-item.active {
+        background-color: var(--primary-color, #007bff);
+        color: white;
+    }
+    
+    .message-item.active .message-time,
+    .message-item.active .message-preview {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .reply-container {
+        border-top: 1px solid #333;
+        padding: 20px;
+        background-color: #1a1a1a;
+    }
+    
+    .reply-body textarea {
+        width: 100%;
+        min-height: 80px;
+        background-color: #2a2a2a;
+        border: 1px solid #555;
+        border-radius: 8px;
+        padding: 12px;
+        color: white;
+        resize: vertical;
+        font-family: inherit;
+    }
+    
+    .reply-body textarea:focus {
+        border-color: var(--primary-color, #007bff);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+    
+    .reply-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 15px;
+    }
+    
+    .attachment-btn {
+        background: none;
+        border: 1px solid #555;
+        color: #999;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s ease;
+        margin-bottom: 10px;
+    }
+    
+    .attachment-btn:hover {
+        border-color: var(--primary-color, #007bff);
+        color: var(--primary-color, #007bff);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .message-bubble {
+            max-width: 95%;
+        }
+        
+        .reply-actions {
+            flex-direction: column;
+        }
+        
+        .reply-actions button {
+            width: 100%;
+        }
+    }
+`;
+
+document.head.appendChild(messagesStyles);

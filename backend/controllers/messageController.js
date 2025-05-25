@@ -528,7 +528,7 @@ exports.getMessageStats = async (req, res) => {
 };
 
 /**
- * Obtiene conversaciones archivadas (solo para admins)
+ * Obtiene conversaciones archivadas
  */
 exports.getArchivedConversations = async (req, res) => {
     try {
@@ -543,11 +543,64 @@ exports.getArchivedConversations = async (req, res) => {
             });
         }
         
-        // TODO: Implementar sistema de archivado
-        // Por ahora devolver array vacío
+        // Obtener conversaciones archivadas
+        const pipeline = [
+            {
+                $match: { archivado: true }
+            },
+            {
+                $sort: { fechaArchivado: -1 }
+            },
+            {
+                $group: {
+                    _id: '$cliente',
+                    ultimoMensaje: { $first: '$$ROOT' },
+                    totalMensajes: { $sum: 1 },
+                    fechaArchivado: { $first: '$fechaArchivado' },
+                    archivadoPor: { $first: '$archivadoPor' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'clienteInfo'
+                }
+            },
+            {
+                $unwind: '$clienteInfo'
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'archivadoPor',
+                    foreignField: '_id',
+                    as: 'archivadoPorInfo'
+                }
+            },
+            {
+                $unwind: { 
+                    path: '$archivadoPorInfo',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $match: {
+                    'clienteInfo.rol': 'cliente'
+                }
+            },
+            {
+                $sort: { fechaArchivado: -1 }
+            }
+        ];
+        
+        const archivedConversations = await db.collection('messages').aggregate(pipeline).toArray();
+        
         res.status(200).json({
             success: true,
-            data: []
+            count: archivedConversations.length,
+            data: archivedConversations
         });
         
     } catch (error) {
@@ -555,6 +608,139 @@ exports.getArchivedConversations = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error al obtener conversaciones archivadas',
+            error: error.message
+        });
+    }
+};
+
+
+/**
+ * Archiva una conversación completa
+ */
+exports.archiveConversation = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const { clienteId } = req.params;
+        const userId = req.user.id;
+        const userRole = req.user.rol;
+        
+        // Verificar permisos (solo admins pueden archivar)
+        if (userRole !== 'admin' && userRole !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para archivar conversaciones'
+            });
+        }
+        
+        // Verificar que el cliente existe
+        const cliente = await db.collection('users').findOne({ 
+            _id: toObjectId(clienteId),
+            rol: 'cliente'
+        });
+        
+        if (!cliente) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cliente no encontrado'
+            });
+        }
+        
+        // Marcar todos los mensajes de la conversación como archivados
+        const result = await db.collection('messages').updateMany(
+            { cliente: toObjectId(clienteId) },
+            { 
+                $set: { 
+                    archivado: true,
+                    fechaArchivado: new Date(),
+                    archivadoPor: toObjectId(userId)
+                } 
+            }
+        );
+        
+        console.log(`✅ Conversación archivada: ${result.modifiedCount} mensajes archivados`);
+        
+        // Enviar notificación por email al admin que archivó
+        try {
+            const admin = await db.collection('users').findOne({ _id: toObjectId(userId) });
+            
+            if (admin && typeof emailService.sendConversationArchivedNotification === 'function') {
+                await emailService.sendConversationArchivedNotification(admin, {
+                    clientName: `${cliente.nombre} ${cliente.apellidos}`,
+                    totalMessages: result.modifiedCount
+                });
+            }
+        } catch (emailError) {
+            console.error('Error al enviar notificación de archivo:', emailError);
+            // No interrumpir el proceso por fallos de email
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Conversación archivada correctamente',
+            data: {
+                clienteId: clienteId,
+                mensajesArchivados: result.modifiedCount,
+                fechaArchivado: new Date()
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error al archivar conversación:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al archivar conversación',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Restaura una conversación archivada
+ */
+exports.restoreConversation = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const { clienteId } = req.params;
+        const userId = req.user.id;
+        const userRole = req.user.rol;
+        
+        // Verificar permisos (solo admins pueden restaurar)
+        if (userRole !== 'admin' && userRole !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para restaurar conversaciones'
+            });
+        }
+        
+        // Restaurar todos los mensajes de la conversación
+        const result = await db.collection('messages').updateMany(
+            { cliente: toObjectId(clienteId) },
+            { 
+                $unset: { 
+                    archivado: "",
+                    fechaArchivado: "",
+                    archivadoPor: ""
+                }
+            }
+        );
+        
+        console.log(`✅ Conversación restaurada: ${result.modifiedCount} mensajes restaurados`);
+        
+        res.status(200).json({
+            success: true,
+            message: 'Conversación restaurada correctamente',
+            data: {
+                clienteId: clienteId,
+                mensajesRestaurados: result.modifiedCount,
+                fechaRestauracion: new Date()
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error al restaurar conversación:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al restaurar conversación',
             error: error.message
         });
     }

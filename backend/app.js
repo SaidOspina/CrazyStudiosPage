@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 // Inicializar Express
 const app = express();
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes); // ✅ ESTA LÍNEA ES IMPORTANTE
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Ruta principal (SPA)
 app.get('*', (req, res) => {
@@ -65,6 +67,20 @@ app.use((req, res, next) => {
         console.log('Headers:', JSON.stringify(req.headers, null, 2));
         console.log('Body:', JSON.stringify(req.body, null, 2));
         console.log('=========================================');
+    }
+    next();
+}); 
+
+app.use((req, res, next) => {
+    if (req.url.includes('/api/messages')) {
+        console.log('==== PETICIÓN DE MENSAJES RECIBIDA ====');
+        console.log('URL:', req.url);
+        console.log('Method:', req.method);
+        console.log('Headers:', JSON.stringify(req.headers, null, 2));
+        if (req.method !== 'GET') {
+            console.log('Body:', JSON.stringify(req.body, null, 2));
+        }
+        console.log('========================================');
     }
     next();
 });
@@ -111,6 +127,21 @@ if (process.env.NODE_ENV === 'development') {
             ]
         });
     });
+    
+    // ✅ AGREGADO: Ruta de prueba para verificar rutas de mensajes
+    app.get('/api/test/messages', (req, res) => {
+        res.json({
+            success: true,
+            message: 'Ruta de mensajes funcionando correctamente',
+            availableRoutes: [
+                'GET /api/messages/conversations - Obtener conversaciones',
+                'GET /api/messages/messages/:clienteId - Obtener mensajes de una conversación',
+                'POST /api/messages/send - Enviar mensaje',
+                'PUT /api/messages/mark-read/:clienteId - Marcar como leído',
+                'GET /api/messages/stats - Obtener estadísticas',
+                'GET /api/messages/search - Buscar mensajes'
+            ]
+        });
+    });
 }
-
 module.exports = app;

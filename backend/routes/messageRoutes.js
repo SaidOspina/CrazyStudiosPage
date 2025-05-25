@@ -62,6 +62,18 @@ router.get('/stats', protect, authorize('admin', 'superadmin'), messageControlle
 router.get('/archived', protect, authorize('admin', 'superadmin'), messageController.getArchivedConversations);
 
 /**
+ * PUT /api/messages/archive/:clienteId
+ * Archiva una conversación completa
+ */
+router.put('/archive/:clienteId', protect, authorize('admin', 'superadmin'), messageController.archiveConversation);
+
+/**
+ * PUT /api/messages/restore/:clienteId
+ * Restaura una conversación archivada
+ */
+router.put('/restore/:clienteId', protect, authorize('admin', 'superadmin'), messageController.restoreConversation);
+
+/**
  * DELETE /api/messages/message/:messageId
  * Elimina un mensaje específico (solo admins)
  */

@@ -1462,3 +1462,568 @@
         page-break-inside: avoid;
     }
 }
+/**
+ * ESTILOS ADICIONALES PARA MENSAJES ARCHIVADOS
+ * Agregar este CSS al archivo frontend/css/modulMessages.css
+ */
+
+/* ==================== MENSAJES ARCHIVADOS ==================== */
+
+/* Badge de archivado */
+.archived-badge {
+    background: #28a745;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Elementos de conversación archivada */
+.message-item.archived {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left: 3px solid #28a745;
+    opacity: 0.9;
+}
+
+.message-item.archived:hover {
+    background-color: rgba(40, 167, 69, 0.15);
+}
+
+.message-item.archived .message-time {
+    color: #28a745;
+    font-weight: 500;
+}
+
+/* Acciones de elementos archivados */
+.archived-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.archived-actions button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid transparent;
+}
+
+.restore-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.restore-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.view-btn {
+    background: none;
+    color: #6c757d;
+    border: 1px solid #495057;
+}
+
+.view-btn:hover {
+    background-color: #495057;
+    color: white;
+}
+
+/* Header de conversación archivada */
+.message-header.archived-header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d5016 100%);
+    border-bottom: 2px solid #28a745;
+}
+
+.message-header.archived-header .message-details h3 {
+    color: #28a745;
+}
+
+/* Mensajes archivados (solo lectura) */
+.message-bubble.archived-message {
+    position: relative;
+    opacity: 0.95;
+}
+
+.message-bubble.archived-message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(40, 167, 69, 0.05) 10px,
+        rgba(40, 167, 69, 0.05) 20px
+    );
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+/* Conversación archivada (solo lectura) */
+.conversation-view.archived-conversation {
+    position: relative;
+}
+
+.conversation-view.archived-conversation::after {
+    content: 'ARCHIVADO';
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    z-index: 10;
+}
+
+/* Aviso de solo lectura */
+.archived-notice {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d5016 100%);
+    border-top: 2px solid #28a745;
+}
+
+.archived-notice i {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Header de sección archivados */
+.archived-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    margin: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.archived-header button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.archived-header button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Contador de archivados en pestañas */
+.archived-count {
+    background: #28a745 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    padding: 2px 6px !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    margin-left: 5px !important;
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Estados de la pestaña archivados */
+.message-tab[data-tab="archived"] {
+    position: relative;
+}
+
+.message-tab[data-tab="archived"].active {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.message-tab[data-tab="archived"]:hover:not(.active) {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+/* Efectos visuales para elementos archivados */
+.message-item.archived {
+    position: relative;
+    overflow: hidden;
+}
+
+.message-item.archived::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -50px;
+    width: 100px;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(40, 167, 69, 0.1), transparent);
+    transform: skewX(-25deg);
+    transition: right 0.6s ease;
+}
+
+.message-item.archived:hover::after {
+    right: 100%;
+}
+
+/* Indicador de estado archivado */
+.archived-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 8px;
+    height: 8px;
+    background: #28a745;
+    border-radius: 50%;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.3;
+    }
+}
+
+/* Tooltip para elementos archivados */
+.archived-tooltip {
+    position: relative;
+}
+
+.archived-tooltip::before {
+    content: 'Esta conversación está archivada';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.archived-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+    bottom: calc(100% + 5px);
+}
+
+/* Animación de entrada para elementos archivados */
+@keyframes slideInFromLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.message-item.archived {
+    animation: slideInFromLeft 0.5s ease;
+}
+
+/* Responsive para elementos archivados */
+@media (max-width: 768px) {
+    .archived-actions {
+        flex-direction: column;
+    }
+    
+    .archived-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .conversation-view.archived-conversation::after {
+        top: 10px;
+        right: 10px;
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    .archived-header {
+        position: relative;
+    }
+    
+    .archived-header > div {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 480px) {
+    .archived-badge {
+        font-size: 9px;
+        padding: 1px 6px;
+    }
+    
+    .archived-actions button {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+    
+    .archived-notice {
+        padding: 15px;
+    }
+    
+    .archived-notice h4 {
+        font-size: 16px;
+    }
+    
+    .archived-notice p {
+        font-size: 13px;
+    }
+}
+
+/* Estados de hover mejorados */
+.restore-btn:hover {
+    background: linear-gradient(135deg, #218838, #1e7e34);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
+}
+
+.view-btn:hover {
+    background-color: #6c757d;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 10px rgba(108, 117, 125, 0.3);
+}
+
+/* Transiciones suaves */
+.message-item.archived,
+.archived-actions button,
+.restore-btn,
+.view-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejoras de accesibilidad */
+.restore-btn:focus,
+.view-btn:focus {
+    outline: 2px solid #28a745;
+    outline-offset: 2px;
+}
+
+/* Efectos de carga para archivados */
+.loading-archived {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #28a745;
+}
+
+.loading-archived .loading-spinner {
+    border-top-color: #28a745;
+}
+
+/* Mensaje de éxito para operaciones de archivo */
+.archive-success {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1));
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    color: #28a745;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.archive-success i {
+    font-size: 18px;
+}
+
+/* Botón de acción flotante para archivados */
+.fab-archive {
+    position: fixed;
+    bottom: 90px;
+    right: 30px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    transition: all 0.3s ease;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    z-index: 999;
+}
+
+.fab-archive:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6);
+}
+
+/* Mostrar FAB en vista de archivados */
+.messages-container.archived-view .fab-archive {
+    display: flex;
+}
+
+/* Badge personalizado para diferentes estados */
+.status-badge.archived {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.status-badge.restored {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    animation: pulse 1s ease;
+}
+
+/* Separador visual entre archivados y normales */
+.section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #28a745, transparent);
+    margin: 20px 0;
+    position: relative;
+}
+
+.section-divider::after {
+    content: 'ARCHIVADOS';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #28a745;
+    padding: 0 15px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* Animación de éxito al archivar */
+@keyframes archiveSuccess {
+    0% {
+        transform: scale(1);
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    50% {
+        transform: scale(1.02);
+        background-color: rgba(40, 167, 69, 0.2);
+    }
+    100% {
+        transform: scale(1);
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+}
+
+.message-item.archive-animation {
+    animation: archiveSuccess 0.6s ease;
+}
+
+/* Filtros para elementos archivados */
+.archived-filters {
+    padding: 15px;
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #333;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.archived-filters select,
+.archived-filters input {
+    background-color: #2a2a2a;
+    border: 1px solid #555;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.archived-filters label {
+    color: #999;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Indicador de progreso para operaciones de archivo */
+.archive-progress {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    display: none;
+    align-items: center;
+    gap: 15px;
+    z-index: 10000;
+}
+
+.archive-progress.show {
+    display: flex;
+}
+
+.archive-progress .progress-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #333;
+    border-top: 2px solid #28a745;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
