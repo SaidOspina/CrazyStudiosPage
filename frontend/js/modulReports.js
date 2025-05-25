@@ -1,6 +1,6 @@
 /**
- * MÓDULO DE REPORTES - VERSIÓN SIMPLIFICADA
- * Generador de informes de proyectos y citas con exportación
+ * MÓDULO DE REPORTES - VERSIÓN CON EXPORTACIÓN REAL PDF/EXCEL
+ * Generador de informes de proyectos y citas con exportación completa
  */
 
 // Variables globales del módulo
@@ -8,17 +8,101 @@ let currentReportData = null;
 let currentReportType = null;
 let currentFilters = {};
 
+// Verificar si las librerías están disponibles
+let jsPDFLoaded = false;
+let xlsxLoaded = false;
+
 /**
  * Inicializa el módulo de reportes
  */
 function initReportsModule() {
     console.log('🔄 Inicializando módulo de reportes...');
     
-    setupReportEventListeners();
-    setDefaultDates();
-    
-    console.log('✅ Módulo de reportes inicializado correctamente');
+    // Cargar librerías necesarias
+    loadRequiredLibraries().then(() => {
+        setupReportEventListeners();
+        setDefaultDates();
+        console.log('✅ Módulo de reportes inicializado correctamente');
+    }).catch(error => {
+        console.error('Error al cargar librerías:', error);
+        showToast('Error al inicializar módulo de reportes', 'error');
+    });
 }
+
+/**
+ * Carga las librerías necesarias para exportación - VERSIÓN CORREGIDA
+ */
+async function loadRequiredLibraries() {
+    return new Promise((resolve, reject) => {
+        let scriptsToLoad = 0;
+        let scriptsLoaded = 0;
+        
+        // Función para verificar cuando todas las librerías estén cargadas
+        function checkAllLoaded() {
+            scriptsLoaded++;
+            if (scriptsLoaded === scriptsToLoad) {
+                resolve();
+            }
+        }
+        
+        // Cargar jsPDF si no está disponible
+        if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+            scriptsToLoad++;
+            const jsPDFScript = document.createElement('script');
+            jsPDFScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            jsPDFScript.onload = () => {
+                // jsPDF puede estar disponible en diferentes formas según la versión
+                if (typeof window.jspdf !== 'undefined') {
+                    jsPDFLoaded = true;
+                    console.log('✅ jsPDF cargado (window.jspdf)');
+                } else if (typeof window.jsPDF !== 'undefined') {
+                    jsPDFLoaded = true;
+                    console.log('✅ jsPDF cargado (window.jsPDF)');
+                } else {
+                    console.warn('⚠️ jsPDF cargado pero no encontrado en window');
+                    jsPDFLoaded = false;
+                }
+                checkAllLoaded();
+            };
+            jsPDFScript.onerror = () => {
+                console.error('❌ Error al cargar jsPDF');
+                jsPDFLoaded = false;
+                reject(new Error('Error al cargar jsPDF'));
+            };
+            document.head.appendChild(jsPDFScript);
+        } else {
+            jsPDFLoaded = true;
+            console.log('✅ jsPDF ya estaba disponible');
+        }
+        
+        // Cargar SheetJS si no está disponible
+        if (typeof window.XLSX === 'undefined') {
+            scriptsToLoad++;
+            const xlsxScript = document.createElement('script');
+            xlsxScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            xlsxScript.onload = () => {
+                xlsxLoaded = true;
+                console.log('✅ SheetJS cargado');
+                checkAllLoaded();
+            };
+            xlsxScript.onerror = () => {
+                console.error('❌ Error al cargar SheetJS');
+                xlsxLoaded = false;
+                reject(new Error('Error al cargar SheetJS'));
+            };
+            document.head.appendChild(xlsxScript);
+        } else {
+            xlsxLoaded = true;
+            console.log('✅ SheetJS ya estaba disponible');
+        }
+        
+        // Si ambas librerías ya están cargadas
+        if (scriptsToLoad === 0) {
+            resolve();
+        }
+    });
+}
+
 
 /**
  * Configura todos los event listeners del módulo
@@ -772,51 +856,581 @@ function exportToCSV() {
 }
 
 /**
- * Exporta a Excel (simulado como CSV mejorado)
+ * Exporta a Excel usando SheetJS
  */
 function exportToExcel() {
-    // Por simplicidad, exportamos como CSV con extensión .xlsx
-    // En una implementación completa se usaría una librería como SheetJS
-    exportToCSV();
-    showToast('Nota: Exportación Excel simulada como CSV', 'info');
-}
+    if (!xlsxLoaded || typeof XLSX === 'undefined') {
+        showToast('Librería Excel no disponible. Usando CSV como alternativa.', 'warning');
+        exportToCSV();
+        return;
+    }
 
-/**
- * Exporta a PDF (simulado)
- */
-function exportToPDF() {
-    // Por simplicidad, creamos un reporte básico en texto
-    // En una implementación completa se usaría una librería como jsPDF
     const data = currentReportData.data;
     const type = currentReportType;
     const stats = currentReportData.stats;
     
-    let pdfContent = `INFORME DE ${type.toUpperCase()}\n`;
-    pdfContent += `Generado: ${new Date().toLocaleString('es-ES')}\n`;
-    pdfContent += `Período: ${currentReportData.period.startDate} al ${currentReportData.period.endDate}\n\n`;
+    // Crear un nuevo libro de trabajo
+    const workbook = XLSX.utils.book_new();
     
-    pdfContent += `RESUMEN:\n`;
-    pdfContent += `Total de registros: ${stats.total}\n`;
+    // Preparar datos para la hoja principal
+    let worksheetData = [];
     
     if (type === 'projects') {
-        pdfContent += `Costo total: ${formatNumber(stats.totalCost)}\n`;
-        pdfContent += `Costo promedio: ${formatNumber(stats.avgCost)}\n`;
-        pdfContent += `Progreso promedio: ${Math.round(stats.avgProgress)}%\n\n`;
+        // Headers para proyectos
+        const headers = ['Proyecto', 'Descripción', 'Cliente', 'Empresa', 'Categoría', 'Estado', 'Progreso (%)', 'Costo', 'Fecha Creación'];
+        worksheetData.push(headers);
+        
+        // Datos de proyectos
+        data.forEach(project => {
+            const row = [
+                project.nombre || '',
+                project.descripcion || '',
+                project.clienteDetalles ? `${project.clienteDetalles.nombre} ${project.clienteDetalles.apellidos}` : 'No asignado',
+                project.clienteDetalles?.empresa || '',
+                getCategoryDisplayName(project.categoria),
+                getStatusDisplayName(project.estado),
+                project.porcentajeProgreso || 0,
+                project.costo || 0,
+                project.fechaCreacion ? new Date(project.fechaCreacion).toLocaleDateString('es-ES') : ''
+            ];
+            worksheetData.push(row);
+        });
+        
+    } else if (type === 'appointments') {
+        // Headers para citas
+        const headers = ['Cliente', 'Email', 'Teléfono', 'Tipo Cita', 'Fecha', 'Hora', 'Estado', 'Proyecto', 'Notas'];
+        worksheetData.push(headers);
+        
+        // Datos de citas
+        data.forEach(appointment => {
+            const row = [
+                appointment.usuarioDetalles ? `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}` : appointment.nombreContacto || '',
+                appointment.usuarioDetalles?.correo || appointment.correoContacto || '',
+                appointment.usuarioDetalles?.telefono || appointment.telefonoContacto || '',
+                getAppointmentTypeDisplayName(appointment.tipo),
+                appointment.fecha ? new Date(appointment.fecha).toLocaleDateString('es-ES') : '',
+                appointment.hora || '',
+                getStatusDisplayName(appointment.estado),
+                appointment.proyectoDetalles?.nombre || '',
+                appointment.notas || ''
+            ];
+            worksheetData.push(row);
+        });
     }
     
-    pdfContent += `DETALLES:\n`;
-    data.forEach((item, index) => {
-        pdfContent += `${index + 1}. `;
-        if (type === 'projects') {
-            pdfContent += `${item.nombre} - ${getStatusDisplayName(item.estado)} - ${formatNumber(item.costo || 0)}\n`;
-        } else if (type === 'appointments') {
-            const clientName = item.usuarioDetalles ? `${item.usuarioDetalles.nombre} ${item.usuarioDetalles.apellidos}` : item.nombreContacto || 'No disponible';
-            pdfContent += `${clientName} - ${getAppointmentTypeDisplayName(item.tipo)} - ${getStatusDisplayName(item.estado)}\n`;
-        }
-    });
+    // Crear hoja de trabajo principal
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     
-    downloadFile(pdfContent, `informe_${type}_${getCurrentDateString()}.txt`, 'text/plain');
-    showToast('Nota: Exportación PDF simulada como archivo de texto', 'info');
+    // Aplicar estilos a los headers
+    const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "366092" } },
+        alignment: { horizontal: "center", vertical: "center" }
+    };
+    
+    // Aplicar estilo a la primera fila (headers)
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (!worksheet[cellAddress]) continue;
+        worksheet[cellAddress].s = headerStyle;
+    }
+    
+    // Ajustar ancho de columnas
+    const colWidths = [];
+    for (let col = 0; col < worksheetData[0].length; col++) {
+        let maxWidth = 10;
+        for (let row = 0; row < worksheetData.length; row++) {
+            const cellValue = String(worksheetData[row][col] || '');
+            maxWidth = Math.max(maxWidth, cellValue.length);
+        }
+        colWidths.push({ wch: Math.min(maxWidth + 2, 50) });
+    }
+    worksheet['!cols'] = colWidths;
+    
+    // Agregar hoja principal al libro
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
+    
+    // Crear hoja de resumen estadístico
+    createStatsSheet(workbook, stats, type);
+    
+    // Crear hoja de información del reporte
+    createInfoSheet(workbook, currentReportData);
+    
+    // Generar y descargar archivo
+    const fileName = `informe_${type}_${getCurrentDateString()}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+}
+
+/**
+ * Crea hoja de estadísticas para Excel
+ */
+function createStatsSheet(workbook, stats, type) {
+    const statsData = [];
+    
+    // Título
+    statsData.push(['RESUMEN ESTADÍSTICO']);
+    statsData.push(['']); // Fila vacía
+    
+    if (type === 'projects') {
+        statsData.push(['Métrica', 'Valor']);
+        statsData.push(['Total de Proyectos', stats.total]);
+        statsData.push(['Costo Total', formatNumber(stats.totalCost)]);
+        statsData.push(['Costo Promedio', formatNumber(stats.avgCost)]);
+        statsData.push(['Progreso Promedio (%)', Math.round(stats.avgProgress)]);
+        statsData.push(['']); // Fila vacía
+        
+        // Estadísticas por estado
+        statsData.push(['DISTRIBUCIÓN POR ESTADO']);
+        statsData.push(['Estado', 'Cantidad', 'Porcentaje']);
+        Object.entries(stats.byStatus).forEach(([status, count]) => {
+            const percentage = ((count / stats.total) * 100).toFixed(1);
+            statsData.push([getStatusDisplayName(status), count, `${percentage}%`]);
+        });
+        
+        statsData.push(['']); // Fila vacía
+        
+        // Estadísticas por categoría
+        statsData.push(['DISTRIBUCIÓN POR CATEGORÍA']);
+        statsData.push(['Categoría', 'Cantidad', 'Porcentaje']);
+        Object.entries(stats.byCategory).forEach(([category, count]) => {
+            const percentage = ((count / stats.total) * 100).toFixed(1);
+            statsData.push([getCategoryDisplayName(category), count, `${percentage}%`]);
+        });
+        
+    } else if (type === 'appointments') {
+        statsData.push(['Métrica', 'Valor']);
+        statsData.push(['Total de Citas', stats.total]);
+        statsData.push(['']); // Fila vacía
+        
+        // Estadísticas por estado
+        statsData.push(['DISTRIBUCIÓN POR ESTADO']);
+        statsData.push(['Estado', 'Cantidad', 'Porcentaje']);
+        Object.entries(stats.byStatus).forEach(([status, count]) => {
+            const percentage = ((count / stats.total) * 100).toFixed(1);
+            statsData.push([getStatusDisplayName(status), count, `${percentage}%`]);
+        });
+        
+        statsData.push(['']); // Fila vacía
+        
+        // Estadísticas por tipo
+        statsData.push(['DISTRIBUCIÓN POR TIPO']);
+        statsData.push(['Tipo', 'Cantidad', 'Porcentaje']);
+        Object.entries(stats.byType).forEach(([typeKey, count]) => {
+            const percentage = ((count / stats.total) * 100).toFixed(1);
+            statsData.push([getAppointmentTypeDisplayName(typeKey), count, `${percentage}%`]);
+        });
+    }
+    
+    // Crear hoja de estadísticas
+    const statsSheet = XLSX.utils.aoa_to_sheet(statsData);
+    
+    // Aplicar estilos
+    const titleStyle = {
+        font: { bold: true, size: 14 },
+        alignment: { horizontal: "center" }
+    };
+    
+    const headerStyle = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "D3D3D3" } }
+    };
+    
+    // Aplicar estilo al título
+    if (statsSheet['A1']) {
+        statsSheet['A1'].s = titleStyle;
+    }
+    
+    // Ajustar ancho de columnas
+    statsSheet['!cols'] = [
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 15 }
+    ];
+    
+    XLSX.utils.book_append_sheet(workbook, statsSheet, 'Estadísticas');
+}
+
+/**
+ * Crea hoja de información del reporte para Excel
+ */
+function createInfoSheet(workbook, reportData) {
+    const infoData = [];
+    
+    infoData.push(['INFORMACIÓN DEL REPORTE']);
+    infoData.push(['']); // Fila vacía
+    infoData.push(['Tipo de Reporte', currentReportType === 'projects' ? 'Proyectos' : 'Citas']);
+    infoData.push(['Fecha de Generación', new Date().toLocaleString('es-ES')]);
+    infoData.push(['Período de Consulta', `${new Date(reportData.period.startDate).toLocaleDateString('es-ES')} - ${new Date(reportData.period.endDate).toLocaleDateString('es-ES')}`]);
+    infoData.push(['Total de Registros', reportData.data.length]);
+    infoData.push(['']); // Fila vacía
+    
+    // Filtros aplicados
+    infoData.push(['FILTROS APLICADOS']);
+    if (Object.keys(reportData.filters).length > 0) {
+        Object.entries(reportData.filters).forEach(([key, value]) => {
+            let displayKey = key;
+            let displayValue = value;
+            
+            if (key === 'estado') {
+                displayKey = 'Estado';
+                displayValue = getStatusDisplayName(value);
+            } else if (key === 'categoria') {
+                displayKey = 'Categoría';
+                displayValue = getCategoryDisplayName(value);
+            } else if (key === 'tipo') {
+                displayKey = 'Tipo';
+                displayValue = getAppointmentTypeDisplayName(value);
+            }
+            
+            infoData.push([displayKey, displayValue]);
+        });
+    } else {
+        infoData.push(['Sin filtros aplicados', '']);
+    }
+    
+    // Crear hoja de información
+    const infoSheet = XLSX.utils.aoa_to_sheet(infoData);
+    
+    // Aplicar estilos
+    const titleStyle = {
+        font: { bold: true, size: 14 },
+        alignment: { horizontal: "center" }
+    };
+    
+    if (infoSheet['A1']) {
+        infoSheet['A1'].s = titleStyle;
+    }
+    
+    // Ajustar ancho de columnas
+    infoSheet['!cols'] = [
+        { wch: 25 },
+        { wch: 40 }
+    ];
+    
+    XLSX.utils.book_append_sheet(workbook, infoSheet, 'Información');
+}
+
+/**
+ * Exporta a PDF usando jsPDF - VERSIÓN CORREGIDA
+ */
+function exportToPDF() {
+    // Verificar disponibilidad de jsPDF con múltiples métodos
+    let jsPDFConstructor = null;
+    
+    if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+        jsPDFConstructor = window.jspdf.jsPDF;
+        console.log('✅ Usando window.jspdf.jsPDF');
+    } else if (typeof window.jsPDF !== 'undefined') {
+        jsPDFConstructor = window.jsPDF;
+        console.log('✅ Usando window.jsPDF');
+    } else if (typeof jsPDF !== 'undefined') {
+        jsPDFConstructor = jsPDF;
+        console.log('✅ Usando jsPDF global');
+    }
+    
+    if (!jsPDFConstructor) {
+        console.error('❌ jsPDF no está disponible');
+        showToast('Librería PDF no disponible. Usando exportación alternativa.', 'warning');
+        exportToCSV();
+        return;
+    }
+
+    try {
+        const doc = new jsPDFConstructor('l', 'mm', 'a4'); // Orientación horizontal
+        
+        const data = currentReportData.data;
+        const type = currentReportType;
+        const stats = currentReportData.stats;
+        
+        let yPosition = 20;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        
+        // Función para agregar nueva página si es necesario
+        function checkPageBreak(neededSpace = 20) {
+            if (yPosition + neededSpace > pageHeight - margin) {
+                doc.addPage();
+                yPosition = margin;
+                return true;
+            }
+            return false;
+        }
+        
+        // Título del reporte
+        doc.setFontSize(20);
+        doc.setFont(undefined, 'bold');
+        const title = `INFORME DE ${type === 'projects' ? 'PROYECTOS' : 'CITAS'}`;
+        doc.text(title, pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 15;
+        
+        // Información del reporte
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'normal');
+        const reportInfo = [
+            `Fecha de generación: ${new Date().toLocaleString('es-ES')}`,
+            `Período: ${new Date(currentReportData.period.startDate).toLocaleDateString('es-ES')} - ${new Date(currentReportData.period.endDate).toLocaleDateString('es-ES')}`,
+            `Total de registros: ${data.length}`
+        ];
+        
+        reportInfo.forEach(info => {
+            doc.text(info, margin, yPosition);
+            yPosition += 8;
+        });
+        
+        yPosition += 10;
+        
+        // Resumen estadístico
+        checkPageBreak(60);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('RESUMEN ESTADÍSTICO', margin, yPosition);
+        yPosition += 10;
+        
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'normal');
+        
+        if (type === 'projects') {
+            const summaryStats = [
+                `• Total de proyectos: ${stats.total}`,
+                `• Costo total: ${formatNumber(stats.totalCost)}`,
+                `• Costo promedio: ${formatNumber(stats.avgCost)}`,
+                `• Progreso promedio: ${Math.round(stats.avgProgress)}%`
+            ];
+            
+            summaryStats.forEach(stat => {
+                checkPageBreak();
+                doc.text(stat, margin, yPosition);
+                yPosition += 8;
+            });
+            
+            // Distribución por estado
+            yPosition += 5;
+            checkPageBreak(30);
+            doc.setFont(undefined, 'bold');
+            doc.text('Distribución por Estado:', margin, yPosition);
+            yPosition += 8;
+            doc.setFont(undefined, 'normal');
+            
+            Object.entries(stats.byStatus).forEach(([status, count]) => {
+                const percentage = ((count / stats.total) * 100).toFixed(1);
+                checkPageBreak();
+                doc.text(`• ${getStatusDisplayName(status)}: ${count} (${percentage}%)`, margin + 10, yPosition);
+                yPosition += 6;
+            });
+            
+        } else if (type === 'appointments') {
+            const summaryStats = [
+                `• Total de citas: ${stats.total}`,
+                `• Completadas: ${stats.byStatus['completada'] || 0}`,
+                `• Pendientes: ${(stats.byStatus['pendiente'] || 0) + (stats.byStatus['confirmada'] || 0)}`,
+                `• Canceladas: ${stats.byStatus['cancelada'] || 0}`
+            ];
+            
+            summaryStats.forEach(stat => {
+                checkPageBreak();
+                doc.text(stat, margin, yPosition);
+                yPosition += 8;
+            });
+        }
+        
+        // Tabla de datos
+        yPosition += 15;
+        checkPageBreak(40);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('DETALLE DE DATOS', margin, yPosition);
+        yPosition += 15;
+        
+        // Configurar tabla
+        doc.setFontSize(10);
+        
+        if (type === 'projects') {
+            // Headers de tabla de proyectos
+            const headers = ['Proyecto', 'Cliente', 'Estado', 'Progreso', 'Costo'];
+            const colWidths = [60, 50, 40, 25, 35];
+            let xPosition = margin;
+            
+            // Dibujar headers
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(54, 96, 146);
+            doc.setTextColor(255, 255, 255);
+            doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 10, 'F');
+            
+            headers.forEach((header, i) => {
+                doc.text(header, xPosition + 2, yPosition);
+                xPosition += colWidths[i];
+            });
+            
+            yPosition += 8;
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, 'normal');
+            
+            // Datos de proyectos
+            data.slice(0, 25).forEach((project, index) => { // Limitar a 25 registros para PDF
+                checkPageBreak();
+                
+                xPosition = margin;
+                const rowData = [
+                    truncateText(project.nombre, 25),
+                    project.clienteDetalles ? truncateText(`${project.clienteDetalles.nombre} ${project.clienteDetalles.apellidos}`, 20) : 'No asignado',
+                    getStatusDisplayName(project.estado),
+                    `${project.porcentajeProgreso || 0}%`,
+                    formatNumber(project.costo || 0)
+                ];
+                
+                // Alternar color de fondo para filas
+                if (index % 2 === 0) {
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, 8, 'F');
+                }
+                
+                rowData.forEach((cell, i) => {
+                    doc.text(String(cell), xPosition + 2, yPosition);
+                    xPosition += colWidths[i];
+                });
+                
+                yPosition += 8;
+            });
+            
+        } else if (type === 'appointments') {
+            // Headers de tabla de citas
+            const headers = ['Cliente', 'Tipo', 'Fecha', 'Estado', 'Proyecto'];
+            const colWidths = [60, 45, 30, 35, 50];
+            let xPosition = margin;
+            
+            // Dibujar headers
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(54, 96, 146);
+            doc.setTextColor(255, 255, 255);
+            doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 10, 'F');
+            
+            headers.forEach((header, i) => {
+                doc.text(header, xPosition + 2, yPosition);
+                xPosition += colWidths[i];
+            });
+            
+            yPosition += 8;
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, 'normal');
+            
+            // Datos de citas
+            data.slice(0, 25).forEach((appointment, index) => { // Limitar a 25 registros para PDF
+                checkPageBreak();
+                
+                xPosition = margin;
+                const clientName = appointment.usuarioDetalles 
+                    ? `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}`
+                    : appointment.nombreContacto || 'No disponible';
+                
+                const rowData = [
+                    truncateText(clientName, 25),
+                    getAppointmentTypeDisplayName(appointment.tipo),
+                    appointment.fecha ? new Date(appointment.fecha).toLocaleDateString('es-ES') : 'N/A',
+                    getStatusDisplayName(appointment.estado),
+                    appointment.proyectoDetalles ? truncateText(appointment.proyectoDetalles.nombre, 20) : 'N/A'
+                ];
+                
+                // Alternar color de fondo para filas
+                if (index % 2 === 0) {
+                    doc.setFillColor(245, 245, 245);
+                    doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, 8, 'F');
+                }
+                
+                rowData.forEach((cell, i) => {
+                    doc.text(String(cell), xPosition + 2, yPosition);
+                    xPosition += colWidths[i];
+                });
+                
+                yPosition += 8;
+            });
+        }
+        
+        // Nota sobre limitación de registros
+        if (data.length > 25) {
+            yPosition += 10;
+            checkPageBreak();
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'italic');
+            doc.text(`Nota: Se muestran los primeros 25 registros de ${data.length} total. Para ver todos los datos, use la exportación Excel.`, margin, yPosition);
+        }
+        
+        // Pie de página en todas las páginas
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Página ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+            doc.text('Generado por Sistema de Gestión', margin, pageHeight - 10);
+        }
+        
+        // Descargar archivo
+        const fileName = `informe_${type}_${getCurrentDateString()}.pdf`;
+        doc.save(fileName);
+        
+        console.log('✅ PDF generado exitosamente');
+        
+    } catch (error) {
+        console.error('❌ Error al generar PDF:', error);
+        showToast('Error al generar PDF. Usando exportación CSV como alternativa.', 'error');
+        exportToCSV();
+    }
+}
+
+/**
+ * Función de debugging para verificar el estado de jsPDF
+ */
+function debugJsPDF() {
+    console.log('=== DEBUG jsPDF ===');
+    console.log('window.jspdf:', typeof window.jspdf);
+    console.log('window.jsPDF:', typeof window.jsPDF);
+    console.log('jsPDF global:', typeof jsPDF);
+    
+    if (window.jspdf) {
+        console.log('window.jspdf.jsPDF:', typeof window.jspdf.jsPDF);
+        console.log('window.jspdf keys:', Object.keys(window.jspdf));
+    }
+    
+    if (window.jsPDF) {
+        console.log('window.jsPDF constructor:', typeof window.jsPDF);
+    }
+    
+    console.log('==================');
+}
+
+// Función para probar jsPDF después de cargar
+function testJsPDFAfterLoad() {
+    console.log('🧪 Probando jsPDF después de cargar...');
+    debugJsPDF();
+    
+    // Intentar crear un documento de prueba
+    try {
+        let TestDoc = null;
+        
+        if (window.jspdf && window.jspdf.jsPDF) {
+            TestDoc = new window.jspdf.jsPDF();
+            console.log('✅ Test exitoso con window.jspdf.jsPDF');
+        } else if (window.jsPDF) {
+            TestDoc = new window.jsPDF();
+            console.log('✅ Test exitoso con window.jsPDF');
+        } else if (typeof jsPDF !== 'undefined') {
+            TestDoc = new jsPDF();
+            console.log('✅ Test exitoso con jsPDF global');
+        }
+        
+        if (TestDoc) {
+            console.log('✅ jsPDF funcionando correctamente');
+            return true;
+        } else {
+            console.error('❌ No se pudo crear documento de prueba');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error en test de jsPDF:', error);
+        return false;
+    }
 }
 
 /**
@@ -928,8 +1542,26 @@ reportStyles.textContent = `
         color: #17a2b8;
         border: 1px solid rgba(23, 162, 184, 0.3);
     }
+    
+    /* Loading indicator for library loading */
+    .library-loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        z-index: 9999;
+        display: none;
+    }
 `;
 
 document.head.appendChild(reportStyles);
+window.loadRequiredLibraries = loadRequiredLibraries;
+window.exportToPDF = exportToPDF;
+window.debugJsPDF = debugJsPDF;
+window.testJsPDFAfterLoad = testJsPDFAfterLoad;
 
-console.log('📊 Módulo de reportes cargado correctamente');
+console.log('📊 Módulo de reportes con exportación real cargado correctamente');
