@@ -1,6 +1,6 @@
 /**
- * ARCHIVO: backend/controllers/messageController.js
- * Controlador para el módulo de mensajes
+ * CONTROLADOR DE MENSAJES ACTUALIZADO
+ * Versión mejorada con mejor manejo de notificaciones y funcionalidades adicionales
  */
 
 const { getDatabase, toObjectId } = require('../config/db').default;
@@ -31,7 +31,12 @@ exports.getConversations = async (req, res) => {
                         mensajesNoLeidos: {
                             $sum: {
                                 $cond: [
-                                    { $and: [{ $eq: ['$leido', false] }, { $ne: ['$remitente', toObjectId(userId)] }] },
+                                    { 
+                                        $and: [
+                                            { $eq: ['$leido', false] }, 
+                                            { $eq: ['$esDeAdmin', false] } // Solo contar mensajes de clientes no leídos
+                                        ]
+                                    },
                                     1,
                                     0
                                 ]
@@ -49,6 +54,11 @@ exports.getConversations = async (req, res) => {
                 },
                 {
                     $unwind: '$clienteInfo'
+                },
+                {
+                    $match: {
+                        'clienteInfo.rol': 'cliente' // Solo mostrar conversaciones con clientes
+                    }
                 },
                 {
                     $sort: { 'ultimoMensaje.fechaCreacion': -1 }
@@ -75,17 +85,27 @@ exports.getConversations = async (req, res) => {
                 );
             }
             
+            // Contar mensajes no leídos de administradores
+            const mensajesNoLeidos = messages.filter(msg => !msg.leido && msg.esDeAdmin).length;
+            
             conversations = [{
                 _id: userId,
                 messages: messages,
                 totalMensajes: messages.length,
-                mensajesNoLeidos: messages.filter(msg => !msg.leido && msg.esDeAdmin).length,
-                ultimoAdmin: ultimoAdmin
+                mensajesNoLeidos: mensajesNoLeidos,
+                ultimoAdmin: ultimoAdmin,
+                clienteInfo: {
+                    _id: toObjectId(userId),
+                    nombre: req.user.nombre,
+                    apellidos: req.user.apellidos,
+                    correo: req.user.correo
+                }
             }];
         }
         
         res.status(200).json({
             success: true,
+            count: conversations.length,
             data: conversations
         });
         
@@ -128,7 +148,7 @@ exports.getMessages = async (req, res) => {
             if (message.remitente) {
                 const sender = await db.collection('users').findOne(
                     { _id: message.remitente },
-                    { projection: { nombre: 1, apellidos: 1, rol: 1 } }
+                    { projection: { nombre: 1, apellidos: 1, rol: 1, correo: 1 } }
                 );
                 message.remitenteInfo = sender;
             }
@@ -144,7 +164,13 @@ exports.getMessages = async (req, res) => {
                     esDeAdmin: false,
                     leido: false
                 },
-                { $set: { leido: true, fechaLectura: new Date() } }
+                { 
+                    $set: { 
+                        leido: true, 
+                        fechaLectura: new Date(),
+                        leidoPor: toObjectId(userId)
+                    } 
+                }
             );
         } else {
             // Cliente marca como leídos los mensajes de admin
@@ -154,12 +180,19 @@ exports.getMessages = async (req, res) => {
                     esDeAdmin: true,
                     leido: false
                 },
-                { $set: { leido: true, fechaLectura: new Date() } }
+                { 
+                    $set: { 
+                        leido: true, 
+                        fechaLectura: new Date(),
+                        leidoPor: toObjectId(userId)
+                    } 
+                }
             );
         }
         
         res.status(200).json({
             success: true,
+            count: messagesWithSenders.length,
             data: messagesWithSenders
         });
         
@@ -195,11 +228,11 @@ exports.sendMessage = async (req, res) => {
         let esDeAdmin = false;
         
         if (userRole === 'cliente') {
-            // Cliente enviando mensaje
+            // Cliente enviando mensaje a administradores
             targetClienteId = toObjectId(userId);
             esDeAdmin = false;
         } else if (userRole === 'admin' || userRole === 'superadmin') {
-            // Admin enviando mensaje
+            // Admin enviando mensaje a cliente
             if (!clienteId) {
                 return res.status(400).json({
                     success: false,
@@ -251,11 +284,16 @@ exports.sendMessage = async (req, res) => {
         try {
             if (esDeAdmin) {
                 // Admin respondiendo a cliente
+                console.log('📧 Enviando notificación al cliente:', cliente.correo);
+                
                 await emailService.sendMessageNotificationToClient(cliente, {
                     adminName: `${remitente.nombre} ${remitente.apellidos}`,
                     mensaje: mensaje.trim(),
                     fechaEnvio: new Date()
                 });
+                
+                console.log('✅ Notificación enviada al cliente exitosamente');
+                
             } else {
                 // Cliente enviando mensaje - notificar al último admin que le respondió
                 const ultimoMensajeAdmin = await db.collection('messages')
@@ -268,37 +306,47 @@ exports.sendMessage = async (req, res) => {
                     );
                 
                 if (ultimoMensajeAdmin && ultimoMensajeAdmin.remitente) {
+                    // Notificar al último admin que respondió
                     const ultimoAdmin = await db.collection('users').findOne(
                         { _id: ultimoMensajeAdmin.remitente }
                     );
                     
                     if (ultimoAdmin) {
+                        console.log('📧 Enviando notificación al último admin:', ultimoAdmin.correo);
+                        
                         await emailService.sendMessageNotificationToAdmin(ultimoAdmin, {
                             clientName: `${cliente.nombre} ${cliente.apellidos}`,
                             clientEmail: cliente.correo,
                             mensaje: mensaje.trim(),
                             fechaEnvio: new Date()
                         });
+                        
+                        console.log('✅ Notificación enviada al último admin exitosamente');
                     }
                 } else {
                     // Si no hay admin previo, notificar a todos los admins
+                    console.log('📧 Notificando a todos los administradores...');
+                    
                     const admins = await db.collection('users')
                         .find({ rol: { $in: ['admin', 'superadmin'] } })
                         .toArray();
                     
-                    for (const admin of admins) {
-                        await emailService.sendMessageNotificationToAdmin(admin, {
+                    const notificationPromises = admins.map(admin => 
+                        emailService.sendMessageNotificationToAdmin(admin, {
                             clientName: `${cliente.nombre} ${cliente.apellidos}`,
                             clientEmail: cliente.correo,
                             mensaje: mensaje.trim(),
                             fechaEnvio: new Date()
-                        });
-                    }
+                        })
+                    );
+                    
+                    await Promise.all(notificationPromises);
+                    console.log(`✅ Notificaciones enviadas a ${admins.length} administradores`);
                 }
             }
         } catch (emailError) {
-            console.error('Error al enviar notificación por email:', emailError);
-            // No interrumpir el proceso por fallos de email
+            console.error('❌ Error al enviar notificación por email:', emailError);
+            // No interrumpir el proceso por fallos de email, pero registrar el error
         }
         
         // Obtener mensaje creado con información del remitente
@@ -306,7 +354,8 @@ exports.sendMessage = async (req, res) => {
         mensajeCreado.remitenteInfo = {
             nombre: remitente.nombre,
             apellidos: remitente.apellidos,
-            rol: remitente.rol
+            rol: remitente.rol,
+            correo: remitente.correo
         };
         
         res.status(201).json({
@@ -316,7 +365,7 @@ exports.sendMessage = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error al enviar mensaje:', error);
+        console.error('❌ Error al enviar mensaje:', error);
         res.status(500).json({
             success: false,
             message: 'Error al enviar mensaje',
@@ -346,6 +395,13 @@ exports.markMessagesAsRead = async (req, res) => {
             };
         } else if (userRole === 'admin' || userRole === 'superadmin') {
             // Admin marca como leídos los mensajes del cliente
+            if (!clienteId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Se requiere especificar el cliente'
+                });
+            }
+            
             filter = {
                 cliente: toObjectId(clienteId),
                 esDeAdmin: false,
@@ -358,7 +414,8 @@ exports.markMessagesAsRead = async (req, res) => {
             { 
                 $set: { 
                     leido: true, 
-                    fechaLectura: new Date() 
+                    fechaLectura: new Date(),
+                    leidoPor: toObjectId(userId)
                 } 
             }
         );
@@ -385,6 +442,15 @@ exports.markMessagesAsRead = async (req, res) => {
 exports.getMessageStats = async (req, res) => {
     try {
         const db = getDatabase();
+        const userRole = req.user.rol;
+        
+        // Verificar permisos
+        if (userRole !== 'admin' && userRole !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para ver estadísticas'
+            });
+        }
         
         const stats = await db.collection('messages').aggregate([
             {
@@ -393,7 +459,16 @@ exports.getMessageStats = async (req, res) => {
                     totalMensajes: { $sum: 1 },
                     mensajesNoLeidos: {
                         $sum: {
-                            $cond: [{ $eq: ['$leido', false] }, 1, 0]
+                            $cond: [
+                                { 
+                                    $and: [
+                                        { $eq: ['$leido', false] }, 
+                                        { $eq: ['$esDeAdmin', false] } // Solo mensajes de clientes no leídos
+                                    ]
+                                }, 
+                                1, 
+                                0
+                            ]
                         }
                     },
                     ultimoMensaje: { $max: '$fechaCreacion' }
@@ -415,6 +490,28 @@ exports.getMessageStats = async (req, res) => {
             totalNoLeidos: 0
         };
         
+        // Obtener estadísticas adicionales
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const mensajesHoy = await db.collection('messages').countDocuments({
+            fechaCreacion: { $gte: today }
+        });
+        
+        const mensajesClientesHoy = await db.collection('messages').countDocuments({
+            fechaCreacion: { $gte: today },
+            esDeAdmin: false
+        });
+        
+        const mensajesAdminsHoy = await db.collection('messages').countDocuments({
+            fechaCreacion: { $gte: today },
+            esDeAdmin: true
+        });
+        
+        result.mensajesHoy = mensajesHoy;
+        result.mensajesClientesHoy = mensajesClientesHoy;
+        result.mensajesAdminsHoy = mensajesAdminsHoy;
+        
         res.status(200).json({
             success: true,
             data: result
@@ -425,6 +522,423 @@ exports.getMessageStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error al obtener estadísticas',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Obtiene conversaciones archivadas (solo para admins)
+ */
+exports.getArchivedConversations = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const userRole = req.user.rol;
+        
+        // Verificar permisos
+        if (userRole !== 'admin' && userRole !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para ver conversaciones archivadas'
+            });
+        }
+        
+        // TODO: Implementar sistema de archivado
+        // Por ahora devolver array vacío
+        res.status(200).json({
+            success: true,
+            data: []
+        });
+        
+    } catch (error) {
+        console.error('Error al obtener conversaciones archivadas:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener conversaciones archivadas',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Busca mensajes
+ */
+exports.searchMessages = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const userId = req.user.id;
+        const userRole = req.user.rol;
+        const { q: searchTerm, limit = 20, page = 1 } = req.query;
+        
+        if (!searchTerm || searchTerm.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Término de búsqueda requerido'
+            });
+        }
+        
+        const skip = (page - 1) * limit;
+        const searchRegex = new RegExp(searchTerm.trim(), 'i');
+        
+        let filter = {
+            mensaje: searchRegex
+        };
+        
+        // Filtrar según rol
+        if (userRole === 'cliente') {
+            filter.cliente = toObjectId(userId);
+        }
+        
+        const messages = await db.collection('messages')
+            .find(filter)
+            .sort({ fechaCreacion: -1 })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .toArray();
+        
+        // Obtener información de remitentes y clientes
+        const messagesWithDetails = await Promise.all(messages.map(async (message) => {
+            const details = { ...message };
+            
+            // Información del remitente
+            if (message.remitente) {
+                const sender = await db.collection('users').findOne(
+                    { _id: message.remitente },
+                    { projection: { nombre: 1, apellidos: 1, rol: 1 } }
+                );
+                details.remitenteInfo = sender;
+            }
+            
+            // Información del cliente
+            if (message.cliente) {
+                const client = await db.collection('users').findOne(
+                    { _id: message.cliente },
+                    { projection: { nombre: 1, apellidos: 1, correo: 1 } }
+                );
+                details.clienteInfo = client;
+            }
+            
+            return details;
+        }));
+        
+        const total = await db.collection('messages').countDocuments(filter);
+        
+        res.status(200).json({
+            success: true,
+            data: messagesWithDetails,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error en búsqueda de mensajes:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error en búsqueda de mensajes',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Elimina un mensaje específico (solo admins)
+ */
+exports.deleteMessage = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const { messageId } = req.params;
+        const userRole = req.user.rol;
+        
+        // Verificar permisos
+        if (userRole !== 'admin' && userRole !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para eliminar mensajes'
+            });
+        }
+        
+        // Verificar que el mensaje existe
+        const message = await db.collection('messages').findOne({ 
+            _id: toObjectId(messageId) 
+        });
+        
+        if (!message) {
+            return res.status(404).json({
+                success: false,
+                message: 'Mensaje no encontrado'
+            });
+        }
+        
+        // Eliminar mensaje
+        await db.collection('messages').deleteOne({ _id: toObjectId(messageId) });
+        
+        res.status(200).json({
+            success: true,
+            message: 'Mensaje eliminado correctamente'
+        });
+        
+    } catch (error) {
+        console.error('Error al eliminar mensaje:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar mensaje',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Elimina una conversación completa (solo admins)
+ */
+exports.deleteConversation = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const { clienteId } = req.params;
+        const userRole = req.user.rol;
+        
+        // Verificar permisos
+        if (userRole !== 'admin' && userRole !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para eliminar conversaciones'
+            });
+        }
+        
+        // Verificar que el cliente existe
+        const cliente = await db.collection('users').findOne({ 
+            _id: toObjectId(clienteId),
+            rol: 'cliente'
+        });
+        
+        if (!cliente) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cliente no encontrado'
+            });
+        }
+        
+        // Contar mensajes a eliminar
+        const messageCount = await db.collection('messages').countDocuments({
+            cliente: toObjectId(clienteId)
+        });
+        
+        // Eliminar todos los mensajes de la conversación
+        const result = await db.collection('messages').deleteMany({
+            cliente: toObjectId(clienteId)
+        });
+        
+        res.status(200).json({
+            success: true,
+            message: `Conversación eliminada correctamente. ${result.deletedCount} mensajes eliminados.`,
+            deletedCount: result.deletedCount
+        });
+        
+    } catch (error) {
+        console.error('Error al eliminar conversación:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar conversación',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Exporta mensajes de una conversación (solo admins)
+ */
+exports.exportConversation = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const { clienteId } = req.params;
+        const userRole = req.user.rol;
+        const { format = 'json' } = req.query;
+        
+        // Verificar permisos
+        if (userRole !== 'admin' && userRole !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para exportar conversaciones'
+            });
+        }
+        
+        // Obtener información del cliente
+        const cliente = await db.collection('users').findOne(
+            { _id: toObjectId(clienteId) },
+            { projection: { nombre: 1, apellidos: 1, correo: 1 } }
+        );
+        
+        if (!cliente) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cliente no encontrado'
+            });
+        }
+        
+        // Obtener todos los mensajes de la conversación
+        const messages = await db.collection('messages')
+            .find({ cliente: toObjectId(clienteId) })
+            .sort({ fechaCreacion: 1 })
+            .toArray();
+        
+        // Obtener detalles de remitentes
+        const messagesWithDetails = await Promise.all(messages.map(async (message) => {
+            if (message.remitente) {
+                const sender = await db.collection('users').findOne(
+                    { _id: message.remitente },
+                    { projection: { nombre: 1, apellidos: 1, rol: 1 } }
+                );
+                return {
+                    ...message,
+                    remitenteInfo: sender
+                };
+            }
+            return message;
+        }));
+        
+        const exportData = {
+            cliente: {
+                nombre: cliente.nombre,
+                apellidos: cliente.apellidos,
+                correo: cliente.correo
+            },
+            totalMensajes: messages.length,
+            fechaExportacion: new Date(),
+            mensajes: messagesWithDetails
+        };
+        
+        if (format === 'csv') {
+            // Generar CSV
+            const csvHeaders = ['Fecha', 'Remitente', 'Tipo', 'Mensaje', 'Leído'];
+            const csvRows = messagesWithDetails.map(msg => [
+                msg.fechaCreacion.toISOString(),
+                msg.remitenteInfo ? `${msg.remitenteInfo.nombre} ${msg.remitenteInfo.apellidos}` : 'Desconocido',
+                msg.esDeAdmin ? 'Admin' : 'Cliente',
+                `"${msg.mensaje.replace(/"/g, '""')}"`, // Escapar comillas
+                msg.leido ? 'Sí' : 'No'
+            ]);
+            
+            const csvContent = [csvHeaders.join(','), ...csvRows.map(row => row.join(','))].join('\n');
+            
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename="conversacion_${cliente.nombre}_${new Date().toISOString().split('T')[0]}.csv"`);
+            res.send(csvContent);
+        } else {
+            // Generar JSON
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', `attachment; filename="conversacion_${cliente.nombre}_${new Date().toISOString().split('T')[0]}.json"`);
+            res.json(exportData);
+        }
+        
+    } catch (error) {
+        console.error('Error al exportar conversación:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al exportar conversación',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Obtiene el historial de mensajes con paginación avanzada
+ */
+exports.getMessageHistory = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const userId = req.user.id;
+        const userRole = req.user.rol;
+        const { 
+            page = 1, 
+            limit = 20, 
+            startDate, 
+            endDate, 
+            clienteId,
+            unreadOnly = false 
+        } = req.query;
+        
+        const skip = (page - 1) * limit;
+        let filter = {};
+        
+        // Filtros según rol
+        if (userRole === 'cliente') {
+            filter.cliente = toObjectId(userId);
+        } else if (clienteId) {
+            filter.cliente = toObjectId(clienteId);
+        }
+        
+        // Filtro de fechas
+        if (startDate || endDate) {
+            filter.fechaCreacion = {};
+            if (startDate) {
+                filter.fechaCreacion.$gte = new Date(startDate);
+            }
+            if (endDate) {
+                filter.fechaCreacion.$lte = new Date(endDate);
+            }
+        }
+        
+        // Filtro de no leídos
+        if (unreadOnly === 'true') {
+            filter.leido = false;
+            if (userRole === 'admin' || userRole === 'superadmin') {
+                filter.esDeAdmin = false; // Solo mensajes de clientes no leídos
+            } else {
+                filter.esDeAdmin = true; // Solo mensajes de admins no leídos
+            }
+        }
+        
+        const messages = await db.collection('messages')
+            .find(filter)
+            .sort({ fechaCreacion: -1 })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .toArray();
+        
+        const total = await db.collection('messages').countDocuments(filter);
+        
+        // Agregar detalles de remitentes
+        const messagesWithDetails = await Promise.all(messages.map(async (message) => {
+            const details = { ...message };
+            
+            if (message.remitente) {
+                const sender = await db.collection('users').findOne(
+                    { _id: message.remitente },
+                    { projection: { nombre: 1, apellidos: 1, rol: 1 } }
+                );
+                details.remitenteInfo = sender;
+            }
+            
+            if (message.cliente && (userRole === 'admin' || userRole === 'superadmin')) {
+                const client = await db.collection('users').findOne(
+                    { _id: message.cliente },
+                    { projection: { nombre: 1, apellidos: 1, correo: 1 } }
+                );
+                details.clienteInfo = client;
+            }
+            
+            return details;
+        }));
+        
+        res.status(200).json({
+            success: true,
+            data: messagesWithDetails,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error al obtener historial de mensajes:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener historial de mensajes',
             error: error.message
         });
     }

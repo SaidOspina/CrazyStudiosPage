@@ -32,6 +32,232 @@ function initMessagesModule() {
     console.log('✅ Módulo de mensajes inicializado');
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar botones adicionales del header
+    setupMessagesHeaderButtons();
+    
+    // Configurar FAB para móvil
+    setupFloatingActionButton();
+    
+    // Configurar atajos de teclado
+    setupKeyboardShortcuts();
+    
+    // Configurar notificaciones del navegador
+    setupBrowserNotifications();
+});
+
+/**
+ * Configura los botones del header de mensajes
+ */
+function setupMessagesHeaderButtons() {
+    const refreshBtn = document.getElementById('refresh-messages-btn');
+    const startConversationBtn = document.getElementById('start-new-conversation-btn');
+    
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            if (typeof loadConversations === 'function') {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+                this.disabled = true;
+                
+                loadConversations().finally(() => {
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
+                        this.disabled = false;
+                    }, 500);
+                });
+            }
+        });
+    }
+    
+    if (startConversationBtn) {
+        startConversationBtn.addEventListener('click', function() {
+            if (typeof openNewMessageModal === 'function') {
+                openNewMessageModal();
+            }
+        });
+    }
+}
+
+/**
+ * Configura el Floating Action Button para móvil
+ */
+function setupFloatingActionButton() {
+    const fabBtn = document.getElementById('fab-new-message');
+    
+    if (fabBtn) {
+        fabBtn.addEventListener('click', function() {
+            if (typeof openNewMessageModal === 'function') {
+                openNewMessageModal();
+            }
+        });
+        
+        // Mostrar/ocultar según el scroll
+        let lastScrollTop = 0;
+        const messagesList = document.querySelector('.messages-list');
+        
+        if (messagesList) {
+            messagesList.addEventListener('scroll', function() {
+                const scrollTop = this.scrollTop;
+                
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    // Scrolling down - hide FAB
+                    fabBtn.style.transform = 'scale(0)';
+                } else {
+                    // Scrolling up - show FAB
+                    fabBtn.style.transform = 'scale(1)';
+                }
+                
+                lastScrollTop = scrollTop;
+            });
+        }
+    }
+}
+
+/**
+ * Configura atajos de teclado para mensajes
+ */
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Solo activar en la sección de mensajes
+        const messagesSection = document.getElementById('messages');
+        if (!messagesSection || !messagesSection.classList.contains('active')) {
+            return;
+        }
+        
+        // Ctrl/Cmd + N - Nuevo mensaje
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            if (typeof openNewMessageModal === 'function') {
+                openNewMessageModal();
+            }
+        }
+        
+        // Ctrl/Cmd + R - Actualizar
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            if (typeof loadConversations === 'function') {
+                loadConversations();
+            }
+        }
+        
+        // Escape - Cerrar modales
+        if (e.key === 'Escape') {
+            const activeModal = document.querySelector('.modal.active');
+            if (activeModal) {
+                const closeBtn = activeModal.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.click();
+                }
+            }
+        }
+        
+        // Enter en textarea - Enviar mensaje (Ctrl/Cmd + Enter)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            const activeTextarea = document.querySelector('textarea:focus');
+            if (activeTextarea) {
+                const form = activeTextarea.closest('form');
+                if (form) {
+                    const submitBtn = form.querySelector('button[type="submit"], .primary-btn');
+                    if (submitBtn && !submitBtn.disabled) {
+                        submitBtn.click();
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Configura notificaciones del navegador
+ */
+function setupBrowserNotifications() {
+    // Solicitar permiso para notificaciones
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
+/**
+ * Muestra notificación del navegador
+ */
+function showBrowserNotification(title, options = {}) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const notification = new Notification(title, {
+            icon: '../img/logo.png',
+            badge: '../img/logo.png',
+            tag: 'crazy-studios-message',
+            requireInteraction: false,
+            ...options
+        });
+        
+        // Auto cerrar después de 5 segundos
+        setTimeout(() => {
+            notification.close();
+        }, 5000);
+        
+        return notification;
+    }
+}
+
+/**
+ * Crea efecto de partículas para notificaciones
+ */
+function createNotificationParticles(element) {
+    const rect = element.getBoundingClientRect();
+    const particleCount = 6;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'notification-particle';
+        particle.style.left = (rect.left + Math.random() * rect.width) + 'px';
+        particle.style.top = (rect.top + Math.random() * rect.height) + 'px';
+        
+        document.body.appendChild(particle);
+        
+        // Remover partícula después de la animación
+        setTimeout(() => {
+            if (particle && particle.parentNode) {
+                particle.parentNode.removeChild(particle);
+            }
+        }, 2000);
+    }
+}
+
+/**
+ * Maneja errores de conexión
+ */
+function handleConnectionError() {
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+        const errorHTML = `
+            <div class="error-state">
+                <i class="fas fa-wifi-slash"></i>
+                <h3>Error de Conexión</h3>
+                <p>No se pudo conectar con el servidor. Verifica tu conexión a internet.</p>
+                <button class="retry-btn" onclick="retryConnection()">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
+            </div>
+        `;
+        messagesContainer.innerHTML = errorHTML;
+    }
+}
+
+/**
+ * Reintenta la conexión
+ */
+function retryConnection() {
+    if (typeof loadConversations === 'function') {
+        loadConversations();
+    }
+}
+
+// Exponer funciones globalmente
+window.handleConnectionError = handleConnectionError;
+window.retryConnection = retryConnection;
+window.showBrowserNotification = showBrowserNotification;
+window.createNotificationParticles = createNotificationParticles;
+
 /**
  * Configura la interfaz según el rol del usuario
  */
@@ -851,3 +1077,552 @@ async function handleSendNewMessage(e, closeModal) {
         }
     }
 }
+
+/**
+ * Envía un mensaje individual
+ */
+async function sendIndividualMessage(messageData) {
+    const token = localStorage.getItem('authToken');
+    const API_BASE = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : '';
+    
+    const response = await fetch(`${API_BASE}/api/messages/send`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            clienteId: messageData.to,
+            mensaje: `${messageData.subject}\n\n${messageData.content}`,
+            adjuntos: [] // TODO: Implementar adjuntos
+        })
+    });
+    
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al enviar mensaje');
+    }
+    
+    return await response.json();
+}
+
+/**
+ * Envía un mensaje grupal
+ */
+async function sendGroupMessage(messageData) {
+    // TODO: Implementar envío de mensajes grupales
+    console.log('📢 Enviando mensaje grupal:', messageData);
+    showToast('Funcionalidad de mensajes grupales próximamente', 'info');
+}
+
+/**
+ * Guarda un borrador del mensaje
+ */
+function saveDraft() {
+    const formData = {
+        to: document.getElementById('message-to').value,
+        subject: document.getElementById('message-subject').value.trim(),
+        content: document.getElementById('message-content').value.trim(),
+        timestamp: new Date().toISOString()
+    };
+    
+    // Guardar en localStorage
+    const drafts = JSON.parse(localStorage.getItem('messageDrafts') || '[]');
+    drafts.push(formData);
+    
+    // Mantener solo los últimos 10 borradores
+    if (drafts.length > 10) {
+        drafts.splice(0, drafts.length - 10);
+    }
+    
+    localStorage.setItem('messageDrafts', JSON.stringify(drafts));
+    showToast('Borrador guardado', 'success');
+}
+
+/**
+ * Carga la conversación del cliente actual (para vista de cliente)
+ */
+async function loadClientConversation() {
+    console.log('👤 Cargando conversación del cliente...');
+    
+    const currentUser = window.currentUser || JSON.parse(localStorage.getItem('userData') || '{}');
+    
+    if (currentUser.rol !== 'cliente') {
+        console.warn('Esta función es solo para clientes');
+        return;
+    }
+    
+    await loadConversationMessages(currentUser._id);
+}
+
+/**
+ * Configurar polling para actualización automática de mensajes
+ */
+function setupMessagePolling() {
+    // Limpiar intervalo existente
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+    }
+    
+    // Configurar nuevo intervalo (cada 30 segundos)
+    messagePollingInterval = setInterval(() => {
+        if (currentConversationId) {
+            loadConversationMessages(currentConversationId);
+        }
+        loadConversations(); // Actualizar lista de conversaciones
+    }, 30000);
+    
+    console.log('🔄 Polling de mensajes configurado (30s)');
+}
+
+/**
+ * Marca una conversación como leída
+ */
+async function markConversationAsRead(conversationId) {
+    console.log('✅ Marcando conversación como leída:', conversationId);
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/messages/mark-read/${conversationId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al marcar como leído');
+        }
+        
+        // Recargar conversaciones para actualizar contadores
+        await loadConversations();
+        
+        showToast('Mensajes marcados como leídos', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error al marcar como leído:', error);
+        showToast('Error al marcar mensajes como leídos', 'error');
+    }
+}
+
+/**
+ * Archiva una conversación
+ */
+async function archiveConversation(conversationId) {
+    console.log('📦 Archivando conversación:', conversationId);
+    
+    if (!confirm('¿Estás seguro de que deseas archivar esta conversación?')) {
+        return;
+    }
+    
+    try {
+        // TODO: Implementar archivado en el backend
+        showToast('Conversación archivada', 'success');
+        
+        // Recargar conversaciones
+        await loadConversations();
+        
+        // Limpiar vista de mensaje actual
+        const messageContent = document.querySelector('.message-content');
+        if (messageContent) {
+            messageContent.innerHTML = `
+                <div class="no-conversation">
+                    <i class="fas fa-archive" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
+                    <p>Conversación archivada</p>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al archivar conversación:', error);
+        showToast('Error al archivar conversación', 'error');
+    }
+}
+
+/**
+ * Elimina una conversación
+ */
+async function deleteConversation(conversationId) {
+    console.log('🗑️  Eliminando conversación:', conversationId);
+    
+    if (!confirm('¿Estás seguro de que deseas eliminar esta conversación? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        // TODO: Implementar eliminación en el backend
+        showToast('Conversación eliminada', 'success');
+        
+        // Recargar conversaciones
+        await loadConversations();
+        
+        // Limpiar vista de mensaje actual
+        const messageContent = document.querySelector('.message-content');
+        if (messageContent) {
+            messageContent.innerHTML = `
+                <div class="no-conversation">
+                    <i class="fas fa-trash" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
+                    <p>Conversación eliminada</p>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar conversación:', error);
+        showToast('Error al eliminar conversación', 'error');
+    }
+}
+
+/**
+ * Busca mensajes
+ */
+function searchMessages() {
+    const searchInput = document.querySelector('.messages-search input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    console.log('🔍 Buscando mensajes:', searchTerm);
+    
+    if (!searchTerm) {
+        // Mostrar todas las conversaciones
+        renderConversationsList(messagesData);
+        return;
+    }
+    
+    // Filtrar conversaciones por término de búsqueda
+    const filteredConversations = messagesData.filter(conv => {
+        const clientInfo = conv.clienteInfo || {};
+        const lastMessage = conv.ultimoMensaje || {};
+        
+        return (
+            (clientInfo.nombre && clientInfo.nombre.toLowerCase().includes(searchTerm)) ||
+            (clientInfo.apellidos && clientInfo.apellidos.toLowerCase().includes(searchTerm)) ||
+            (clientInfo.correo && clientInfo.correo.toLowerCase().includes(searchTerm)) ||
+            (lastMessage.mensaje && lastMessage.mensaje.toLowerCase().includes(searchTerm))
+        );
+    });
+    
+    renderConversationsList(filteredConversations);
+    
+    if (filteredConversations.length === 0) {
+        showToast(`No se encontraron resultados para "${searchTerm}"`, 'info');
+    }
+}
+
+/**
+ * Filtra mensajes por pestaña
+ */
+function filterMessagesByTab(tabType) {
+    console.log('🔄 Filtrando mensajes por pestaña:', tabType);
+    
+    let filteredData = [];
+    
+    switch (tabType) {
+        case 'inbox':
+            filteredData = messagesData.filter(conv => !conv.archived);
+            break;
+        case 'sent':
+            // TODO: Implementar mensajes enviados
+            filteredData = [];
+            break;
+        case 'archived':
+            filteredData = messagesData.filter(conv => conv.archived);
+            break;
+        default:
+            filteredData = messagesData;
+    }
+    
+    renderConversationsList(filteredData);
+}
+
+/**
+ * Muestra datos de ejemplo cuando falla la carga
+ */
+function showSampleConversationsData() {
+    console.log('📋 Mostrando datos de ejemplo');
+    
+    const messagesList = document.getElementById('messages-list');
+    if (!messagesList) return;
+    
+    messagesList.innerHTML = `
+        <div class="message-item unread" onclick="showSampleConversation()">
+            <div class="message-sender">
+                <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                <div class="sender-info">
+                    <h4>Juan Pérez</h4>
+                    <p class="message-time">Hace 2 horas</p>
+                </div>
+                <span class="unread-badge">2</span>
+            </div>
+            <p class="message-subject">Consulta sobre proyecto web</p>
+            <p class="message-preview">Hola, quisiera saber el estado de mi proyecto de desarrollo web...</p>
+        </div>
+        
+        <div class="message-item" onclick="showSampleConversation()">
+            <div class="message-sender">
+                <img src="/api/placeholder/40/40" alt="User Avatar" class="sender-avatar">
+                <div class="sender-info">
+                    <h4>Ana González</h4>
+                    <p class="message-time">Ayer</p>
+                </div>
+            </div>
+            <p class="message-subject">Información sobre servicios</p>
+            <p class="message-preview">Buenos días, me gustaría conocer más sobre sus servicios de marketing digital...</p>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; color: #999; font-style: italic; border-top: 1px solid #333; margin-top: 20px;">
+            Datos de ejemplo - Conecte con la API para ver mensajes reales
+        </div>
+    `;
+}
+
+/**
+ * Muestra conversación de ejemplo
+ */
+function showSampleConversation() {
+    const messageContent = document.querySelector('.message-content');
+    if (!messageContent) return;
+    
+    messageContent.innerHTML = `
+        <div class="message-header">
+            <div class="message-details">
+                <h3 class="message-content-subject">Consulta sobre proyecto web</h3>
+                <div class="message-meta">
+                    <p class="message-content-from">De: Juan Pérez &lt;juan.perez@email.com&gt;</p>
+                    <p class="message-content-time">15 May 2025, 10:23 AM</p>
+                </div>
+            </div>
+            <div class="message-actions">
+                <button class="action-btn" title="Marcar como leído"><i class="fas fa-envelope-open"></i></button>
+                <button class="action-btn" title="Archivar"><i class="fas fa-archive"></i></button>
+                <button class="action-btn delete-btn" title="Eliminar"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+        
+        <div class="message-body conversation-view">
+            <div class="message-bubble client-message">
+                <div class="message-sender-name">Juan Pérez</div>
+                <div class="message-text">Hola, quisiera saber el estado de mi proyecto de desarrollo web. ¿Podrían darme una actualización?</div>
+                <div class="message-time">15 May 2025, 10:23 AM</div>
+            </div>
+            
+            <div class="message-bubble admin-message">
+                <div class="message-sender-name">Admin - Crazy Studios</div>
+                <div class="message-text">Hola Juan, tu proyecto va muy bien. Actualmente estamos en la fase de desarrollo del frontend. Te enviaremos un preview esta semana.</div>
+                <div class="message-time">15 May 2025, 2:45 PM</div>
+            </div>
+            
+            <div class="message-bubble client-message">
+                <div class="message-sender-name">Juan Pérez</div>
+                <div class="message-text">Perfecto, muchas gracias por la actualización. Estaré atento al preview.</div>
+                <div class="message-time">15 May 2025, 3:12 PM</div>
+            </div>
+        </div>
+        
+        <div class="reply-container">
+            <div class="reply-header">
+                <h4>Responder</h4>
+            </div>
+            <div class="reply-body">
+                <textarea placeholder="Escribe tu respuesta aquí..." id="reply-textarea"></textarea>
+                <div class="reply-actions">
+                    <button class="secondary-btn" onclick="clearReply()">Descartar</button>
+                    <button class="primary-btn" onclick="showToast('Funcionalidad disponible con API', 'info')">
+                        <i class="fas fa-paper-plane"></i> Enviar Respuesta
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Funciones de utilidad
+ */
+
+/**
+ * Formatea tiempo relativo (ej: "hace 2 horas")
+ */
+function formatTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `Hace ${diffMins} min`;
+    if (diffHours < 24) return `Hace ${diffHours}h`;
+    if (diffDays < 7) return `Hace ${diffDays}d`;
+    
+    return date.toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit',
+        year: '2-digit'
+    });
+}
+
+/**
+ * Formatea fecha y hora completa
+ */
+function formatDateTime(date) {
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+/**
+ * Trunca texto a una longitud específica
+ */
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
+/**
+ * Obtiene estadísticas de mensajes
+ */
+async function getMessagesStatistics() {
+    try {
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        const response = await fetch(`${API_BASE}/api/messages/stats`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('Error al obtener estadísticas de mensajes:', error);
+        return null;
+    }
+}
+
+/**
+ * Actualiza el contador de mensajes no leídos en el dashboard
+ */
+async function updateMessagesCounter() {
+    const stats = await getMessagesStatistics();
+    
+    if (stats) {
+        const messagesCount = document.getElementById('messages-count');
+        if (messagesCount) {
+            messagesCount.textContent = stats.totalNoLeidos || 0;
+        }
+        
+        // Crear evento personalizado para notificar cambios
+        const statsEvent = new CustomEvent('messagesStatsUpdated', {
+            detail: stats
+        });
+        
+        document.dispatchEvent(statsEvent);
+    }
+}
+
+/**
+ * Limpieza cuando se sale del módulo
+ */
+function cleanupMessagesModule() {
+    console.log('🧹 Limpiando módulo de mensajes...');
+    
+    // Limpiar interval de polling
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+        messagePollingInterval = null;
+    }
+    
+    // Limpiar variables globales
+    currentConversation = null;
+    currentConversationId = null;
+    messagesData = [];
+    filteredMessagesData = [];
+}
+
+/**
+ * Funciones públicas para uso externo
+ */
+
+// Función para inicializar desde el dashboard principal
+window.initMessagesModuleComplete = function() {
+    console.log('🚀 Inicializando módulo completo de mensajes...');
+    initMessagesModule();
+};
+
+// Función para abrir nuevo mensaje desde quick actions
+window.openNewMessageFromQuickAction = function() {
+    // Cambiar a la sección de mensajes primero
+    if (typeof switchToSection === 'function') {
+        switchToSection('messages');
+    }
+    
+    // Luego abrir el modal
+    setTimeout(() => {
+        openNewMessageModal();
+    }, 300);
+};
+
+// Funciones globales para botones
+window.selectConversation = selectConversation;
+window.markConversationAsRead = markConversationAsRead;
+window.archiveConversation = archiveConversation;
+window.deleteConversation = deleteConversation;
+window.sendReply = sendReply;
+window.clearReply = clearReply;
+window.showSampleConversation = showSampleConversation;
+
+// Inicialización automática cuando se carga la sección
+document.addEventListener('DOMContentLoaded', function() {
+    // Observar cambios en la sección de mensajes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const messagesSection = document.getElementById('messages');
+                if (messagesSection && messagesSection.classList.contains('active')) {
+                    setTimeout(() => {
+                        initMessagesModule();
+                    }, 100);
+                }
+            }
+        });
+    });
+    
+    const messagesSection = document.getElementById('messages');
+    if (messagesSection) {
+        observer.observe(messagesSection, { attributes: true });
+        
+        // También inicializar si la sección ya está activa
+        if (messagesSection.classList.contains('active')) {
+            setTimeout(() => {
+                initMessagesModule();
+            }, 100);
+        }
+    }
+});
+
+// Cleanup cuando se sale de la página
+window.addEventListener('beforeunload', function() {
+    cleanupMessagesModule();
+});
+
+console.log('✅ Módulo de mensajes cargado completamente');

@@ -969,206 +969,462 @@ exports.testConnection = async () => {
 };
 
 /**
- * Envía notificación por email a un cliente cuando un admin le responde
+ * Envía notificación por email a un cliente cuando un admin le responde (VERSIÓN MEJORADA)
  * @param {Object} client - Datos del cliente
  * @param {Object} messageData - Datos del mensaje
  */
 exports.sendMessageNotificationToClient = async (client, messageData) => {
     try {
+        console.log('📧 Enviando notificación de mensaje al cliente:', client.correo);
+        
         const emailContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="color: #4a4a4a;">Nueva Respuesta de Crazy Studios</h1>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+                <!-- Header con logo -->
+                <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #007bff;">
+                    <h1 style="color: #007bff; margin: 0; font-size: 24px;">💬 Nueva Respuesta de Crazy Studios</h1>
                 </div>
-                <div style="color: #666; line-height: 1.6;">
-                    <p>Hola ${client.nombre},</p>
-                    <p><strong>${messageData.adminName}</strong> de nuestro equipo te ha enviado una respuesta:</p>
+                
+                <!-- Saludo personalizado -->
+                <div style="color: #333; line-height: 1.6; font-size: 16px;">
+                    <p style="margin-bottom: 20px;">¡Hola <strong>${client.nombre}</strong>!</p>
                     
-                    <div style="background-color: #f9f9f9; padding: 20px; border-left: 4px solid #4CAF50; margin: 20px 0; border-radius: 4px;">
-                        <p style="margin: 0; font-style: italic; color: #333;">
-                            "${messageData.mensaje}"
+                    <p style="margin-bottom: 25px;">
+                        <strong style="color: #007bff;">${messageData.adminName}</strong> de nuestro equipo te ha enviado una respuesta:
+                    </p>
+                    
+                    <!-- Mensaje destacado -->
+                    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-left: 4px solid #007bff; margin: 25px 0; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                            <div style="background-color: #007bff; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
+                                ${messageData.adminName.charAt(0).toUpperCase()}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #007bff; margin-bottom: 8px;">
+                                    ${messageData.adminName} - Crazy Studios
+                                </div>
+                                <div style="color: #333; font-style: italic; line-height: 1.5; font-size: 15px;">
+                                    "${messageData.mensaje}"
+                                </div>
+                                <div style="margin-top: 12px; font-size: 13px; color: #666;">
+                                    📅 ${messageData.fechaEnvio.toLocaleDateString('es-ES', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Call to action -->
+                    <div style="text-align: center; margin: 35px 0;">
+                        <p style="margin-bottom: 20px; color: #555;">
+                            Para ver la conversación completa y responder, accede a tu cuenta:
                         </p>
-                        <p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">
-                            Enviado el ${messageData.fechaEnvio.toLocaleDateString('es-ES', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard" 
+                           style="display: inline-block; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); transition: all 0.3s ease;">
+                            💬 Ver y Responder Mensaje
+                        </a>
+                    </div>
+                    
+                    <!-- Información adicional -->
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 25px 0;">
+                        <p style="margin: 0; color: #856404; font-size: 14px;">
+                            <strong>💡 Consejo:</strong> Mantén una comunicación fluida con nuestro equipo para obtener los mejores resultados en tu proyecto.
                         </p>
                     </div>
                     
-                    <p>Para ver la conversación completa y responder, accede a tu cuenta en nuestro portal.</p>
-                    
-                    <p style="text-align: center; margin: 30px 0;">
-                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard" 
-                           style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                            Ver Mensajes
-                        </a>
+                    <p style="margin-top: 25px; color: #555;">
+                        Si tienes alguna pregunta adicional, no dudes en responder a través de tu panel de cliente.
                     </p>
                     
-                    <p>Si tienes alguna pregunta adicional, no dudes en responder a través de tu cuenta.</p>
-                    <p>¡Gracias por confiar en Crazy Studios!</p>
+                    <p style="color: #007bff; font-weight: 600;">
+                        ¡Gracias por confiar en Crazy Studios! 🚀
+                    </p>
                 </div>
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
-                    <p>© ${new Date().getFullYear()} Crazy Studios. Todos los derechos reservados.</p>
-                    <p>Este mensaje fue enviado porque tienes una cuenta activa en nuestro sistema.</p>
+                
+                <!-- Footer -->
+                <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+                    <p style="margin: 0 0 10px 0;">© ${new Date().getFullYear()} Crazy Studios. Todos los derechos reservados.</p>
+                    <p style="margin: 0;">Este mensaje fue enviado porque tienes una cuenta activa en nuestro sistema.</p>
+                    <p style="margin: 10px 0 0 0; color: #007bff;">
+                        <a href="mailto:soporte@crazystudios.com" style="color: #007bff; text-decoration: none;">📧 soporte@crazystudios.com</a>
+                    </p>
                 </div>
             </div>
         `;
         
         await sendEmail({
             to: client.correo,
-            subject: 'Nueva respuesta de Crazy Studios - Centro de Mensajes',
+            subject: `💬 Nueva respuesta de ${messageData.adminName} - Crazy Studios`,
             html: emailContent
         });
         
-        console.log(`Notificación de mensaje enviada al cliente: ${client.correo}`);
+        console.log('✅ Notificación de mensaje enviada al cliente:', client.correo);
         
     } catch (error) {
-        console.error('Error al enviar notificación de mensaje al cliente:', error);
+        console.error('❌ Error al enviar notificación de mensaje al cliente:', error);
         throw error;
     }
 };
 
 /**
- * Envía notificación por email a un admin cuando un cliente envía un mensaje
+ * Envía notificación por email a un admin cuando un cliente envía un mensaje (VERSIÓN MEJORADA)
  * @param {Object} admin - Datos del administrador
  * @param {Object} messageData - Datos del mensaje
  */
 exports.sendMessageNotificationToAdmin = async (admin, messageData) => {
     try {
+        console.log('📧 Enviando notificación de mensaje al admin:', admin.correo);
+        
         const emailContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="color: #4a4a4a;">💬 Nuevo Mensaje de Cliente</h1>
+            <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); border-radius: 8px; color: white;">
+                    <h1 style="margin: 0; font-size: 24px;">🔔 Nuevo Mensaje de Cliente</h1>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">Requiere tu atención</p>
                 </div>
-                <div style="color: #666; line-height: 1.6;">
-                    <p>Hola ${admin.nombre},</p>
-                    <p>Has recibido un nuevo mensaje de <strong>${messageData.clientName}</strong>:</p>
-                    
-                    <div style="background-color: #f0f8ff; padding: 20px; border-left: 4px solid #007bff; margin: 20px 0; border-radius: 4px;">
-                        <div style="margin-bottom: 10px;">
-                            <strong style="color: #007bff;">De:</strong> ${messageData.clientName}<br>
-                            <strong style="color: #007bff;">Email:</strong> ${messageData.clientEmail}<br>
-                            <strong style="color: #007bff;">Fecha:</strong> ${messageData.fechaEnvio.toLocaleDateString('es-ES', { 
+                
+                <!-- Información del cliente -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #28a745;">
+                    <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">👤 Información del Cliente</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong style="color: #495057;">Nombre:</strong><br>
+                            <span style="color: #007bff; font-size: 16px; font-weight: 600;">${messageData.clientName}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #495057;">Email:</strong><br>
+                            <a href="mailto:${messageData.clientEmail}" style="color: #007bff; text-decoration: none;">${messageData.clientEmail}</a>
+                        </div>
+                        <div>
+                            <strong style="color: #495057;">Fecha:</strong><br>
+                            <span style="color: #495057;">${messageData.fechaEnvio.toLocaleDateString('es-ES', { 
                                 year: 'numeric', 
                                 month: 'long', 
                                 day: 'numeric',
                                 hour: '2-digit',
                                 minute: '2-digit'
-                            })}
+                            })}</span>
                         </div>
-                        <div style="border-top: 1px solid #ccc; padding-top: 15px; margin-top: 15px;">
-                            <strong style="color: #333;">Mensaje:</strong>
-                            <p style="margin: 10px 0 0 0; font-style: italic; color: #333;">
-                                "${messageData.mensaje}"
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <p>Para responder a este cliente, accede al panel de administración.</p>
-                    
-                    <p style="text-align: center; margin: 30px 0;">
-                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/html/dashboardAdministrador.html" 
-                           style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                            Responder Mensaje
-                        </a>
-                    </p>
-                    
-                    <div style="background-color: #fffbee; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                        <p style="margin: 0; color: #b8860b;">
-                            <strong>💡 Consejo:</strong> Responde pronto para mantener una buena comunicación con el cliente.
-                        </p>
                     </div>
                 </div>
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
-                    <p>© ${new Date().getFullYear()} Crazy Studios. Todos los derechos reservados.</p>
-                    <p>Este mensaje fue enviado porque eres administrador del sistema.</p>
+                
+                <!-- Mensaje del cliente -->
+                <div style="color: #333; line-height: 1.6;">
+                    <h3 style="color: #333; margin-bottom: 20px; font-size: 18px;">💬 Mensaje del Cliente:</h3>
+                    
+                    <div style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 25px; border-radius: 12px; margin: 20px 0; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <!-- Indicador de mensaje -->
+                        <div style="position: absolute; top: -8px; left: 25px; background-color: #007bff; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                            MENSAJE CLIENTE
+                        </div>
+                        
+                        <div style="margin-top: 10px; font-size: 16px; line-height: 1.6; color: #333;">
+                            "${messageData.mensaje}"
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Acciones rápidas -->
+                <div style="background-color: #fff; border: 2px solid #007bff; border-radius: 12px; padding: 25px; margin: 30px 0;">
+                    <h3 style="margin: 0 0 20px 0; color: #007bff; text-align: center; font-size: 18px;">⚡ Acciones Rápidas</h3>
+                    
+                    <div style="text-align: center;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/html/dashboardAdministrador.html" 
+                           style="display: inline-block; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 0 10px 10px 0; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);">
+                            💬 Responder Ahora
+                        </a>
+                        
+                        <a href="mailto:${messageData.clientEmail}" 
+                           style="display: inline-block; background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 0 10px 10px 0; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                            📧 Email Directo
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Consejos para una buena respuesta -->
+                <div style="background-color: #f8f9fa; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">💡 Consejos para una Respuesta Efectiva:</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #495057; line-height: 1.6;">
+                        <li>Responde dentro de las próximas 2 horas para mantener una excelente experiencia de cliente</li>
+                        <li>Personaliza tu respuesta mencionando el nombre del cliente</li>
+                        <li>Proporciona información específica y actionable</li>
+                        <li>Si necesitas más tiempo, envía una respuesta de confirmación inicial</li>
+                    </ul>
+                </div>
+                
+                <!-- Estadísticas rápidas -->
+                <div style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); padding: 20px; border-radius: 8px; margin: 25px 0; color: white; text-align: center;">
+                    <h4 style="margin: 0 0 10px 0;">📊 Recuerda</h4>
+                    <p style="margin: 0; opacity: 0.9;">La comunicación rápida y efectiva mejora la satisfacción del cliente y fortalece nuestra reputación.</p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #e8f5e8; border-radius: 8px;">
+                    <p style="margin: 0; color: #155724; font-weight: 600; font-size: 16px;">
+                        🚀 ¡Mantengamos la excelencia en nuestro servicio al cliente!
+                    </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+                    <p style="margin: 0 0 10px 0;">© ${new Date().getFullYear()} Crazy Studios - Panel de Administración</p>
+                    <p style="margin: 0;">Este mensaje fue enviado porque eres administrador del sistema.</p>
+                    <p style="margin: 10px 0 0 0;">
+                        📞 Si tienes problemas técnicos, contacta al equipo de desarrollo.
+                    </p>
                 </div>
             </div>
         `;
         
         await sendEmail({
             to: admin.correo,
-            subject: `Nuevo mensaje de ${messageData.clientName} - Centro de Mensajes`,
+            subject: `🔔 Nuevo mensaje de ${messageData.clientName} - Centro de Mensajes`,
             html: emailContent
         });
         
-        console.log(`Notificación de mensaje enviada al admin: ${admin.correo}`);
+        console.log('✅ Notificación de mensaje enviada al admin:', admin.correo);
         
     } catch (error) {
-        console.error('Error al enviar notificación de mensaje al admin:', error);
+        console.error('❌ Error al enviar notificación de mensaje al admin:', error);
         throw error;
     }
 };
 
 /**
- * Envía resumen diario de mensajes a los administradores
+ * Envía resumen diario de mensajes a los administradores (VERSIÓN MEJORADA)
  * @param {Object} admin - Datos del administrador
  * @param {Object} summary - Resumen de mensajes
  */
 exports.sendDailyMessageSummary = async (admin, summary) => {
     try {
         const emailContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="color: #4a4a4a;">📊 Resumen Diario de Mensajes</h1>
+            <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, #6f42c1 0%, #007bff 100%); border-radius: 8px; color: white;">
+                    <h1 style="margin: 0; font-size: 28px;">📊 Resumen Diario de Mensajes</h1>
+                    <p style="margin: 15px 0 0 0; opacity: 0.9; font-size: 18px;">
+                        ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
                 </div>
-                <div style="color: #666; line-height: 1.6;">
-                    <p>Hola ${admin.nombre},</p>
-                    <p>Aquí tienes el resumen de mensajes del día:</p>
-                    
-                    <div style="display: flex; justify-content: space-around; margin: 30px 0;">
-                        <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; flex: 1; margin: 0 10px;">
-                            <h3 style="color: #007bff; margin: 0; font-size: 28px;">${summary.nuevosHoy}</h3>
-                            <p style="margin: 5px 0 0 0; color: #666;">Mensajes Nuevos</p>
+                
+                <!-- Saludo personalizado -->
+                <div style="margin-bottom: 30px;">
+                    <p style="font-size: 18px; color: #333; margin: 0;">
+                        ¡Hola <strong style="color: #007bff;">${admin.nombre}</strong>! 👋
+                    </p>
+                    <p style="color: #666; margin: 10px 0 0 0;">
+                        Aquí tienes el resumen de la actividad de mensajes del día:
+                    </p>
+                </div>
+                
+                <!-- Estadísticas principales -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; margin: 30px 0;">
+                    <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                        <div style="font-size: 36px; font-weight: bold; margin-bottom: 8px;">
+                            ${summary.nuevosHoy || 0}
                         </div>
-                        <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; flex: 1; margin: 0 10px;">
-                            <h3 style="color: #28a745; margin: 0; font-size: 28px;">${summary.respondidosHoy}</h3>
-                            <p style="margin: 5px 0 0 0; color: #666;">Respondidos</p>
-                        </div>
-                        <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; flex: 1; margin: 0 10px;">
-                            <h3 style="color: #dc3545; margin: 0; font-size: 28px;">${summary.pendientes}</h3>
-                            <p style="margin: 5px 0 0 0; color: #666;">Pendientes</p>
+                        <div style="font-size: 14px; opacity: 0.9;">
+                            💬 Mensajes Nuevos
                         </div>
                     </div>
                     
-                    ${summary.conversacionesActivas.length > 0 ? `
-                        <h3 style="color: #333; margin-top: 30px;">Conversaciones Activas</h3>
-                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
-                            ${summary.conversacionesActivas.map(conv => `
-                                <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6;">
-                                    <strong>${conv.clientName}</strong> - ${conv.mensajesPendientes} mensaje(s) sin responder
-                                </div>
-                            `).join('')}
+                    <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, #007bff 0%, #6610f2 100%); border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);">
+                        <div style="font-size: 36px; font-weight: bold; margin-bottom: 8px;">
+                            ${summary.respondidosHoy || 0}
                         </div>
-                    ` : ''}
+                        <div style="font-size: 14px; opacity: 0.9;">
+                            ✅ Respondidos
+                        </div>
+                    </div>
                     
-                    <p style="text-align: center; margin: 30px 0;">
-                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/html/dashboardAdministrador.html" 
-                           style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                            Ver Centro de Mensajes
-                        </a>
+                    <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%); border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);">
+                        <div style="font-size: 36px; font-weight: bold; margin-bottom: 8px;">
+                            ${summary.pendientes || 0}
+                        </div>
+                        <div style="font-size: 14px; opacity: 0.9;">
+                            ⏳ Pendientes
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Métricas adicionales -->
+                <div style="background-color: #f8f9fa; padding: 25px; border-radius: 12px; margin: 30px 0;">
+                    <h3 style="margin: 0 0 20px 0; color: #495057; text-align: center;">📈 Métricas del Día</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 5px;">
+                                ${summary.tiempoRespuestaPromedio || 'N/A'}
+                            </div>
+                            <div style="font-size: 14px; color: #666;">⏱️ Tiempo Respuesta Promedio</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #28a745; margin-bottom: 5px;">
+                                ${summary.satisfaccionClientes || 'N/A'}
+                            </div>
+                            <div style="font-size: 14px; color: #666;">😊 Satisfacción Cliente</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conversaciones activas -->
+                ${summary.conversacionesActivas && summary.conversacionesActivas.length > 0 ? `
+                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 25px; border-radius: 12px; margin: 30px 0;">
+                    <h3 style="color: #856404; margin: 0 0 20px 0; text-align: center;">🔥 Conversaciones que Requieren Atención</h3>
+                    <div style="space-y: 15px;">
+                        ${summary.conversacionesActivas.map(conv => `
+                            <div style="background-color: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 600; color: #495057; margin-bottom: 5px;">
+                                            👤 ${conv.clientName}
+                                        </div>
+                                        <div style="color: #6c757d; font-size: 14px;">
+                                            💬 ${conv.mensajesPendientes} mensaje(s) sin responder
+                                        </div>
+                                    </div>
+                                    <div style="background-color: #ffc107; color: #212529; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: 600;">
+                                        PRIORITARIO
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- Call to action -->
+                <div style="text-align: center; margin: 40px 0; padding: 30px; background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%); border-radius: 12px; color: white;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 20px;">🚀 ¡Mantén el Momentum!</h3>
+                    <p style="margin: 0 0 25px 0; opacity: 0.9; font-size: 16px;">
+                        ${summary.pendientes > 0 ? 
+                            `Tienes ${summary.pendientes} mensajes esperando tu respuesta. ¡Vamos por ellos!` :
+                            '¡Excelente trabajo! Todos los mensajes han sido atendidos.'
+                        }
+                    </p>
+                    
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/html/dashboardAdministrador.html" 
+                       style="display: inline-block; background-color: white; color: #007bff; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        💼 Ir al Centro de Mensajes
+                    </a>
+                </div>
+                
+                <!-- Consejos del día -->
+                <div style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); padding: 25px; border-radius: 12px; margin: 30px 0; color: white;">
+                    <h4 style="margin: 0 0 15px 0; text-align: center;">💡 Consejo del Día</h4>
+                    <p style="margin: 0; text-align: center; font-style: italic; opacity: 0.9;">
+                        "La comunicación efectiva es el 80% del éxito en el servicio al cliente. Cada mensaje es una oportunidad de crear una experiencia memorable."
                     </p>
                 </div>
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
-                    <p>© ${new Date().getFullYear()} Crazy Studios. Todos los derechos reservados.</p>
+                
+                <!-- Footer -->
+                <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+                    <p style="margin: 0 0 10px 0;">© ${new Date().getFullYear()} Crazy Studios - Sistema de Gestión</p>
+                    <p style="margin: 0;">Resumen automático generado para administradores del sistema.</p>
                 </div>
             </div>
         `;
         
         await sendEmail({
             to: admin.correo,
-            subject: `Resumen diario de mensajes - ${new Date().toLocaleDateString('es-ES')}`,
+            subject: `📊 Resumen diario de mensajes - ${new Date().toLocaleDateString('es-ES')} - Crazy Studios`,
             html: emailContent
         });
         
-        console.log(`Resumen diario enviado a: ${admin.correo}`);
+        console.log('✅ Resumen diario enviado a:', admin.correo);
         
     } catch (error) {
-        console.error('Error al enviar resumen diario:', error);
+        console.error('❌ Error al enviar resumen diario:', error);
+        throw error;
+    }
+};
+
+/**
+ * Envía notificación cuando se archiva una conversación
+ * @param {Object} admin - Datos del administrador
+ * @param {Object} conversationData - Datos de la conversación archivada
+ */
+exports.sendConversationArchivedNotification = async (admin, conversationData) => {
+    try {
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #6c757d;">📦 Conversación Archivada</h1>
+                </div>
+                <div style="color: #666; line-height: 1.6;">
+                    <p>Hola ${admin.nombre},</p>
+                    <p>Se ha archivado la conversación con <strong>${conversationData.clientName}</strong>.</p>
+                    
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p><strong>Cliente:</strong> ${conversationData.clientName}</p>
+                        <p><strong>Total de mensajes:</strong> ${conversationData.totalMessages}</p>
+                        <p><strong>Fecha de archivo:</strong> ${new Date().toLocaleDateString('es-ES')}</p>
+                    </div>
+                    
+                    <p>La conversación puede ser restaurada desde el panel de administración si es necesario.</p>
+                </div>
+            </div>
+        `;
+        
+        await sendEmail({
+            to: admin.correo,
+            subject: '📦 Conversación Archivada - Crazy Studios',
+            html: emailContent
+        });
+        
+    } catch (error) {
+        console.error('Error al enviar notificación de archivo:', error);
+        throw error;
+    }
+};
+
+/**
+ * Envía alerta cuando hay muchos mensajes sin responder
+ * @param {Object} admin - Datos del administrador
+ * @param {Object} alertData - Datos de la alerta
+ */
+exports.sendUnreadMessagesAlert = async (admin, alertData) => {
+    try {
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dc3545; border-radius: 8px; background-color: #f8d7da;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #721c24;">🚨 Alerta: Mensajes Sin Responder</h1>
+                </div>
+                <div style="color: #721c24; line-height: 1.6;">
+                    <p>Hola ${admin.nombre},</p>
+                    <p>Hay <strong>${alertData.unreadCount}</strong> mensajes sin responder que requieren tu atención.</p>
+                    
+                    <div style="background-color: #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p><strong>Mensajes más antiguos sin responder:</strong></p>
+                        <ul>
+                            ${alertData.oldestMessages.map(msg => 
+                                `<li>${msg.clientName} - ${msg.timeAgo}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                    
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/html/dashboardAdministrador.html" 
+                           style="background-color: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            🚨 Responder Mensajes Urgentes
+                        </a>
+                    </p>
+                    
+                    <p>Por favor, revisa y responde estos mensajes lo antes posible para mantener la satisfacción del cliente.</p>
+                </div>
+            </div>
+        `;
+        
+        await sendEmail({
+            to: admin.correo,
+            subject: `🚨 URGENTE: ${alertData.unreadCount} mensajes sin responder - Crazy Studios`,
+            html: emailContent
+        });
+        
+    } catch (error) {
+        console.error('Error al enviar alerta de mensajes:', error);
         throw error;
     }
 };
