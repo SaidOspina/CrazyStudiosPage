@@ -1773,6 +1773,422 @@ clientDashboardStyles.textContent = `
     }
 `;
 
+/**
+ * Carga proyectos recientes para mostrar en el dashboard
+ */
+async function loadRecentProjects() {
+    console.log('📋 Cargando proyectos recientes...');
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        const user = window.currentUser;
+        
+        if (!token || !user) {
+            console.warn('⚠️ No hay datos de autenticación');
+            showEmptyRecentProjects();
+            return;
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        // Cargar proyectos del cliente actual
+        const response = await fetch(`${API_BASE}/api/projects?cliente=${user._id}&limit=3`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al cargar proyectos');
+        }
+        
+        const data = await response.json();
+        const projects = data.data || [];
+        
+        console.log('✅ Proyectos cargados:', projects.length);
+        
+        // Filtrar solo proyectos en progreso
+        const projectsInProgress = projects.filter(project => 
+            ['pago procesado', 'iniciado', 'desarrollo inicial', 'desarrollo medio'].includes(project.estado)
+        );
+        
+        renderRecentProjects(projectsInProgress);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar proyectos recientes:', error);
+        showEmptyRecentProjects();
+    }
+}
+
+/**
+ * Renderiza los proyectos recientes en el dashboard
+ */
+function renderRecentProjects(projects) {
+    const container = document.getElementById('recent-projects-container');
+    if (!container) {
+        console.warn('⚠️ Contenedor de proyectos recientes no encontrado');
+        return;
+    }
+    
+    if (projects.length === 0) {
+        showEmptyRecentProjects();
+        return;
+    }
+    
+    const estadoLabels = {
+        'cotizacion': 'Cotización',
+        'pago procesado': 'Pago Procesado',
+        'iniciado': 'Iniciado',
+        'desarrollo inicial': 'Desarrollo Inicial',
+        'desarrollo medio': 'Desarrollo Medio',
+        'finalizado': 'Finalizado'
+    };
+    
+    const categoriaLabels = {
+        'web-development': 'Desarrollo Web',
+        'ecommerce': 'Tienda Online',
+        'marketing-digital': 'Marketing Digital',
+        'social-media': 'Redes Sociales',
+        'seo': 'SEO',
+        'branding': 'Branding',
+        'design': 'Diseño Gráfico'
+    };
+    
+    const projectsHTML = projects.map(project => `
+        <div class="recent-project-card" onclick="viewClientProject('${project._id}')">
+            <div class="project-card-header">
+                <div class="project-card-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <div class="project-card-info">
+                    <h4>${project.nombre}</h4>
+                    <p class="project-category">${categoriaLabels[project.categoria] || project.categoria}</p>
+                </div>
+                <span class="project-status-badge" data-status="${project.estado}">
+                    ${estadoLabels[project.estado] || project.estado}
+                </span>
+            </div>
+            
+            <div class="project-progress-container">
+                <div class="progress-info">
+                    <span>Progreso</span>
+                    <span>${project.porcentajeProgreso || 0}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: ${project.porcentajeProgreso || 0}%;"></div>
+                </div>
+            </div>
+            
+            <div class="project-card-footer">
+                <div class="project-date">
+                    <i class="far fa-calendar-alt"></i>
+                    <span>Actualizado: ${new Date(project.fechaActualizacion || project.fechaCreacion).toLocaleDateString('es-ES')}</span>
+                </div>
+                ${project.costo ? `
+                <div class="project-cost">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>$${project.costo.toLocaleString()}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = projectsHTML;
+}
+
+/**
+ * Muestra mensaje cuando no hay proyectos recientes
+ */
+function showEmptyRecentProjects() {
+    const container = document.getElementById('recent-projects-container');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <h4>No hay proyectos en progreso</h4>
+            <p>Aún no tienes proyectos activos. Contacta con nuestro equipo para iniciar tu primer proyecto.</p>
+            <button class="primary-btn" onclick="switchToClientSection('projects')">
+                <i class="fas fa-plus"></i> Solicitar Proyecto
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Carga citas próximas para mostrar en el dashboard
+ */
+async function loadUpcomingAppointments() {
+    console.log('📅 Cargando citas próximas...');
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        const user = window.currentUser;
+        
+        if (!token || !user) {
+            console.warn('⚠️ No hay datos de autenticación');
+            showEmptyUpcomingAppointments();
+            return;
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        // Cargar citas del cliente actual - solo futuras
+        const response = await fetch(`${API_BASE}/api/appointments?usuario=${user._id}&futuras=true&limit=3`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al cargar citas');
+        }
+        
+        const data = await response.json();
+        const appointments = data.data || [];
+        
+        console.log('✅ Citas próximas cargadas:', appointments.length);
+        
+        // Filtrar solo citas pendientes y confirmadas
+        const upcomingAppointments = appointments.filter(apt => 
+            ['pendiente', 'confirmada'].includes(apt.estado)
+        );
+        
+        renderUpcomingAppointments(upcomingAppointments);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar citas próximas:', error);
+        showEmptyUpcomingAppointments();
+    }
+}
+
+/**
+ * Renderiza las citas próximas en el dashboard
+ */
+function renderUpcomingAppointments(appointments) {
+    const container = document.getElementById('recent-appointments-container');
+    if (!container) {
+        console.warn('⚠️ Contenedor de citas próximas no encontrado');
+        return;
+    }
+    
+    if (appointments.length === 0) {
+        showEmptyUpcomingAppointments();
+        return;
+    }
+    
+    const tipoLabels = {
+        'consulta-general': 'Consulta General',
+        'plan-personalizado': 'Plan Personalizado',
+        'seguimiento-proyecto': 'Seguimiento de Proyecto'
+    };
+    
+    const estadoLabels = {
+        'pendiente': 'Pendiente',
+        'confirmada': 'Confirmada',
+        'cancelada': 'Cancelada',
+        'completada': 'Completada'
+    };
+    
+    const appointmentsHTML = appointments.map(appointment => {
+        const fecha = new Date(appointment.fecha);
+        const fechaFormatted = fecha.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+        });
+        
+        const tiempoHasta = getTimeUntilDate(fecha);
+        
+        return `
+            <div class="upcoming-appointment-card" onclick="viewClientAppointment('${appointment._id}')">
+                <div class="appointment-card-header">
+                    <div class="appointment-card-icon">
+                        <i class="far fa-calendar-alt"></i>
+                    </div>
+                    <div class="appointment-card-info">
+                        <h4>${tipoLabels[appointment.tipo] || appointment.tipo}</h4>
+                        <p class="appointment-date">${fechaFormatted}</p>
+                    </div>
+                    <span class="appointment-status-badge" data-status="${appointment.estado}">
+                        ${estadoLabels[appointment.estado] || appointment.estado}
+                    </span>
+                </div>
+                
+                <div class="appointment-details">
+                    <div class="appointment-time">
+                        <i class="far fa-clock"></i>
+                        <span>${appointment.hora}</span>
+                    </div>
+                    
+                    <div class="appointment-countdown">
+                        <i class="fas fa-hourglass-half"></i>
+                        <span class="countdown-text">${tiempoHasta}</span>
+                    </div>
+                </div>
+                
+                ${appointment.proyectoDetalles ? `
+                <div class="appointment-project">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>Proyecto: ${appointment.proyectoDetalles.nombre}</span>
+                </div>
+                ` : ''}
+                
+                ${appointment.notas ? `
+                <div class="appointment-notes">
+                    <i class="fas fa-sticky-note"></i>
+                    <span>${appointment.notas}</span>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = appointmentsHTML;
+}
+
+/**
+ * Muestra mensaje cuando no hay citas próximas
+ */
+function showEmptyUpcomingAppointments() {
+    const container = document.getElementById('recent-appointments-container');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="far fa-calendar-alt"></i>
+            </div>
+            <h4>No hay citas programadas</h4>
+            <p>No tienes citas próximas programadas. Agenda una cita para consultoría o seguimiento de tus proyectos.</p>
+            <button class="primary-btn" onclick="switchToClientSection('appointments')">
+                <i class="far fa-calendar-plus"></i> Agendar Cita
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Calcula el tiempo hasta una fecha determinada
+ */
+function getTimeUntilDate(targetDate) {
+    const now = new Date();
+    const timeDiff = targetDate - now;
+    
+    if (timeDiff < 0) {
+        return 'Vencida';
+    }
+    
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (days > 0) {
+        return `En ${days} día${days > 1 ? 's' : ''}`;
+    } else if (hours > 0) {
+        return `En ${hours} hora${hours > 1 ? 's' : ''}`;
+    } else if (minutes > 0) {
+        return `En ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+    } else {
+        return 'Muy pronto';
+    }
+}
+
+/**
+ * Ver detalles de un proyecto del cliente
+ */
+function viewClientProject(projectId) {
+    console.log('👁️ Ver proyecto cliente:', projectId);
+    
+    // Cambiar a la sección de proyectos y luego mostrar detalles
+    switchToClientSection('projects');
+    
+    // Dar tiempo para que cargue la sección y luego mostrar detalles
+    setTimeout(() => {
+        if (window.showClientProjectDetails) {
+            window.showClientProjectDetails(projectId);
+        } else {
+            showToast('Cargando detalles del proyecto...', 'info');
+        }
+    }, 500);
+}
+
+/**
+ * Ver detalles de una cita del cliente
+ */
+function viewClientAppointment(appointmentId) {
+    console.log('👁️ Ver cita cliente:', appointmentId);
+    
+    // Cambiar a la sección de citas y luego mostrar detalles
+    switchToClientSection('appointments');
+    
+    // Dar tiempo para que cargue la sección y luego mostrar detalles
+    setTimeout(() => {
+        if (window.showClientAppointmentDetails) {
+            window.showClientAppointmentDetails(appointmentId);
+        } else {
+            showToast('Cargando detalles de la cita...', 'info');
+        }
+    }, 500);
+}
+
+/**
+ * Carga actividad reciente (opcional)
+ */
+async function loadRecentActivity() {
+    console.log('📈 Cargando actividad reciente...');
+    
+    try {
+        // Combinar datos de proyectos y citas para mostrar actividad
+        const token = localStorage.getItem('authToken');
+        const user = window.currentUser;
+        
+        if (!token || !user) {
+            console.warn('⚠️ No hay datos de autenticación para actividad');
+            return;
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        // Cargar mensajes recientes para mostrar como actividad
+        const messagesResponse = await fetch(`${API_BASE}/api/messages/conversations`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (messagesResponse.ok) {
+            const messagesData = await messagesResponse.json();
+            const conversations = messagesData.data || [];
+            
+            if (conversations.length > 0 && conversations[0].messages) {
+                const recentMessages = conversations[0].messages.slice(-3);
+                console.log('📨 Mensajes recientes para actividad:', recentMessages.length);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar actividad reciente:', error);
+    }
+}
+
 document.head.appendChild(clientDashboardStyles);
+
+window.viewClientProject = viewClientProject;
+window.viewClientAppointment = viewClientAppointment;
+window.loadRecentProjects = loadRecentProjects;
+window.loadUpcomingAppointments = loadUpcomingAppointments;
 
 console.log('✅ Dashboard Cliente - JavaScript cargado completamente');
