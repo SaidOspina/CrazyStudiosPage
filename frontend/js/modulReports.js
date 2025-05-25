@@ -475,9 +475,6 @@ function displayReportResults(reportData, reportType, startDate, endDate) {
     // Mostrar tabla de datos
     displayReportTable(reportData.data, reportType);
     
-    // Habilitar botón de exportación
-    document.getElementById('export-report-btn').disabled = false;
-    
     // Si no hay datos, mostrar estado vacío
     if (reportData.data.length === 0) {
         document.getElementById('report-results').style.display = 'none';
@@ -747,9 +744,6 @@ function handleClearReport() {
     
     // Ocultar todos los estados
     hideAllStates();
-    
-    // Deshabilitar botón de exportación
-    document.getElementById('export-report-btn').disabled = true;
     
     // Establecer fechas por defecto
     setDefaultDates();
