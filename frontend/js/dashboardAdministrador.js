@@ -443,7 +443,7 @@ function loadAppointmentsModuleScript() {
 
 
 /**
- * Carga estadísticas dinámicas desde la API - MEJORADO
+ * Carga estadísticas dinámicas desde la API - VERSIÓN ACTUALIZADA CON GRÁFICOS
  */
 async function loadDynamicStatistics() {
     console.log('📊 Cargando estadísticas dinámicas...');
@@ -469,8 +469,16 @@ async function loadDynamicStatistics() {
         // Cargar estadísticas de citas
         await loadAppointmentsStatistics(API_BASE, token);
         
-        // Cargar estadísticas de mensajes (próximamente)
-        loadMessagesStatistics();
+        // Cargar estadísticas de mensajes
+        await loadMessagesStatistics();
+        
+        // 🎯 NUEVO: Inicializar gráficos después de cargar estadísticas
+        setTimeout(() => {
+            if (document.getElementById('overview')?.classList.contains('active')) {
+                console.log('📊 Inicializando gráficos del dashboard...');
+                initDashboardCharts();
+            }
+        }, 1000);
         
     } catch (error) {
         console.error('Error al cargar estadísticas dinámicas:', error);
@@ -696,10 +704,267 @@ async function loadAppointmentsStatistics(API_BASE, token) {
 /**
  * Estadísticas de mensajes (placeholder)
  */
-function loadMessagesStatistics() {
-    console.log('Estadísticas de mensajes - próximamente');
-    // Aquí iría la lógica para cargar estadísticas de mensajes
+/**
+ * Carga estadísticas de mensajes desde la API - IMPLEMENTACIÓN COMPLETA
+ */
+async function loadMessagesStatistics() {
+    try {
+        console.log('💬 Cargando estadísticas de mensajes...');
+        
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('No hay token de autenticación para cargar estadísticas de mensajes');
+            return;
+        }
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
+        
+        // Obtener estadísticas generales de mensajes
+        const statsResponse = await fetch(`${API_BASE}/api/messages/stats`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            const stats = statsData.data || {};
+            
+            console.log('📊 Estadísticas de mensajes obtenidas:', stats);
+            
+            // Actualizar contador de mensajes no leídos
+            const messagesCount = document.getElementById('messages-count');
+            if (messagesCount) {
+                messagesCount.textContent = stats.totalNoLeidos || 0;
+            }
+            
+            // Actualizar descripción con mensajes de hoy
+            const messagesDescription = document.querySelector('.messages-icon')?.closest('.stat-card')?.querySelector('.stat-description');
+            if (messagesDescription) {
+                const mensajesHoy = stats.mensajesHoy || 0;
+                messagesDescription.textContent = `${mensajesHoy} mensajes hoy`;
+            }
+            
+            // Opcional: Obtener conversaciones para estadísticas adicionales
+            await loadConversationsStatistics(API_BASE, token, stats);
+            
+            console.log('✅ Estadísticas de mensajes cargadas:', {
+                totalConversaciones: stats.totalConversaciones || 0,
+                totalMensajes: stats.totalMensajes || 0,
+                noLeidos: stats.totalNoLeidos || 0,
+                mensajesHoy: stats.mensajesHoy || 0,
+                mensajesClientesHoy: stats.mensajesClientesHoy || 0,
+                mensajesAdminsHoy: stats.mensajesAdminsHoy || 0
+            });
+            
+        } else {
+            console.warn('⚠️ No se pudieron cargar las estadísticas de mensajes');
+            
+            // Fallback: intentar cargar conversaciones directamente
+            await loadConversationsStatistics(API_BASE, token, {});
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estadísticas de mensajes:', error);
+        
+        // Fallback: mostrar estadísticas por defecto
+        loadFallbackMessagesStatistics();
+    }
 }
+
+/**
+ * Carga estadísticas adicionales desde las conversaciones
+ */
+async function loadConversationsStatistics(API_BASE, token, existingStats = {}) {
+    try {
+        console.log('💬 Obteniendo conversaciones para estadísticas adicionales...');
+        
+        const conversationsResponse = await fetch(`${API_BASE}/api/messages/conversations`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (conversationsResponse.ok) {
+            const conversationsData = await conversationsResponse.json();
+            const conversations = conversationsData.data || [];
+            
+            console.log('📝 Conversaciones obtenidas:', conversations.length);
+            
+            // Calcular estadísticas de conversaciones
+            let totalMensajesNoLeidos = 0;
+            let conversacionesActivas = 0;
+            let ultimoMensajeHoy = false;
+            
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            
+            conversations.forEach(conversation => {
+                // Contar mensajes no leídos
+                if (conversation.mensajesNoLeidos) {
+                    totalMensajesNoLeidos += conversation.mensajesNoLeidos;
+                }
+                
+                // Contar conversaciones activas (con mensajes no leídos)
+                if (conversation.mensajesNoLeidos > 0) {
+                    conversacionesActivas++;
+                }
+                
+                // Verificar si hay mensajes de hoy
+                if (conversation.ultimoMensaje && conversation.ultimoMensaje.fechaCreacion) {
+                    const fechaUltimoMensaje = new Date(conversation.ultimoMensaje.fechaCreacion);
+                    if (fechaUltimoMensaje >= hoy) {
+                        ultimoMensajeHoy = true;
+                    }
+                }
+            });
+            
+            // Usar estadísticas de conversaciones si no las tenemos de la API de stats
+            if (!existingStats.totalNoLeidos) {
+                const messagesCount = document.getElementById('messages-count');
+                if (messagesCount) {
+                    messagesCount.textContent = totalMensajesNoLeidos;
+                }
+            }
+            
+            // Actualizar descripción si no se ha hecho
+            const messagesDescription = document.querySelector('.messages-icon')?.closest('.stat-card')?.querySelector('.stat-description');
+            if (messagesDescription && !existingStats.mensajesHoy) {
+                messagesDescription.textContent = conversacionesActivas > 0 
+                    ? `${conversacionesActivas} conversaciones activas`
+                    : 'Sin mensajes pendientes';
+            }
+            
+            console.log('📊 Estadísticas de conversaciones calculadas:', {
+                totalConversaciones: conversations.length,
+                mensajesNoLeidos: totalMensajesNoLeidos,
+                conversacionesActivas: conversacionesActivas,
+                ultimoMensajeHoy: ultimoMensajeHoy
+            });
+            
+            // Guardar estadísticas globalmente para uso posterior
+            window.messagesStatistics = {
+                totalConversaciones: conversations.length,
+                mensajesNoLeidos: totalMensajesNoLeidos,
+                conversacionesActivas: conversacionesActivas,
+                conversations: conversations,
+                lastUpdated: new Date()
+            };
+            
+        } else {
+            console.warn('⚠️ No se pudieron cargar las conversaciones');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al cargar conversaciones:', error);
+    }
+}
+
+/**
+ * Carga estadísticas de mensajes por defecto cuando no se puede conectar a la API
+ */
+function loadFallbackMessagesStatistics() {
+    console.log('📊 Cargando estadísticas de mensajes por defecto...');
+    
+    // Mostrar valores por defecto
+    const messagesCount = document.getElementById('messages-count');
+    if (messagesCount) {
+        messagesCount.textContent = '0';
+    }
+    
+    const messagesDescription = document.querySelector('.messages-icon')?.closest('.stat-card')?.querySelector('.stat-description');
+    if (messagesDescription) {
+        messagesDescription.textContent = 'Sin conexión';
+    }
+    
+    // Mostrar mensaje informativo si estamos en el módulo de mensajes
+    if (document.getElementById('messages')?.classList.contains('active')) {
+        showToast('No se pudieron cargar las estadísticas de mensajes. Verifica tu conexión.', 'warning');
+    }
+}
+
+/**
+ * Actualiza las estadísticas de mensajes en tiempo real
+ * Esta función puede ser llamada cuando se reciben nuevos mensajes
+ */
+function updateMessagesStatistics(newMessageData) {
+    try {
+        console.log('🔄 Actualizando estadísticas de mensajes en tiempo real...');
+        
+        if (!window.messagesStatistics) {
+            console.log('No hay estadísticas previas, cargando completas...');
+            loadMessagesStatistics();
+            return;
+        }
+        
+        const stats = window.messagesStatistics;
+        
+        // Si es un mensaje de cliente (no de admin), incrementar no leídos
+        if (newMessageData && !newMessageData.esDeAdmin) {
+            stats.mensajesNoLeidos++;
+            
+            // Actualizar contador en la interfaz
+            const messagesCount = document.getElementById('messages-count');
+            if (messagesCount) {
+                messagesCount.textContent = stats.mensajesNoLeidos;
+            }
+            
+            // Mostrar notificación
+            showToast(`Nuevo mensaje de ${newMessageData.clientName || 'cliente'}`, 'info');
+        }
+        
+        // Actualizar timestamp
+        stats.lastUpdated = new Date();
+        
+        console.log('✅ Estadísticas actualizadas:', stats);
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar estadísticas de mensajes:', error);
+    }
+}
+
+/**
+ * Marca mensajes como leídos y actualiza estadísticas
+ */
+function markMessagesAsReadAndUpdateStats(clienteId, messagesMarked = 1) {
+    try {
+        if (!window.messagesStatistics) return;
+        
+        const stats = window.messagesStatistics;
+        stats.mensajesNoLeidos = Math.max(0, stats.mensajesNoLeidos - messagesMarked);
+        
+        // Actualizar contador en la interfaz
+        const messagesCount = document.getElementById('messages-count');
+        if (messagesCount) {
+            messagesCount.textContent = stats.mensajesNoLeidos;
+        }
+        
+        console.log(`✅ ${messagesMarked} mensajes marcados como leídos. Total no leídos: ${stats.mensajesNoLeidos}`);
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar estadísticas después de marcar como leído:', error);
+    }
+}
+
+/**
+ * Refresca las estadísticas de mensajes
+ * Útil para llamar periódicamente o después de acciones importantes
+ */
+async function refreshMessagesStatistics() {
+    console.log('🔄 Refrescando estadísticas de mensajes...');
+    await loadMessagesStatistics();
+}
+
+// Exponer funciones globalmente para uso en otros módulos
+window.updateMessagesStatistics = updateMessagesStatistics;
+window.markMessagesAsReadAndUpdateStats = markMessagesAsReadAndUpdateStats;
+window.refreshMessagesStatistics = refreshMessagesStatistics;
 
 /**
  * Verifica si el usuario está autenticado y es administrador
@@ -1732,9 +1997,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('📋 Estado de módulos:', modules);
     
-    // Si el módulo de citas no está disponible, intentar cargarlo
-    if (!modules.appointments) {
-        console.log('⚠️ Módulo de citas no disponible, se cargará dinámicamente cuando sea necesario');
+    const overviewSection = document.getElementById('overview');
+    if (overviewSection) {
+        // Observer para detectar cuando se muestra la sección overview
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.target.classList.contains('active')) {
+                    console.log('📊 Sección overview visible, inicializando gráficos...');
+                    setTimeout(initDashboardCharts, 500);
+                }
+            });
+        });
+        
+        observer.observe(overviewSection);
     }
 });
 
