@@ -159,10 +159,14 @@ function formatTime(time24) {
 }
 
 function formatDateForInput(date) {
+    // ⚠️ CORRECCIÓN CRÍTICA: Evitar problemas de zona horaria
     const d = new Date(date);
+    
+    // Usar getFullYear, getMonth y getDate en lugar de toISOString para evitar cambios de zona horaria
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
+    
     return `${year}-${month}-${day}`;
 }
 
@@ -636,13 +640,29 @@ function getAppointmentsByDateRange(startDate, endDate) {
  * Obtener citas de un día específico
  */
 function getAppointmentsByDate(date) {
+    // ⚠️ CORRECCIÓN CRÍTICA: Manejar la fecha target correctamente
     const targetDate = new Date(date);
+    
+    // Si la fecha viene como string, procesarla correctamente
+    if (typeof date === 'string') {
+        const parts = date.split('-');
+        if (parts.length === 3) {
+            // Crear fecha sin cambios de zona horaria
+            targetDate.setFullYear(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+    }
     
     return appointmentsData.filter(appointment => {
         if (!appointment.fecha) return false;
         
         const appointmentDate = new Date(appointment.fecha);
-        return appointmentDate.toDateString() === targetDate.toDateString();
+        
+        // Comparar solo año, mes y día (ignorar horas)
+        return (
+            appointmentDate.getFullYear() === targetDate.getFullYear() &&
+            appointmentDate.getMonth() === targetDate.getMonth() &&
+            appointmentDate.getDate() === targetDate.getDate()
+        );
     });
 }
 
@@ -1718,7 +1738,7 @@ function generateCalendarHTML() {
                 calendarHTML += `<td class="calendar-day other-month">${dayNum}</td>`;
                 
             } else if (dayCount <= daysInMonth) {
-                // Días del mes actual
+                // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha correctamente sin cambios de zona horaria
                 const currentDate = new Date(year, month, dayCount);
                 const isToday = isDateToday(currentDate);
                 const dayAppointments = getAppointmentsByDate(currentDate);
@@ -1727,7 +1747,10 @@ function generateCalendarHTML() {
                 if (isToday) dayClass += ' current-day';
                 if (dayAppointments.length > 0) dayClass += ' has-appointments';
                 
-                calendarHTML += `<td class="${dayClass}" data-date="${formatDateForInput(currentDate)}">
+                // ⚠️ CORRECCIÓN CRÍTICA: Usar formatDateForInput corregido
+                const dateString = formatDateForInput(currentDate);
+                
+                calendarHTML += `<td class="${dayClass}" data-date="${dateString}">
                     <div class="day-number">${dayCount}</div>
                     ${generateDayAppointments(dayAppointments)}
                 </td>`;
@@ -1840,8 +1863,16 @@ function navigateCalendar(direction) {
 function handleCalendarDayClick(dateString) {
     console.log('📅 Click en día del calendario:', dateString);
     
-    const selectedDate = new Date(dateString);
+    // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha sin cambios de zona horaria
+    const selectedDate = new Date(dateString + 'T00:00:00'); // Agregar tiempo para evitar problemas de zona horaria
     const dayAppointments = getAppointmentsByDate(selectedDate);
+    
+    console.log('📊 Fecha seleccionada procesada:', {
+        original: dateString,
+        processed: selectedDate,
+        formatted: selectedDate.toLocaleDateString('es-ES'),
+        appointmentsFound: dayAppointments.length
+    });
     
     if (dayAppointments.length > 0) {
         // Si hay citas, mostrar detalles del día
@@ -1904,8 +1935,15 @@ function showDayAppointments(dateString) {
  * Muestra modal con las citas de un día específico
  */
 function showDayAppointmentsModal(dateString, appointments) {
-    const date = new Date(dateString);
+    const date = new Date(dateString + 'T00:00:00'); // ⚠️ CORRECCIÓN: Agregar tiempo específico
     const formattedDate = formatDateForDisplay(date);
+    
+    console.log('📅 Mostrando modal para:', {
+        dateString,
+        dateObj: date,
+        formattedDate,
+        appointmentsCount: appointments.length
+    });
     
     const modalHTML = `
         <div class="modal active" id="day-appointments-modal">
@@ -1915,54 +1953,58 @@ function showDayAppointmentsModal(dateString, appointments) {
                     <button class="close-btn" id="close-appointments-modal">&times;</button>
                 </div>
                 <div class="modal-body">
+                    
                     <div class="day-appointments-list">
-                        ${appointments.map(appointment => {
-                            const clientName = appointment.usuarioDetalles 
-                                ? `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}`
-                                : appointment.nombreContacto || 'Cliente no registrado';
-                            
-                            const statusClass = appointment.estado.toLowerCase().replace(' ', '-');
-                            
-                            return `
-                                <div class="appointment-item">
-                                    <div class="appointment-time">
-                                        <i class="far fa-clock"></i>
-                                        ${appointment.hora}
-                                    </div>
-                                    <div class="appointment-details">
-                                        <h4>${clientName}</h4>
-                                        <p class="appointment-type">${APPOINTMENT_TYPES[appointment.tipo]}</p>
-                                        ${appointment.notas ? `<p class="appointment-notes">${appointment.notas}</p>` : ''}
-                                    </div>
-                                    <div class="appointment-status">
-                                        <span class="status-badge ${statusClass}">${APPOINTMENT_STATUSES[appointment.estado]}</span>
-                                    </div>
-                                    <div class="appointment-actions">
-                                        <button class="action-btn view-btn" onclick="viewAppointment('${appointment._id}')" title="Ver detalles">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="action-btn edit-btn" onclick="editAppointment('${appointment._id}')" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        ${appointment.estado === 'pendiente' ? `
-                                            <button class="action-btn confirm-btn" onclick="confirmAppointment('${appointment._id}')" title="Confirmar">
-                                                <i class="fas fa-check"></i>
+                        ${appointments.length === 0 ? 
+                            '<p style="text-align: center; color: #999; padding: 20px;">No hay citas programadas para este día</p>' :
+                            appointments.map(appointment => {
+                                const clientName = appointment.usuarioDetalles 
+                                    ? `${appointment.usuarioDetalles.nombre} ${appointment.usuarioDetalles.apellidos}`
+                                    : appointment.nombreContacto || 'Cliente no registrado';
+                                
+                                const statusClass = appointment.estado.toLowerCase().replace(' ', '-');
+                                
+                                return `
+                                    <div class="appointment-item">
+                                        <div class="appointment-time">
+                                            <i class="far fa-clock"></i>
+                                            ${appointment.hora}
+                                        </div>
+                                        <div class="appointment-details">
+                                            <h4>${clientName}</h4>
+                                            <p class="appointment-type">${APPOINTMENT_TYPES[appointment.tipo]}</p>
+                                            ${appointment.notas ? `<p class="appointment-notes">${appointment.notas}</p>` : ''}
+                                        </div>
+                                        <div class="appointment-status">
+                                            <span class="status-badge ${statusClass}">${APPOINTMENT_STATUSES[appointment.estado]}</span>
+                                        </div>
+                                        <div class="appointment-actions">
+                                            <button class="action-btn view-btn" onclick="viewAppointment('${appointment._id}')" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
                                             </button>
-                                        ` : ''}
-                                        ${appointment.estado !== 'cancelada' ? `
-                                            <button class="action-btn delete-btn" onclick="cancelAppointment('${appointment._id}')" title="Cancelar">
-                                                <i class="fas fa-times"></i>
+                                            <button class="action-btn edit-btn" onclick="editAppointment('${appointment._id}')" title="Editar">
+                                                <i class="fas fa-edit"></i>
                                             </button>
-                                        ` : ''}
+                                            ${appointment.estado === 'pendiente' ? `
+                                                <button class="action-btn confirm-btn" onclick="confirmAppointment('${appointment._id}')" title="Confirmar">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            ` : ''}
+                                            ${appointment.estado !== 'cancelada' ? `
+                                                <button class="action-btn delete-btn" onclick="cancelAppointment('${appointment._id}')" title="Cancelar">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            ` : ''}
+                                        </div>
                                     </div>
-                                </div>
-                            `;
-                        }).join('')}
+                                `;
+                            }).join('')
+                        }
                     </div>
                     
                     <div class="form-actions" style="margin-top: 20px;">
                         <button type="button" class="secondary-btn" onclick="openCreateAppointmentModalForDate('${dateString}')">
-                            <i class="fas fa-plus"></i> Nueva Cita
+                            <i class="fas fa-plus"></i> Nueva Cita para este Día
                         </button>
                         <button type="button" class="primary-btn" id="close-modal-btn">Cerrar</button>
                     </div>
@@ -1970,6 +2012,12 @@ function showDayAppointmentsModal(dateString, appointments) {
             </div>
         </div>
     `;
+    
+    // Eliminar modal existente si existe
+    const existingModal = document.getElementById('day-appointments-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
     
     // Insertar modal
     document.body.insertAdjacentHTML('beforeend', modalHTML);
@@ -2001,6 +2049,7 @@ function showDayAppointmentsModal(dateString, appointments) {
         });
     }, 100);
 }
+
 
 /**
  * Funciones auxiliares
