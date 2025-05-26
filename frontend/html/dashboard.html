@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../css/styleIndex.css">
     <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="../css/modulProjectsClient.css">
+    <link rel="stylesheet" href="../css/modulMessagesClien.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Chart.js para gráficos -->
@@ -334,7 +335,6 @@
                 </div>
             </section>
             
-            <!-- Messages Section -->
             <section id="messages" class="dashboard-section">
                 <div class="section-header">
                     <h2>Centro de Mensajes</h2>
@@ -348,8 +348,9 @@
                     </div>
                 </div>
                 
+                <!-- Contenedor principal de mensajes -->
                 <div class="messages-container">
-                    <!-- Messages content will be loaded here -->
+                    <!-- El contenido se cargará dinámicamente -->
                     <div class="no-conversation">
                         <i class="fas fa-comments" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
                         <h3>Centro de Mensajes</h3>
@@ -358,6 +359,19 @@
                             <i class="fas fa-plus"></i> Iniciar Conversación
                         </button>
                     </div>
+                </div>
+                
+                <!-- Información adicional sobre mensajes -->
+                <div class="messages-info" style="margin-top: 20px; padding: 16px; background: #2a2a2a; border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                    <h4 style="margin: 0 0 8px 0; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle"></i> Información sobre Mensajes
+                    </h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #ccc; font-size: 14px; line-height: 1.6;">
+                        <li>Nuestro equipo responde mensajes en horario laboral (Lun-Vie, 8AM-6PM)</li>
+                        <li>Para urgencias fuera de horario, incluye "URGENTE" en el asunto</li>
+                        <li>Puedes adjuntar archivos de hasta 5MB (PDF, imágenes, documentos)</li>
+                        <li>Recibirás notificaciones por email cuando recibas respuestas</li>
+                    </ul>
                 </div>
             </section>
         </main>
@@ -371,5 +385,6 @@
     <script src="../js/dashboard.js"></script>
     <script src="../js/modulProjectsClien.js"></script>
     <script src="../js/modulAppointmentsClien.js"></script>
+    <script src="../js/modulMessagesClien.js"></script>
 </body>
 </html>

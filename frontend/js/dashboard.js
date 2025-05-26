@@ -1070,28 +1070,8 @@ function loadDashboardData() {
     
     // Cargar citas próximas
     loadUpcomingAppointments();
-    
-    // Cargar actividad reciente
-    loadRecentActivity();
 }
 
-/**
- * Placeholder functions para cargar datos específicos
- */
-function loadRecentProjects() {
-    console.log('📋 Cargando proyectos recientes...');
-    // Implementar carga de proyectos recientes
-}
-
-function loadUpcomingAppointments() {
-    console.log('📅 Cargando citas próximas...');
-    // Implementar carga de citas próximas
-}
-
-function loadRecentActivity() {
-    console.log('📈 Cargando actividad reciente...');
-    // Implementar carga de actividad reciente
-}
 
 function loadClientProjects() {
     console.log('📋 Cargando proyectos del cliente...');
@@ -1099,14 +1079,9 @@ function loadClientProjects() {
     initClientProjectsModule();
 }
 
-function loadClientAppointments() {
-    console.log('📅 Cargando citas del cliente...');
-    // Implementar carga de citas del cliente
-}
-
 function loadClientMessages() {
     console.log('💬 Cargando mensajes del cliente...');
-    // Implementar carga de mensajes del cliente
+    initClientMessagesModule();
 }
 
 function openScheduleAppointmentModal() {

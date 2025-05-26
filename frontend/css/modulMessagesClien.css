@@ -1,0 +1,102 @@
+.messages-container {
+    height: 600px;
+    background: var(--dark-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #333;
+}
+
+.messages-container.client-view {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Mejorar la apariencia de la tarjeta de mensajes en overview */
+.stat-card .messages-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* Responsive para la sección de mensajes */
+@media (max-width: 768px) {
+    .messages-container {
+        height: 500px;
+    }
+    
+    .messages-header-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .messages-header-actions button {
+        width: 100%;
+    }
+}
+
+/* Estilos para indicadores de mensajes */
+.quick-action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 10px;
+}
+
+.quick-action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.stat-card {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.messages-info ul li {
+    margin-bottom: 4px;
+}
+
+.messages-info ul li:last-child {
+    margin-bottom: 0;
+}
+
+/* Animación para nuevos mensajes */
+@keyframes messageAlert {
+    0%, 100% { 
+        background-color: transparent; 
+    }
+    50% { 
+        background-color: rgba(255, 71, 87, 0.1); 
+    }
+}
+
+.new-message-alert {
+    animation: messageAlert 3s ease-in-out 3;
+}
+
+/* Mejoras responsive para móvil */
+@media (max-width: 768px) {
+    .messages-header-actions {
+        margin-top: 15px;
+    }
+    
+    .messages-info {
+        font-size: 12px;
+    }
+    
+    .messages-info ul {
+        padding-left: 16px;
+    }
+}
