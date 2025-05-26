@@ -58,6 +58,7 @@ function initScrollAnimations() {
         observer.observe(element);
     });
 }
+
 /**
  * Inicializa los tabs de planes (mensual/anual)
  */
@@ -105,6 +106,7 @@ function initFaqAccordion() {
         });
     });
 }
+
 /**
  * Inicializa el modal de reserva de cita
  */
@@ -154,14 +156,112 @@ function initAppointmentModal() {
         appointmentForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Aquí iría la lógica para procesar el formulario
-            // Por ejemplo, enviar datos al servidor
+            // Deshabilitar el botón de envío y mostrar estado de carga
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
             
-            // Mostrar mensaje de éxito
-            alert('¡Cita agendada con éxito! Te enviaremos un correo con la confirmación.');
+            // Recopilar datos del formulario
+            const formData = new FormData(this);
+            const name = formData.get('name');
+            const email = formData.get('email');
+            const phone = formData.get('phone');
+            const company = formData.get('company') || 'No especificada';
+            const needs = formData.get('needs');
+            const appointmentDate = formData.get('appointmentDate');
+            const appointmentTime = formData.get('appointmentTime');
             
-            // Cerrar modal
-            closeModal();
+            // Validar que se hayan seleccionado fecha y hora
+            if (!appointmentDate || !appointmentTime) {
+                showErrorMessage('Por favor selecciona una fecha y hora para la consulta');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+                return;
+            }
+            
+            // Formatear la fecha para mejor presentación
+            const dateObj = new Date(appointmentDate);
+            const formattedDate = dateObj.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Crear el asunto del correo
+            const subject = `Nueva Consulta Gratuita Agendada - ${name}`;
+            
+            // Crear el mensaje detallado
+            const message = `
+NUEVA SOLICITUD DE CONSULTA GRATUITA
+
+=== INFORMACIÓN DEL CLIENTE ===
+Nombre: ${name}
+Email: ${email}
+Teléfono: ${phone}
+Empresa: ${company}
+
+=== FECHA Y HORA SOLICITADA ===
+Fecha: ${formattedDate}
+Hora: ${appointmentTime}
+
+=== NECESIDADES DEL CLIENTE ===
+${needs}
+
+=== INFORMACIÓN ADICIONAL ===
+Tipo de consulta: Plan Personalizado
+Estado: Pendiente de confirmación
+Fecha de solicitud: ${new Date().toLocaleString('es-ES')}
+
+Por favor, confirmar disponibilidad y contactar al cliente para confirmar la cita.
+            `;
+            
+            // Preparar parámetros para EmailJS
+            const templateParams = {
+                from_name: name,
+                from_email: email,
+                phone_number: phone,
+                company_name: company,
+                subject: subject,
+                message: message,
+                reply_to: email,
+                to_name: "Crazy Studios",
+                // Campos específicos para la plantilla
+                appointment_date: formattedDate,
+                appointment_time: appointmentTime,
+                client_needs: needs,
+                detailed_message: message
+            };
+            
+            // Enviar el correo usando EmailJS (usando los mismos IDs que el formulario de contacto)
+            emailjs.send('service_8dq6atk', 'template_7m02u1c', templateParams)
+                .then(function(response) {
+                    console.log('ÉXITO!', response.status, response.text);
+                    
+                    // Mostrar mensaje de éxito
+                    showSuccessMessage('¡Solicitud de consulta enviada con éxito! Te contactaremos pronto para confirmar la fecha y hora.');
+                    
+                    // Limpiar formulario
+                    appointmentForm.reset();
+                    
+                    // Limpiar selecciones del calendario
+                    clearCalendarSelections();
+                    
+                    // Cerrar modal después de un breve delay
+                    setTimeout(() => {
+                        closeModal();
+                    }, 2000);
+                    
+                }, function(error) {
+                    console.log('FALLÓ...', error);
+                    showErrorMessage('Error al enviar la solicitud. Por favor, intenta nuevamente o contáctanos directamente por teléfono.');
+                })
+                .finally(function() {
+                    // Restaurar el botón
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                });
         });
     }
     
@@ -175,6 +275,103 @@ function initAppointmentModal() {
         document.body.style.overflow = '';
     }
 }
+
+/**
+ * Muestra un mensaje de éxito
+ */
+function showSuccessMessage(message) {
+    // Crear elemento de mensaje
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'success-message';
+    messageDiv.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            z-index: 10000;
+            max-width: 400px;
+            font-weight: 500;
+        ">
+            <i class="fas fa-check-circle" style="margin-right: 10px;"></i>
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Remover mensaje después de 5 segundos
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 5000);
+}
+
+/**
+ * Muestra un mensaje de error
+ */
+function showErrorMessage(message) {
+    // Crear elemento de mensaje
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'error-message';
+    messageDiv.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            z-index: 10000;
+            max-width: 400px;
+            font-weight: 500;
+        ">
+            <i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Remover mensaje después de 5 segundos
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 5000);
+}
+
+/**
+ * Limpia las selecciones del calendario
+ */
+function clearCalendarSelections() {
+    // Remover clase activa de días seleccionados
+    document.querySelectorAll('.calendar-day.active').forEach(day => {
+        day.classList.remove('active');
+    });
+    
+    // Remover clase activa de horarios seleccionados
+    document.querySelectorAll('.time-slot.active').forEach(slot => {
+        slot.classList.remove('active');
+    });
+    
+    // Limpiar campos ocultos
+    const appointmentDate = document.getElementById('appointmentDate');
+    const appointmentTime = document.getElementById('appointmentTime');
+    
+    if (appointmentDate) appointmentDate.value = '';
+    if (appointmentTime) appointmentTime.value = '';
+    
+    // Limpiar contenedor de horarios
+    const timeSlotsContainer = document.getElementById('timeSlots');
+    if (timeSlotsContainer) {
+        timeSlotsContainer.innerHTML = '';
+    }
+}
+
 /**
  * Inicializa el calendario para agendar citas
  */
@@ -309,8 +506,8 @@ function initCalendar() {
         // Limpiar los horarios
         timeSlotsContainer.innerHTML = '';
         
-        // Horarios disponibles (ejemplo) - En un caso real, esto vendría del servidor
-        const availableSlots = ['09:00', '10:00', '11:00', '12:00', '15:00', '16:00', '17:00'];
+        // Horarios disponibles para consultas (9 AM a 5 PM, excluyendo almuerzo 12-1 PM)
+        const availableSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
         
         // Crear elementos para cada horario
         availableSlots.forEach(slot => {
@@ -318,9 +515,10 @@ function initCalendar() {
             timeSlot.className = 'time-slot';
             timeSlot.textContent = slot;
             
-            // Aleatoriamente deshabilitar algunos slots para simular horarios ocupados
-            if (Math.random() < 0.3) {
+            // Simular algunos slots ocupados aleatoriamente
+            if (Math.random() < 0.2) {
                 timeSlot.classList.add('disabled');
+                timeSlot.title = 'Horario no disponible';
             } else {
                 timeSlot.addEventListener('click', function() {
                     // Remover clase activa de todos los slots
