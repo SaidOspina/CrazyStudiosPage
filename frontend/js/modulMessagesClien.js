@@ -1,6 +1,6 @@
 /**
  * MÓDULO DE MENSAJES PARA CLIENTES - DASHBOARD
- * Sistema de comunicación simplificado para clientes
+ * Sistema de comunicación simplificado para clientes - VERSIÓN OPTIMIZADA
  */
 
 let clientMessagesData = [];
@@ -8,1020 +8,93 @@ let clientConversationId = null;
 let clientMessagePollingInterval = null;
 let clientUnreadCount = 0;
 
+// Variables para controlar las cargas múltiples
+let isLoadingMessages = false;
+let isModuleInitialized = false;
+let lastLoadTime = 0;
+const LOAD_COOLDOWN = 2000; // 2 segundos de cooldown entre cargas
+
 /**
- * Inicializa el módulo de mensajes para clientes
+ * Inicializa el módulo de mensajes para clientes - OPTIMIZADO
  */
 function initClientMessagesModule() {
     console.log('🔄 Inicializando módulo de mensajes para cliente...');
     
-    // Configurar eventos
+    // Evitar inicialización múltiple
+    if (isModuleInitialized) {
+        console.log('⚠️ Módulo ya inicializado, saltando...');
+        return;
+    }
+    
+    // Marcar como inicializado
+    isModuleInitialized = true;
+    
+    // Configurar eventos (solo una vez)
     setupClientMessagesEvents();
     
-    // Cargar conversación del cliente
-    loadClientConversation();
+    // Cargar conversación del cliente (con cooldown)
+    loadClientConversationSafe();
     
     // Configurar auto-actualización
     setupClientMessagePolling();
-    
-    // Actualizar contador en el sidebar
-    updateClientMessagesCounter();
     
     console.log('✅ Módulo de mensajes para cliente inicializado');
 }
 
 /**
- * Configura los eventos del módulo de mensajes para clientes
+ * Carga segura de conversación con cooldown
  */
-function setupClientMessagesEvents() {
-    // Botón de nuevo mensaje en quick actions
-    const sendMessageBtn = document.getElementById('send-message');
-    const clientNewMessageBtn = document.getElementById('client-new-message-btn');
-    const startConversationBtn = document.getElementById('start-client-conversation-btn');
-    const refreshMessagesBtn = document.getElementById('client-refresh-messages-btn');
+async function loadClientConversationSafe() {
+    const now = Date.now();
     
-    if (sendMessageBtn) {
-        sendMessageBtn.addEventListener('click', openClientMessageModal);
-    }
-    
-    if (clientNewMessageBtn) {
-        clientNewMessageBtn.addEventListener('click', openClientMessageModal);
-    }
-    
-    if (startConversationBtn) {
-        startConversationBtn.addEventListener('click', openClientMessageModal);
-    }
-    
-    if (refreshMessagesBtn) {
-        refreshMessagesBtn.addEventListener('click', refreshClientMessages);
-    }
-    
-    // Configurar formulario de respuesta
-    setupClientReplyForm();
-}
-
-/**
- * Configura el polling automático para actualizar mensajes
- */
-function setupClientMessagePolling() {
-    // Limpiar intervalo existente
-    if (clientMessagePollingInterval) {
-        clearInterval(clientMessagePollingInterval);
-    }
-    
-    // Configurar nuevo intervalo (cada 30 segundos)
-    clientMessagePollingInterval = setInterval(() => {
-        if (clientConversationId) {
-            console.log('🔄 Actualizando mensajes automáticamente...');
-            loadClientMessages(clientConversationId);
-        }
-    }, 30000);
-    
-    console.log('🔄 Polling de mensajes para cliente configurado (30s)');
-}
-
-/**
- * Actualiza manualmente los mensajes del cliente
- */
-async function refreshClientMessages() {
-    const refreshBtn = document.getElementById('client-refresh-messages-btn');
-    
-    if (refreshBtn) {
-        refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    }
-    
-    try {
-        await loadClientConversation();
-        showToast('Mensajes actualizados', 'success');
-    } catch (error) {
-        console.error('Error al actualizar mensajes:', error);
-        showToast('Error al actualizar mensajes', 'error');
-    } finally {
-        if (refreshBtn) {
-            setTimeout(() => {
-                refreshBtn.disabled = false;
-                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
-            }, 1000);
-        }
-    }
-}
-
-/**
- * Hace scroll al último mensaje
- */
-function scrollToLastMessage() {
-    const messagesBody = document.getElementById('client-messages-body');
-    if (messagesBody) {
-        messagesBody.scrollTop = messagesBody.scrollHeight;
-    }
-}
-
-/**
- * Formatea el tiempo del mensaje
- */
-function formatMessageTime(date) {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    
-    if (diffMins < 1) return 'Ahora mismo';
-    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
-    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
-    if (diffDays < 7) return `Hace ${diffDays} día${diffDays !== 1 ? 's' : ''}`;
-    
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-/**
- * Escapa HTML para prevenir XSS
- */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-/**
- * Obtiene la base URL de la API
- */
-function getApiBase() {
-    return window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000' 
-        : '';
-}
-
-/**
- * Obtiene el usuario actual
- */
-function getCurrentUser() {
-    return window.currentUser || JSON.parse(localStorage.getItem('userData') || '{}');
-}
-
-/**
- * Limpia el módulo de mensajes del cliente
- */
-function cleanupClientMessagesModule() {
-    console.log('🧹 Limpiando módulo de mensajes del cliente...');
-    
-    // Limpiar interval de polling
-    if (clientMessagePollingInterval) {
-        clearInterval(clientMessagePollingInterval);
-        clientMessagePollingInterval = null;
-    }
-    
-    // Limpiar variables globales
-    clientMessagesData = [];
-    clientConversationId = null;
-    clientUnreadCount = 0;
-}
-
-/**
- * Muestra notificación de nuevo mensaje (si hay notificaciones del navegador)
- */
-function showClientMessageNotification(message) {
-    // Verificar si hay notificaciones habilitadas
-    if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('Nuevo mensaje de Crazy Studios', {
-            body: message.mensaje.substring(0, 100) + (message.mensaje.length > 100 ? '...' : ''),
-            icon: '../img/logo.png',
-            badge: '../img/logo.png',
-            tag: 'crazy-studios-message',
-            requireInteraction: false
-        });
-        
-        // Auto cerrar después de 5 segundos
-        setTimeout(() => {
-            notification.close();
-        }, 5000);
-        
-        // Evento click para abrir la conversación
-        notification.onclick = function() {
-            window.focus();
-            if (typeof switchToSection === 'function') {
-                switchToSection('messages');
-            }
-            notification.close();
-        };
-    }
-}
-
-/**
- * Inicialización automática cuando se activa la sección de mensajes
- */
-function initClientMessagesOnSectionChange() {
-    const messagesSection = document.getElementById('messages');
-    if (messagesSection && messagesSection.classList.contains('active')) {
-        // Inicializar módulo si no está inicializado
-        if (!clientMessagePollingInterval) {
-            setTimeout(() => {
-                initClientMessagesModule();
-            }, 100);
-        }
-    } else {
-        // Limpiar módulo si se sale de la sección
-        cleanupClientMessagesModule();
-    }
-}
-
-/**
- * Marca todos los mensajes como leídos cuando se abre la sección
- */
-async function markClientMessagesAsRead() {
-    if (!clientConversationId) return;
-    
-    try {
-        const token = localStorage.getItem('authToken');
-        const API_BASE = getApiBase();
-        
-        const response = await fetch(`${API_BASE}/api/messages/mark-read/${clientConversationId}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            // Actualizar contador local
-            clientUnreadCount = 0;
-            updateClientMessagesCounter();
-            
-            // Recargar mensajes para actualizar estado visual
-            await loadClientMessages(clientConversationId);
-        }
-        
-    } catch (error) {
-        console.error('Error al marcar mensajes como leídos:', error);
-    }
-}
-
-/**
- * Exporta la conversación del cliente (función simple)
- */
-function exportClientConversation() {
-    if (clientMessagesData.length === 0) {
-        showToast('No hay mensajes para exportar', 'warning');
+    // Verificar cooldown
+    if (now - lastLoadTime < LOAD_COOLDOWN) {
+        console.log('⏳ Cooldown activo, saltando carga de mensajes...');
         return;
     }
     
-    const currentUser = getCurrentUser();
-    const exportData = {
-        cliente: {
-            nombre: currentUser.nombre,
-            apellidos: currentUser.apellidos,
-            correo: currentUser.correo
-        },
-        totalMensajes: clientMessagesData.length,
-        fechaExportacion: new Date().toISOString(),
-        mensajes: clientMessagesData.map(msg => ({
-            remitente: msg.esDeAdmin ? 'Crazy Studios' : 'Cliente',
-            fecha: msg.fechaCreacion,
-            mensaje: msg.mensaje,
-            leido: msg.leido
-        }))
-    };
+    // Verificar si ya se está cargando
+    if (isLoadingMessages) {
+        console.log('⏳ Ya se están cargando mensajes, saltando...');
+        return;
+    }
     
-    // Crear blob y descargar
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: 'application/json'
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `conversacion_crazystudios_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast('Conversación exportada correctamente', 'success');
+    lastLoadTime = now;
+    await loadClientConversation();
 }
 
 /**
- * Función para solicitar permiso de notificaciones
- */
-function requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                showToast('Notificaciones habilitadas', 'success');
-            }
-        });
-    }
-}
-
-/**
- * FUNCIONES PÚBLICAS PARA INTEGRACIÓN CON EL DASHBOARD
- */
-
-// Función para inicializar desde el dashboard principal
-window.initClientMessagesModule = initClientMessagesModule;
-
-// Función para abrir nuevo mensaje desde quick actions
-window.openClientMessageModal = openClientMessageModal;
-
-// Función para actualizar contador de mensajes
-window.updateClientMessagesCounter = updateClientMessagesCounter;
-
-// Función para limpiar el módulo
-window.cleanupClientMessagesModule = cleanupClientMessagesModule;
-
-// Función para marcar mensajes como leídos
-window.markClientMessagesAsRead = markClientMessagesAsRead;
-
-// Función para exportar conversación
-window.exportClientConversation = exportClientConversation;
-
-// Función para solicitar permisos de notificación
-window.requestNotificationPermission = requestNotificationPermission;
-
-/**
- * INTEGRACIÓN CON EL DASHBOARD PRINCIPAL
- */
-
-// Observar cambios en la sección activa
-document.addEventListener('DOMContentLoaded', function() {
-    // Configurar observer para cambios de sección
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                const messagesSection = document.getElementById('messages');
-                if (messagesSection && mutation.target === messagesSection) {
-                    initClientMessagesOnSectionChange();
-                    
-                    // Marcar como leídos cuando se abre la sección
-                    if (messagesSection.classList.contains('active')) {
-                        setTimeout(() => {
-                            markClientMessagesAsRead();
-                        }, 1000);
-                    }
-                }
-            }
-        });
-    });
-    
-    const messagesSection = document.getElementById('messages');
-    if (messagesSection) {
-        observer.observe(messagesSection, { attributes: true });
-        
-        // Inicializar si la sección ya está activa
-        if (messagesSection.classList.contains('active')) {
-            setTimeout(() => {
-                initClientMessagesModule();
-                markClientMessagesAsRead();
-            }, 500);
-        }
-    }
-});
-
-// Limpiar al salir de la página
-window.addEventListener('beforeunload', function() {
-    cleanupClientMessagesModule();
-});
-
-/**
- * ESTILOS CSS ESPECÍFICOS PARA EL MÓDULO DE CLIENTE
- */
-const clientMessagesStyles = document.createElement('style');
-clientMessagesStyles.textContent = `
-    /* Estilos específicos para mensajes de cliente */
-    
-    .client-messages-wrapper {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        background: var(--dark-bg, #1a1a1a);
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    
-    .client-conversation-header {
-        background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
-        color: white;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .conversation-title h3 {
-        margin: 0 0 5px 0;
-        font-size: 18px;
-        font-weight: 600;
-    }
-    
-    .conversation-subtitle {
-        margin: 0;
-        opacity: 0.8;
-        font-size: 14px;
-    }
-    
-    .conversation-actions button {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    .conversation-actions button:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-1px);
-    }
-    
-    .client-messages-body {
-        flex: 1;
-        padding: 20px;
-        overflow-y: auto;
-        background: var(--dark-bg, #1a1a1a);
-        max-height: 400px;
-    }
-    
-    .client-message-bubble {
-        margin-bottom: 20px;
-        padding: 16px;
-        border-radius: 12px;
-        position: relative;
-        animation: fadeInUp 0.3s ease;
-    }
-    
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .client-message-bubble.client-message {
-        background: linear-gradient(135deg, #2a2a2a, #333);
-        margin-right: 80px;
-        border-bottom-left-radius: 4px;
-    }
-    
-    .client-message-bubble.admin-message {
-        background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
-        color: white;
-        margin-left: 80px;
-        border-bottom-right-radius: 4px;
-    }
-    
-    .client-message-bubble.unread {
-        border-left: 4px solid #28a745;
-        background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
-        color: white;
-        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    }
-    
-    .message-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 12px;
-    }
-    
-    .message-sender {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .sender-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
-    }
-    
-    .sender-avatar.admin-avatar {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-    }
-    
-    .sender-avatar.client-avatar {
-        background: var(--primary-color, #007bff);
-        color: white;
-    }
-    
-    .sender-info {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .sender-name {
-        font-weight: 600;
-        font-size: 14px;
-    }
-    
-    .sender-role {
-        font-size: 11px;
-        opacity: 0.7;
-        margin-top: 2px;
-    }
-    
-    .message-time {
-        font-size: 11px;
-        opacity: 0.6;
-        white-space: nowrap;
-    }
-    
-    .message-content {
-        margin-top: 8px;
-    }
-    
-    .message-text {
-        line-height: 1.5;
-        word-wrap: break-word;
-        white-space: pre-wrap;
-    }
-    
-    .unread-indicator {
-        position: absolute;
-        top: -8px;
-        right: 12px;
-        background: #28a745;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 10px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-    
-    .unread-indicator i {
-        font-size: 6px;
-        animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.3; }
-    }
-    
-    .client-reply-container {
-        background: #2a2a2a;
-        border-top: 1px solid #444;
-        padding: 20px;
-    }
-    
-    .reply-header {
-        margin-bottom: 15px;
-    }
-    
-    .reply-header h4 {
-        margin: 0;
-        color: white;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .message-input-container {
-        margin-bottom: 15px;
-    }
-    
-    .message-input-container textarea {
-        width: 100%;
-        min-height: 100px;
-        background: #1a1a1a;
-        border: 2px solid #444;
-        border-radius: 8px;
-        padding: 12px;
-        color: white;
-        font-family: inherit;
-        font-size: 14px;
-        line-height: 1.5;
-        resize: vertical;
-        transition: all 0.2s ease;
-    }
-    
-    .message-input-container textarea:focus {
-        border-color: var(--primary-color, #007bff);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    }
-    
-    .message-input-container textarea::placeholder {
-        color: #999;
-        line-height: 1.5;
-    }
-    
-    .attachment-section {
-        margin-bottom: 15px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .attachment-btn {
-        background: none;
-        border: 2px dashed #666;
-        color: #999;
-        padding: 12px 16px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        width: fit-content;
-    }
-    
-    .attachment-btn:hover {
-        border-color: var(--primary-color, #007bff);
-        color: var(--primary-color, #007bff);
-        background: rgba(0, 123, 255, 0.05);
-    }
-    
-    .attachment-info {
-        color: #999;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .reply-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-    }
-    
-    .reply-actions button {
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .reply-actions .secondary-btn {
-        background: transparent;
-        border: 2px solid #666;
-        color: #999;
-    }
-    
-    .reply-actions .secondary-btn:hover {
-        border-color: #999;
-        color: white;
-    }
-    
-    .reply-actions .primary-btn {
-        background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
-        border: none;
-        color: white;
-        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    }
-    
-    .reply-actions .primary-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-    }
-    
-    .reply-actions .primary-btn:disabled {
-        opacity: 0.6;
-        transform: none;
-        cursor: not-allowed;
-    }
-    
-    /* No conversation state */
-    .no-conversation {
-        text-align: center;
-        padding: 60px 40px;
-        color: #999;
-    }
-    
-    .no-conversation-icon {
-        font-size: 64px;
-        color: var(--primary-color, #007bff);
-        margin-bottom: 24px;
-        opacity: 0.8;
-    }
-    
-    .no-conversation h3 {
-        color: white;
-        margin: 0 0 16px 0;
-        font-size: 24px;
-    }
-    
-    .no-conversation p {
-        margin: 0 0 12px 0;
-        line-height: 1.6;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .help-text {
-        background: linear-gradient(135deg, #2a2a2a, #333);
-        padding: 16px;
-        border-radius: 8px;
-        margin: 24px 0;
-        border-left: 4px solid var(--primary-color, #007bff);
-    }
-    
-    .conversation-suggestions {
-        background: #2a2a2a;
-        padding: 24px;
-        border-radius: 12px;
-        margin: 32px 0;
-        text-align: left;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .conversation-suggestions h4 {
-        color: white;
-        margin: 0 0 16px 0;
-        font-size: 16px;
-    }
-    
-    .conversation-suggestions ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .conversation-suggestions li {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-        color: #ccc;
-    }
-    
-    .conversation-suggestions li i {
-        color: var(--primary-color, #007bff);
-        width: 16px;
-    }
-    
-    .large-btn {
-        padding: 16px 32px;
-        font-size: 16px;
-        margin-top: 24px;
-    }
-    
-    /* Error state */
-    .client-error-state {
-        text-align: center;
-        padding: 60px 40px;
-        color: #999;
-    }
-    
-    .error-icon {
-        font-size: 64px;
-        color: #ff6b6b;
-        margin-bottom: 24px;
-    }
-    
-    .client-error-state h3 {
-        color: white;
-        margin: 0 0 16px 0;
-    }
-    
-    .error-message {
-        color: #ff6b6b;
-        margin: 0 0 24px 0;
-        font-style: italic;
-    }
-    
-    .error-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    /* Loading states */
-    .loading-messages {
-        text-align: center;
-        padding: 60px 40px;
-        color: #999;
-    }
-    
-    .loading-spinner {
-        border: 3px solid #333;
-        border-top: 3px solid var(--primary-color, #007bff);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    /* Modal styles */
-    .client-message-form .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .client-message-form label {
-        display: block;
-        margin-bottom: 8px;
-        color: white;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .client-message-form input,
-    .client-message-form textarea {
-        width: 100%;
-        background: #2a2a2a;
-        border: 2px solid #444;
-        border-radius: 8px;
-        padding: 12px;
-        color: white;
-        font-family: inherit;
-        transition: all 0.2s ease;
-    }
-    
-    .client-message-form input:focus,
-    .client-message-form textarea:focus {
-        border-color: var(--primary-color, #007bff);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    }
-    
-    .form-help {
-        display: block;
-        margin-top: 5px;
-        color: #999;
-        font-size: 12px;
-    }
-    
-    .message-templates {
-        margin: 24px 0;
-        padding: 20px;
-        background: #2a2a2a;
-        border-radius: 8px;
-    }
-    
-    .message-templates label {
-        margin-bottom: 12px;
-    }
-    
-    .template-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 8px;
-    }
-    
-    .template-btn {
-        background: #1a1a1a;
-        border: 2px solid #444;
-        color: #ccc;
-        padding: 10px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-        transition: all 0.2s ease;
-    }
-    
-    .template-btn:hover {
-        border-color: var(--primary-color, #007bff);
-        color: var(--primary-color, #007bff);
-        background: rgba(0, 123, 255, 0.05);
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .client-conversation-header {
-            flex-direction: column;
-            gap: 10px;
-            text-align: center;
-        }
-        
-        .client-message-bubble.client-message {
-            margin-right: 20px;
-        }
-        
-        .client-message-bubble.admin-message {
-            margin-left: 20px;
-        }
-        
-        .reply-actions {
-            flex-direction: column;
-        }
-        
-        .reply-actions button {
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .template-buttons {
-            grid-template-columns: 1fr;
-        }
-        
-        .error-actions {
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .error-actions button {
-            width: 100%;
-            max-width: 200px;
-        }
-    }
-    
-    /* Sidebar unread badge */
-    .unread-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 18px;
-        height: 18px;
-        border-radius: 9px;
-        font-size: 10px;
-        font-weight: 600;
-        animation: pulse 2s infinite;
-    }
-`;
-
-document.head.appendChild(clientMessagesStyles);
-
-console.log('✅ Módulo de mensajes para cliente cargado completamente');
-function setupClientReplyForm() {
-    document.addEventListener('click', function(e) {
-        if (e.target.matches('#client-send-message-btn')) {
-            e.preventDefault();
-            sendClientMessage();
-        }
-        
-        if (e.target.matches('#client-clear-message-btn')) {
-            e.preventDefault();
-            clearClientMessageForm();
-        }
-    });
-    
-    // Auto-resize del textarea
-    document.addEventListener('input', function(e) {
-        if (e.target.matches('#client-message-textarea')) {
-            e.target.style.height = 'auto';
-            e.target.style.height = e.target.scrollHeight + 'px';
-        }
-    });
-    
-    // Envío con Ctrl+Enter
-    document.addEventListener('keydown', function(e) {
-        if (e.target.matches('#client-message-textarea')) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                sendClientMessage();
-            }
-        }
-    });
-}
-
-/**
- * Carga la conversación del cliente actual
+ * Carga la conversación del cliente actual - OPTIMIZADA
  */
 async function loadClientConversation() {
     console.log('📨 Cargando conversación del cliente...');
     
-    const messagesContainer = document.querySelector('#messages .messages-container');
-    if (!messagesContainer) {
-        console.warn('Contenedor de mensajes no encontrado');
+    // Verificar si ya se está cargando
+    if (isLoadingMessages) {
+        console.log('⏳ Carga ya en progreso, saltando...');
         return;
     }
     
-    // Mostrar loading
-    messagesContainer.innerHTML = `
-        <div class="loading-messages">
-            <div class="loading-spinner"></div>
-            <p>Cargando mensajes...</p>
-        </div>
-    `;
+    // Marcar como cargando
+    isLoadingMessages = true;
+    
+    const messagesContainer = document.querySelector('#messages .messages-container');
+    if (!messagesContainer) {
+        console.warn('Contenedor de mensajes no encontrado');
+        isLoadingMessages = false;
+        return;
+    }
+    
+    // Solo mostrar loading si el contenedor está vacío o tiene error
+    const hasContent = messagesContainer.querySelector('.client-messages-wrapper');
+    if (!hasContent) {
+        messagesContainer.innerHTML = `
+            <div class="loading-messages">
+                <div class="loading-spinner"></div>
+                <p>Cargando mensajes...</p>
+            </div>
+        `;
+    }
     
     try {
         const token = localStorage.getItem('authToken');
@@ -1071,11 +144,14 @@ async function loadClientConversation() {
     } catch (error) {
         console.error('❌ Error al cargar conversación del cliente:', error);
         showClientConversationError(error.message);
+    } finally {
+        // Marcar como no cargando
+        isLoadingMessages = false;
     }
 }
 
 /**
- * Carga los mensajes de la conversación del cliente
+ * Carga los mensajes de la conversación del cliente - OPTIMIZADA
  */
 async function loadClientMessages(conversationId) {
     console.log('📨 Cargando mensajes del cliente:', conversationId);
@@ -1117,6 +193,252 @@ async function loadClientMessages(conversationId) {
         showClientConversationError(error.message);
     }
 }
+
+/**
+ * Configura los eventos del módulo de mensajes para clientes - OPTIMIZADO
+ */
+function setupClientMessagesEvents() {
+    // Evitar configurar eventos múltiples veces
+    if (window.clientMessagesEventsConfigured) {
+        console.log('⚠️ Eventos ya configurados, saltando...');
+        return;
+    }
+    
+    console.log('🔧 Configurando eventos de mensajes para cliente...');
+    
+    // Marcar como configurado
+    window.clientMessagesEventsConfigured = true;
+    
+    // Usar delegación de eventos para evitar múltiples listeners
+    document.addEventListener('click', function(e) {
+        // Botón de nuevo mensaje
+        if (e.target.matches('#client-new-message-btn') || 
+            e.target.matches('#start-client-conversation-btn') ||
+            e.target.matches('#send-message')) {
+            e.preventDefault();
+            openClientMessageModal();
+        }
+        
+        // Botón de refrescar mensajes
+        if (e.target.matches('#client-refresh-messages-btn')) {
+            e.preventDefault();
+            refreshClientMessages();
+        }
+        
+        // Botón de enviar mensaje
+        if (e.target.matches('#client-send-message-btn')) {
+            e.preventDefault();
+            sendClientMessage();
+        }
+        
+        // Botón de limpiar mensaje
+        if (e.target.matches('#client-clear-message-btn')) {
+            e.preventDefault();
+            clearClientMessageForm();
+        }
+    });
+    
+    console.log('✅ Eventos de mensajes configurados');
+}
+
+/**
+ * Configura el polling automático para actualizar mensajes - OPTIMIZADO
+ */
+function setupClientMessagePolling() {
+    // Limpiar intervalo existente
+    if (clientMessagePollingInterval) {
+        clearInterval(clientMessagePollingInterval);
+        clientMessagePollingInterval = null;
+    }
+    
+    // Configurar nuevo intervalo (cada 45 segundos para reducir carga)
+    clientMessagePollingInterval = setInterval(() => {
+        if (clientConversationId && !isLoadingMessages) {
+            console.log('🔄 Actualizando mensajes automáticamente...');
+            // Usar la versión segura con cooldown
+            loadClientConversationSafe();
+        }
+    }, 45000); // Aumentado a 45 segundos
+    
+    console.log('🔄 Polling de mensajes para cliente configurado (45s)');
+}
+
+/**
+ * Actualiza manualmente los mensajes del cliente - OPTIMIZADO
+ */
+async function refreshClientMessages() {
+    const refreshBtn = document.getElementById('client-refresh-messages-btn');
+    
+    // Evitar múltiples refrescos simultáneos
+    if (refreshBtn && refreshBtn.disabled) {
+        console.log('⏳ Refresco ya en progreso...');
+        return;
+    }
+    
+    if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+    
+    try {
+        // Resetear cooldown para permitir refresco manual
+        lastLoadTime = 0;
+        isLoadingMessages = false;
+        
+        await loadClientConversation();
+        showToast('Mensajes actualizados', 'success');
+    } catch (error) {
+        console.error('Error al actualizar mensajes:', error);
+        showToast('Error al actualizar mensajes', 'error');
+    } finally {
+        if (refreshBtn) {
+            setTimeout(() => {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }, 2000); // Aumentado el tiempo de espera
+        }
+    }
+}
+
+/**
+ * Limpia el módulo de mensajes del cliente - MEJORADO
+ */
+function cleanupClientMessagesModule() {
+    console.log('🧹 Limpiando módulo de mensajes del cliente...');
+    
+    // Limpiar interval de polling
+    if (clientMessagePollingInterval) {
+        clearInterval(clientMessagePollingInterval);
+        clientMessagePollingInterval = null;
+    }
+    
+    // Resetear variables globales
+    clientMessagesData = [];
+    clientConversationId = null;
+    clientUnreadCount = 0;
+    isLoadingMessages = false;
+    isModuleInitialized = false;
+    lastLoadTime = 0;
+    
+    // Resetear configuración de eventos
+    window.clientMessagesEventsConfigured = false;
+    
+    console.log('✅ Módulo de mensajes limpiado');
+}
+
+/**
+ * Marca todos los mensajes como leídos cuando se abre la sección - OPTIMIZADO
+ */
+async function markClientMessagesAsRead() {
+    if (!clientConversationId || isLoadingMessages) {
+        console.log('⏳ No se pueden marcar mensajes como leídos ahora');
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('authToken');
+        const API_BASE = getApiBase();
+        
+        const response = await fetch(`${API_BASE}/api/messages/mark-read/${clientConversationId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            // Actualizar contador local
+            clientUnreadCount = 0;
+            updateClientMessagesCounter();
+            
+            // Recargar mensajes para actualizar estado visual (con cooldown)
+            setTimeout(() => {
+                if (clientConversationId && !isLoadingMessages) {
+                    loadClientConversationSafe();
+                }
+            }, 1000);
+        }
+        
+    } catch (error) {
+        console.error('Error al marcar mensajes como leídos:', error);
+    }
+}
+
+/**
+ * INTEGRACIÓN CON EL DASHBOARD PRINCIPAL - OPTIMIZADA
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Inicializando integración de mensajes en dashboard...');
+    
+    let sectionObserver = null;
+    let isObserverConfigured = false;
+    
+    // Configurar observer para la sección de mensajes (solo una vez)
+    function setupSectionObserver() {
+        if (isObserverConfigured) {
+            console.log('⚠️ Observer ya configurado');
+            return;
+        }
+        
+        const messagesSection = document.getElementById('messages');
+        if (!messagesSection) {
+            console.warn('⚠️ Sección de mensajes no encontrada');
+            return;
+        }
+        
+        isObserverConfigured = true;
+        
+        // Observer para detectar cuando se activa la sección
+        sectionObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (messagesSection.classList.contains('active')) {
+                        console.log('📨 Sección de mensajes activada');
+                        
+                        // Inicializar módulo de mensajes después de un breve delay
+                        setTimeout(() => {
+                            initClientMessagesModule();
+                            
+                            // Marcar mensajes como leídos después de 3 segundos
+                            setTimeout(() => {
+                                markClientMessagesAsRead();
+                            }, 3000);
+                        }, 300);
+                    } else {
+                        // Limpiar cuando se sale de la sección
+                        console.log('📨 Saliendo de sección de mensajes');
+                        cleanupClientMessagesModule();
+                    }
+                }
+            });
+        });
+        
+        sectionObserver.observe(messagesSection, { attributes: true });
+        
+        // Si la sección ya está activa al cargar
+        if (messagesSection.classList.contains('active')) {
+            setTimeout(() => {
+                initClientMessagesModule();
+            }, 500);
+        }
+        
+        console.log('✅ Observer de sección configurado');
+    }
+    
+    // Configurar observer después de un breve delay para asegurar que el DOM esté listo
+    setTimeout(setupSectionObserver, 100);
+    
+    // Limpiar al salir de la página
+    window.addEventListener('beforeunload', function() {
+        if (sectionObserver) {
+            sectionObserver.disconnect();
+        }
+        cleanupClientMessagesModule();
+    });
+    
+    console.log('✅ Integración de mensajes configurada');
+});
 
 /**
  * Renderiza la conversación completa del cliente
@@ -1245,9 +567,6 @@ function renderClientConversation(messages) {
     setTimeout(() => {
         scrollToLastMessage();
     }, 100);
-    
-    // Configurar nuevos eventos
-    setupClientMessagesEvents();
 }
 
 /**
@@ -1321,14 +640,18 @@ async function sendClientMessage() {
     const attachmentInput = document.getElementById('client-message-attachment');
     
     if (!textarea || !sendButton) {
-        showToast('Error: Elementos del formulario no encontrados', 'error');
+        if (typeof showToast === 'function') {
+            showToast('Error: Elementos del formulario no encontrados', 'error');
+        }
         return;
     }
     
     const mensaje = textarea.value.trim();
     
     if (!mensaje) {
-        showToast('Por favor escribe un mensaje', 'warning');
+        if (typeof showToast === 'function') {
+            showToast('Por favor escribe un mensaje', 'warning');
+        }
         textarea.focus();
         return;
     }
@@ -1381,13 +704,19 @@ async function sendClientMessage() {
         }
         
         // Recargar mensajes
+        lastLoadTime = 0; // Resetear cooldown para permitir carga inmediata
+        isLoadingMessages = false;
         await loadClientConversation();
         
-        showToast('Mensaje enviado correctamente', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Mensaje enviado correctamente', 'success');
+        }
         
     } catch (error) {
         console.error('❌ Error al enviar mensaje del cliente:', error);
-        showToast(error.message || 'Error al enviar mensaje', 'error');
+        if (typeof showToast === 'function') {
+            showToast(error.message || 'Error al enviar mensaje', 'error');
+        }
     } finally {
         // Restaurar botón
         sendButton.disabled = false;
@@ -1411,7 +740,50 @@ function clearClientMessageForm() {
         attachmentInput.value = '';
     }
     
-    showToast('Formulario limpiado', 'info');
+    if (typeof showToast === 'function') {
+        showToast('Formulario limpiado', 'info');
+    }
+}
+
+/**
+ * Actualiza el contador de mensajes no leídos en el sidebar
+ */
+function updateClientMessagesCounter() {
+    const messagesCountElement = document.getElementById('client-messages-count');
+    
+    if (messagesCountElement) {
+        messagesCountElement.textContent = clientUnreadCount;
+        
+        // Actualizar clase visual del sidebar
+        const messagesMenuItem = document.querySelector('[data-section="messages"]');
+        if (messagesMenuItem) {
+            const existingBadge = messagesMenuItem.querySelector('.unread-badge');
+            if (existingBadge) {
+                existingBadge.remove();
+            }
+            
+            if (clientUnreadCount > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'unread-badge';
+                badge.textContent = clientUnreadCount;
+                badge.style.cssText = `
+                    background: var(--primary-color);
+                    color: white;
+                    border-radius: 10px;
+                    padding: 2px 6px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    margin-left: 8px;
+                `;
+                messagesMenuItem.appendChild(badge);
+            }
+        }
+    }
+    
+    // Actualizar tarjeta de estadísticas en el dashboard
+    if (typeof updateMessagesCardState === 'function') {
+        updateMessagesCardState(clientUnreadCount);
+    }
 }
 
 /**
@@ -1453,17 +825,6 @@ function openClientMessageModal() {
                             ></textarea>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="client-modal-attachment">
-                                <i class="fas fa-paperclip"></i> Adjuntos (opcional)
-                            </label>
-                            <input type="file" id="client-modal-attachment" multiple>
-                            <small class="form-help">
-                                <i class="fas fa-info-circle"></i> 
-                                Máximo 5MB por archivo. Formatos: PDF, imágenes, documentos
-                            </small>
-                        </div>
-                        
                         <div class="message-templates">
                             <label><i class="fas fa-lightbulb"></i> Plantillas rápidas:</label>
                             <div class="template-buttons">
@@ -1484,8 +845,8 @@ function openClientMessageModal() {
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" class="secondary-btn" id="save-client-draft-btn">
-                            <i class="fas fa-save"></i> Guardar Borrador
+                        <button type="button" class="secondary-btn" id="cancel-client-modal-btn">
+                            <i class="fas fa-times"></i> Cancelar
                         </button>
                         <button type="button" class="primary-btn" id="send-client-modal-message-btn">
                             <i class="fas fa-paper-plane"></i> Enviar Mensaje
@@ -1518,8 +879,8 @@ function openClientMessageModal() {
 function setupClientMessageModal() {
     const modal = document.getElementById('client-new-message-modal');
     const closeBtn = document.getElementById('close-client-message-modal');
+    const cancelBtn = document.getElementById('cancel-client-modal-btn');
     const sendBtn = document.getElementById('send-client-modal-message-btn');
-    const saveDraftBtn = document.getElementById('save-client-draft-btn');
     const templateButtons = document.querySelectorAll('.template-btn');
     
     // Función para cerrar modal
@@ -1538,6 +899,10 @@ function setupClientMessageModal() {
         closeBtn.addEventListener('click', closeModal);
     }
     
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeModal);
+    }
+    
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
             closeModal();
@@ -1548,13 +913,6 @@ function setupClientMessageModal() {
     if (sendBtn) {
         sendBtn.addEventListener('click', function() {
             handleSendClientModalMessage(closeModal);
-        });
-    }
-    
-    // Guardar borrador
-    if (saveDraftBtn) {
-        saveDraftBtn.addEventListener('click', function() {
-            saveClientDraft();
         });
     }
     
@@ -1576,7 +934,6 @@ function setupClientMessageModal() {
     }
 }
 
-
 /**
  * Maneja el envío del mensaje desde el modal
  */
@@ -1586,7 +943,9 @@ async function handleSendClientModalMessage(closeModal) {
     const sendBtn = document.getElementById('send-client-modal-message-btn');
     
     if (!subjectInput || !messageInput || !sendBtn) {
-        showToast('Error: Elementos del formulario no encontrados', 'error');
+        if (typeof showToast === 'function') {
+            showToast('Error: Elementos del formulario no encontrados', 'error');
+        }
         return;
     }
     
@@ -1594,7 +953,9 @@ async function handleSendClientModalMessage(closeModal) {
     const message = messageInput.value.trim();
     
     if (!subject || !message) {
-        showToast('Por favor completa el asunto y el mensaje', 'warning');
+        if (typeof showToast === 'function') {
+            showToast('Por favor completa el asunto y el mensaje', 'warning');
+        }
         return;
     }
     
@@ -1617,7 +978,7 @@ async function handleSendClientModalMessage(closeModal) {
         const messageData = {
             clienteId: currentUser._id,
             mensaje: fullMessage,
-            adjuntos: [] // TODO: Implementar adjuntos
+            adjuntos: []
         };
         
         console.log('📤 Enviando mensaje desde modal:', messageData);
@@ -1636,9 +997,13 @@ async function handleSendClientModalMessage(closeModal) {
             throw new Error(error.message || 'Error al enviar mensaje');
         }
         
-        showToast('Mensaje enviado correctamente', 'success');
+        if (typeof showToast === 'function') {
+            showToast('Mensaje enviado correctamente', 'success');
+        }
         
         // Recargar conversación
+        lastLoadTime = 0;
+        isLoadingMessages = false;
         await loadClientConversation();
         
         // Cambiar a la sección de mensajes si no está activa
@@ -1650,7 +1015,9 @@ async function handleSendClientModalMessage(closeModal) {
         
     } catch (error) {
         console.error('❌ Error al enviar mensaje desde modal:', error);
-        showToast(error.message || 'Error al enviar mensaje', 'error');
+        if (typeof showToast === 'function') {
+            showToast(error.message || 'Error al enviar mensaje', 'error');
+        }
     } finally {
         sendBtn.disabled = false;
         sendBtn.innerHTML = originalButtonText;
@@ -1694,232 +1061,68 @@ function applyClientMessageTemplate(template) {
         messageInput.style.height = 'auto';
         messageInput.style.height = messageInput.scrollHeight + 'px';
         
-        showToast('Plantilla aplicada. Puedes editarla antes de enviar.', 'info');
+        if (typeof showToast === 'function') {
+            showToast('Plantilla aplicada. Puedes editarla antes de enviar.', 'info');
+        }
     }
 }
 
 /**
- * Guarda un borrador del mensaje del cliente
+ * FUNCIONES PÚBLICAS PARA INTEGRACIÓN CON EL DASHBOARD
  */
-function saveClientDraft() {
-    const subject = document.getElementById('client-modal-subject')?.value.trim() || '';
-    const message = document.getElementById('client-modal-message')?.value.trim() || '';
-    
-    if (!subject && !message) {
-        showToast('No hay contenido para guardar', 'warning');
-        return;
-    }
-    
-    const draft = {
-        subject,
-        message,
-        timestamp: new Date().toISOString(),
-        type: 'client-message'
-    };
-    
-    // Guardar en localStorage
-    const drafts = JSON.parse(localStorage.getItem('clientMessageDrafts') || '[]');
-    drafts.push(draft);
-    
-    // Mantener solo los últimos 5 borradores
-    if (drafts.length > 5) {
-        drafts.splice(0, drafts.length - 5);
-    }
-    
-    localStorage.setItem('clientMessageDrafts', JSON.stringify(drafts));
-    showToast('Borrador guardado correctamente', 'success');
-}
-
-/**
- * Actualiza el contador de mensajes no leídos en el sidebar
- */
-function updateClientMessagesCounter() {
-    const messagesCountElement = document.getElementById('client-messages-count');
-    
-    if (messagesCountElement) {
-        messagesCountElement.textContent = clientUnreadCount;
-        
-        // Actualizar clase visual del sidebar
-        const messagesMenuItem = document.querySelector('[data-section="messages"]');
-        if (messagesMenuItem) {
-            const existingBadge = messagesMenuItem.querySelector('.unread-badge');
-            if (existingBadge) {
-                existingBadge.remove();
-            }
-            
-            if (clientUnreadCount > 0) {
-                const badge = document.createElement('span');
-                badge.className = 'unread-badge';
-                badge.textContent = clientUnreadCount;
-                badge.style.cssText = `
-                    background: var(--primary-color);
-                    color: white;
-                    border-radius: 10px;
-                    padding: 2px 6px;
-                    font-size: 10px;
-                    font-weight: 600;
-                    margin-left: 8px;
-                `;
-                messagesMenuItem.appendChild(badge);
-            }
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔄 Inicializando integración de mensajes en dashboard...');
-    
-    // Configurar observer para la sección de mensajes
-    const messagesSection = document.getElementById('messages');
-    if (messagesSection) {
-        // Observer para detectar cuando se activa la sección
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    if (messagesSection.classList.contains('active')) {
-                        console.log('📨 Sección de mensajes activada');
-                        
-                        // Inicializar módulo de mensajes después de un breve delay
-                        setTimeout(() => {
-                            if (typeof initClientMessagesModule === 'function') {
-                                initClientMessagesModule();
-                                
-                                // Marcar mensajes como leídos después de 2 segundos
-                                setTimeout(() => {
-                                    if (typeof markClientMessagesAsRead === 'function') {
-                                        markClientMessagesAsRead();
-                                    }
-                                }, 2000);
-                            }
-                        }, 200);
-                    } else {
-                        // Limpiar cuando se sale de la sección
-                        if (typeof cleanupClientMessagesModule === 'function') {
-                            cleanupClientMessagesModule();
-                        }
-                    }
-                }
-            });
-        });
-        
-        observer.observe(messagesSection, { attributes: true });
-        
-        // Si la sección ya está activa al cargar
-        if (messagesSection.classList.contains('active')) {
-            setTimeout(() => {
-                if (typeof initClientMessagesModule === 'function') {
-                    initClientMessagesModule();
-                }
-            }, 500);
-        }
-    }
-    
-    // Configurar click en la tarjeta de mensajes del overview
-    const messagesStatCard = document.getElementById('messages-stat-card');
-    if (messagesStatCard) {
-        messagesStatCard.addEventListener('click', function() {
-            switchToSection('messages');
-        });
-        
-        // Agregar cursor pointer
-        messagesStatCard.style.cursor = 'pointer';
-    }
-    
-    // Configurar tooltips para botones de mensajes
-    const tooltipElements = document.querySelectorAll('[title]');
-    tooltipElements.forEach(element => {
-        if (element.id.includes('message') || element.closest('#messages')) {
-            element.addEventListener('mouseenter', function() {
-                this.style.position = 'relative';
-            });
-        }
-    });
-    
-    // Configurar atajos de teclado globales para mensajes
-    document.addEventListener('keydown', function(e) {
-        // Alt + M para ir a mensajes
-        if (e.altKey && e.key === 'm') {
-            e.preventDefault();
-            switchToSection('messages');
-        }
-        
-        // Alt + N para nuevo mensaje (si está en la sección de mensajes)
-        const messagesSection = document.getElementById('messages');
-        if (e.altKey && e.key === 'n' && messagesSection && messagesSection.classList.contains('active')) {
-            e.preventDefault();
-            if (typeof openClientMessageModal === 'function') {
-                openClientMessageModal();
-            }
-        }
-    });
-    
-    console.log('✅ Integración de mensajes configurada');
-    console.log('💡 Atajos: Alt+M (ir a mensajes), Alt+N (nuevo mensaje)');
-});
-
-// Función para actualizar el estado visual de la tarjeta de mensajes
-function updateMessagesCardState(unreadCount) {
-    const messagesCard = document.getElementById('messages-stat-card');
-    const messagesCountElement = document.getElementById('client-messages-count');
-    
-    if (messagesCard && messagesCountElement) {
-        messagesCountElement.textContent = unreadCount || 0;
-        
-        if (unreadCount > 0) {
-            messagesCard.classList.add('has-unread');
-            messagesCard.title = `Tienes ${unreadCount} mensaje${unreadCount !== 1 ? 's' : ''} sin leer`;
-        } else {
-            messagesCard.classList.remove('has-unread');
-            messagesCard.title = 'No tienes mensajes sin leer';
-        }
-    }
-}
-
-// Escuchar eventos personalizados de actualización de mensajes
-document.addEventListener('messagesStatsUpdated', function(event) {
-    const stats = event.detail;
-    if (stats && typeof stats.totalNoLeidos !== 'undefined') {
-        updateMessagesCardState(stats.totalNoLeidos);
-    }
-});
-
-// Función para mostrar indicador de nuevo mensaje
-function showNewMessageIndicator() {
-    const messagesMenuItem = document.querySelector('[data-section="messages"]');
-    if (messagesMenuItem && !messagesMenuItem.querySelector('.new-message-pulse')) {
-        const pulseIndicator = document.createElement('div');
-        pulseIndicator.className = 'new-message-pulse';
-        pulseIndicator.style.cssText = `
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 8px;
-            height: 8px;
-            background: #ff4757;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        `;
-        messagesMenuItem.style.position = 'relative';
-        messagesMenuItem.appendChild(pulseIndicator);
-        
-        // Remover después de 10 segundos
-        setTimeout(() => {
-            if (pulseIndicator.parentNode) {
-                pulseIndicator.remove();
-            }
-        }, 10000);
-    }
-}
-
-// Exponer funciones globalmente para uso desde otros módulos
-// Exponer funciones globalmente
+window.initClientMessagesModule = initClientMessagesModule;
+window.openClientMessageModal = openClientMessageModal;
+window.updateClientMessagesCounter = updateClientMessagesCounter;
+window.cleanupClientMessagesModule = cleanupClientMessagesModule;
+window.markClientMessagesAsRead = markClientMessagesAsRead;
+window.refreshClientMessages = refreshClientMessages;
 window.loadClientConversation = loadClientConversation;
-window.loadClientMessages = loadClientMessages;
 window.sendClientMessage = sendClientMessage;
 window.clearClientMessageForm = clearClientMessageForm;
-window.openClientMessageModal = openClientMessageModal;
-window.applyClientMessageTemplate = applyClientMessageTemplate;
-window.saveClientDraft = saveClientDraft;
-window.updateMessagesCardState = updateMessagesCardState;
-window.showNewMessageIndicator = showNewMessageIndicator;
+
+// Funciones de utilidad que permanecen igual
+function scrollToLastMessage() {
+    const messagesBody = document.getElementById('client-messages-body');
+    if (messagesBody) {
+        messagesBody.scrollTop = messagesBody.scrollHeight;
+    }
+}
+
+function formatMessageTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Ahora mismo';
+    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+    if (diffDays < 7) return `Hace ${diffDays} día${diffDays !== 1 ? 's' : ''}`;
+    
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getApiBase() {
+    return window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : '';
+}
+
+function getCurrentUser() {
+    return window.currentUser || JSON.parse(localStorage.getItem('userData') || '{}');
+}
+
+console.log('✅ Módulo de mensajes para cliente cargado completamente - VERSIÓN OPTIMIZADA');
