@@ -2037,7 +2037,7 @@ clientAppointmentsStyles.textContent = `
     
     .appointment-type {
         font-size: 10px;
-        color: #666;
+        color:rgb(255, 255, 255);
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
