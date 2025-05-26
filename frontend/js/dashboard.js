@@ -791,9 +791,6 @@ function switchToClientSection(sectionId) {
                 case 'messages':
                     loadClientMessages();
                     break;
-                case 'billing':
-                    loadClientBilling();
-                    break;
                 default:
                     console.log(`Sección ${sectionId} cargada`);
             }
@@ -1110,11 +1107,6 @@ function loadClientAppointments() {
 function loadClientMessages() {
     console.log('💬 Cargando mensajes del cliente...');
     // Implementar carga de mensajes del cliente
-}
-
-function loadClientBilling() {
-    console.log('💰 Cargando facturación del cliente...');
-    // Implementar carga de datos de facturación
 }
 
 function openScheduleAppointmentModal() {

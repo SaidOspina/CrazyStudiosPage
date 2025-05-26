@@ -48,7 +48,6 @@
                 <li data-section="projects"><i class="fas fa-project-diagram"></i> Mis Proyectos</li>
                 <li data-section="appointments"><i class="far fa-calendar-alt"></i> Mis Citas</li>
                 <li data-section="messages"><i class="far fa-envelope"></i> Mensajes</li>
-                <li data-section="billing"><i class="fas fa-file-invoice-dollar"></i> Facturación</li>
             </ul>
         </aside>
         
@@ -358,54 +357,6 @@
                         <button class="primary-btn" id="start-client-conversation-btn">
                             <i class="fas fa-plus"></i> Iniciar Conversación
                         </button>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Billing Section -->
-            <section id="billing" class="dashboard-section">
-                <div class="section-header">
-                    <h2>Facturación</h2>
-                </div>
-                
-                <div class="billing-container">
-                    <div class="billing-summary-card">
-                        <h3><i class="fas fa-dollar-sign"></i> Resumen de Facturación</h3>
-                        <div class="billing-stats">
-                            <div class="billing-stat">
-                                <span class="billing-label">Total Facturado</span>
-                                <span class="billing-value" id="total-billed">$0.00</span>
-                            </div>
-                            <div class="billing-stat">
-                                <span class="billing-label">Pendiente de Pago</span>
-                                <span class="billing-value" id="pending-payment">$0.00</span>
-                            </div>
-                            <div class="billing-stat">
-                                <span class="billing-label">Último Pago</span>
-                                <span class="billing-value" id="last-payment">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="invoices-container">
-                        <h3><i class="fas fa-file-invoice"></i> Facturas</h3>
-                        <div class="table-responsive">
-                            <table class="data-table" id="client-invoices-table">
-                                <thead>
-                                    <tr>
-                                        <th>Número</th>
-                                        <th>Fecha</th>
-                                        <th>Proyecto</th>
-                                        <th>Monto</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Las facturas se cargarán dinámicamente -->
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
             </section>
