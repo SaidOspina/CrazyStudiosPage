@@ -652,7 +652,7 @@ function setupClientQuickActions() {
 }
 
 /**
- * Configura los botones específicos de quick actions del cliente
+ * Configura los botones específicos de quick actions del cliente - VERSIÓN ACTUALIZADA
  */
 function setupClientQuickActionButtons() {
     console.log('🔧 Configurando botones de quick actions...');
@@ -669,8 +669,15 @@ function setupClientQuickActionButtons() {
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
-            // Ir a la sección de proyectos y abrir modal de solicitud
+            // Ir a la sección de proyectos
             switchToClientSection('projects');
+            setTimeout(() => {
+                if (typeof openProjectRequestModal === 'function') {
+                    openProjectRequestModal();
+                } else {
+                    showToast('Funcionalidad de solicitar proyecto próximamente', 'info');
+                }
+            }, 300);
         });
     }
     
@@ -682,14 +689,19 @@ function setupClientQuickActionButtons() {
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
-            // Ir a la sección de citas y abrir modal de agendamiento
+            // Ir a la sección de citas
             switchToClientSection('appointments');
             setTimeout(() => {
-                openScheduleAppointmentModal();
+                if (typeof openScheduleAppointmentModal === 'function') {
+                    openScheduleAppointmentModal();
+                } else {
+                    showToast('Funcionalidad de agendar cita próximamente', 'info');
+                }
             }, 300);
         });
     }
     
+    // ✅ MODIFICADO: Botón de enviar mensaje - integrar con módulo de mensajes
     if (sendMessageBtn) {
         sendMessageBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -698,11 +710,20 @@ function setupClientQuickActionButtons() {
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
-            // Ir a la sección de mensajes y abrir modal de nuevo mensaje
-            switchToClientSection('messages');
-            setTimeout(() => {
-                openSendMessageModal();
-            }, 300);
+            // Abrir modal de mensaje directamente o ir a la sección
+            if (typeof openClientMessageModal === 'function') {
+                openClientMessageModal();
+            } else {
+                // Ir a la sección de mensajes y abrir modal
+                switchToClientSection('messages');
+                setTimeout(() => {
+                    if (typeof openClientMessageModal === 'function') {
+                        openClientMessageModal();
+                    } else {
+                        showToast('Cargando módulo de mensajes...', 'info');
+                    }
+                }, 500);
+            }
         });
     }
     
@@ -752,7 +773,7 @@ function setupClientStatisticsClicks() {
 }
 
 /**
- * Cambia a una sección específica del dashboard cliente
+ * Cambia a una sección específica del dashboard cliente - VERSIÓN ACTUALIZADA
  */
 function switchToClientSection(sectionId) {
     console.log('🔄 Cambiando a sección:', sectionId);
@@ -776,20 +797,38 @@ function switchToClientSection(sectionId) {
     if (targetSection) {
         targetSection.classList.add('active');
         
-        // Inicializar módulo específico si es necesario
+        // ✅ MODIFICADO: Inicializar módulo específico con mejor integración
         setTimeout(() => {
             switch(sectionId) {
                 case 'overview':
                     loadDashboardData();
                     break;
                 case 'projects':
-                    initClientProjectsModule();
+                    if (typeof initClientProjectsModule === 'function') {
+                        initClientProjectsModule();
+                    }
                     break;
                 case 'appointments':
-                    initClientAppointmentsModule();
+                    if (typeof initClientAppointmentsModule === 'function') {
+                        initClientAppointmentsModule();
+                    }
                     break;
                 case 'messages':
-                    loadClientMessages();
+                    // ✅ MEJORADO: Inicializar módulo de mensajes con fallback
+                    console.log('📨 Inicializando módulo de mensajes...');
+                    if (typeof initClientMessagesModule === 'function') {
+                        initClientMessagesModule();
+                        
+                        // Marcar mensajes como leídos después de un momento
+                        setTimeout(() => {
+                            if (typeof markClientMessagesAsRead === 'function') {
+                                markClientMessagesAsRead();
+                            }
+                        }, 1500);
+                    } else {
+                        console.warn('⚠️ Módulo de mensajes no está disponible');
+                        showToast('Cargando módulo de mensajes...', 'info');
+                    }
                     break;
                 default:
                     console.log(`Sección ${sectionId} cargada`);
@@ -799,6 +838,7 @@ function switchToClientSection(sectionId) {
         console.error(`❌ Sección ${sectionId} no encontrada`);
     }
 }
+
 
 /**
  * Configura la navegación entre secciones
@@ -955,7 +995,7 @@ async function loadClientAppointmentsStatistics(API_BASE, token) {
 }
 
 /**
- * Carga estadísticas de mensajes del cliente
+ * Carga estadísticas de mensajes del cliente - VERSIÓN MEJORADA
  */
 async function loadClientMessagesStatistics(API_BASE, token) {
     try {
@@ -982,17 +1022,51 @@ async function loadClientMessagesStatistics(API_BASE, token) {
             const messagesCount = document.getElementById('client-messages-count');
             if (messagesCount) {
                 messagesCount.textContent = unreadMessages;
+                
+                // ✅ NUEVO: Añadir clase visual si hay mensajes no leídos
+                const messagesCard = messagesCount.closest('.stat-card');
+                if (messagesCard) {
+                    if (unreadMessages > 0) {
+                        messagesCard.classList.add('has-unread');
+                        messagesCard.style.borderLeft = '4px solid var(--primary-color)';
+                    } else {
+                        messagesCard.classList.remove('has-unread');
+                        messagesCard.style.borderLeft = '';
+                    }
+                }
             }
             
             const messagesDescription = document.querySelector('.messages-icon')?.closest('.stat-card')?.querySelector('.stat-description');
             if (messagesDescription) {
-                messagesDescription.textContent = unreadMessages > 0 ? 'sin leer' : 'al día';
+                if (unreadMessages > 0) {
+                    messagesDescription.textContent = `${unreadMessages} sin leer`;
+                    messagesDescription.style.color = 'var(--primary-color)';
+                    messagesDescription.style.fontWeight = '600';
+                } else {
+                    messagesDescription.textContent = 'al día';
+                    messagesDescription.style.color = '';
+                    messagesDescription.style.fontWeight = '';
+                }
             }
             
             console.log('✅ Estadísticas de mensajes cargadas:', {
                 conversaciones: conversations.length,
                 noLeidos: unreadMessages
             });
+            
+            // ✅ NUEVO: Actualizar variable global para el módulo de mensajes
+            if (typeof window !== 'undefined') {
+                window.clientUnreadCount = unreadMessages;
+            }
+            
+            // ✅ NUEVO: Emitir evento personalizado
+            const statsEvent = new CustomEvent('clientMessagesStatsUpdated', {
+                detail: { 
+                    unreadCount: unreadMessages,
+                    totalconversations: conversations.length 
+                }
+            });
+            document.dispatchEvent(statsEvent);
             
         } else {
             console.warn('⚠️ No se pudieron cargar estadísticas de mensajes');
@@ -1002,6 +1076,44 @@ async function loadClientMessagesStatistics(API_BASE, token) {
         console.error('❌ Error al cargar estadísticas de mensajes:', error);
     }
 }
+
+/**
+ * Configura la integración completa del módulo de mensajes
+ */
+function setupClientMessagesIntegration() {
+    console.log('🔧 Configurando integración de mensajes...');
+    
+    // Escuchar eventos de actualización de mensajes
+    document.addEventListener('clientMessagesStatsUpdated', function(event) {
+        const { unreadCount } = event.detail;
+        console.log('📊 Estadísticas de mensajes actualizadas:', unreadCount);
+        
+        // Actualizar indicador visual en el sidebar
+        updateClientMessagesSidebar(unreadCount);
+        
+        // Mostrar notificación si hay nuevos mensajes
+        if (unreadCount > 0 && !document.getElementById('messages').classList.contains('active')) {
+            showNewMessageNotification(unreadCount);
+        }
+    });
+    
+    // Configurar actualización periódica de estadísticas de mensajes
+    setInterval(() => {
+        if (typeof loadClientDynamicStatistics === 'function') {
+            // Solo actualizar si no estamos en la sección de mensajes para evitar conflictos
+            if (!document.getElementById('messages').classList.contains('active')) {
+                console.log('🔄 Actualizando estadísticas de mensajes en background...');
+                loadClientMessagesStatistics(
+                    window.location.hostname === 'localhost' ? 'http://localhost:3000' : '',
+                    localStorage.getItem('authToken')
+                );
+            }
+        }
+    }, 60000); // Cada minuto
+    
+    console.log('✅ Integración de mensajes configurada');
+}
+
 
 /**
  * Calcula el tiempo como cliente
@@ -1079,9 +1191,131 @@ function loadClientProjects() {
     initClientProjectsModule();
 }
 
+/**
+ * Función alias para cargar mensajes del cliente - COMPATIBILIDAD
+ */
 function loadClientMessages() {
-    console.log('💬 Cargando mensajes del cliente...');
-    initClientMessagesModule();
+    console.log('💬 Cargando mensajes del cliente desde dashboard...');
+    
+    if (typeof initClientMessagesModule === 'function') {
+        initClientMessagesModule();
+    } else if (typeof loadClientConversation === 'function') {
+        loadClientConversation();
+    } else {
+        console.warn('⚠️ Función de carga de mensajes no disponible');
+        showToast('Módulo de mensajes no está disponible', 'warning');
+    }
+}
+
+/**
+ * Actualiza la apariencia del sidebar de mensajes
+ */
+function updateClientMessagesSidebar(unreadCount) {
+    const messagesMenuItem = document.querySelector('[data-section="messages"]');
+    if (!messagesMenuItem) return;
+    
+    // Remover badge existente
+    const existingBadge = messagesMenuItem.querySelector('.messages-unread-badge');
+    if (existingBadge) {
+        existingBadge.remove();
+    }
+    
+    // Añadir nuevo badge si hay mensajes no leídos
+    if (unreadCount > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'messages-unread-badge';
+        badge.textContent = unreadCount;
+        badge.style.cssText = `
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        `;
+        
+        // Hacer el menu item relativo para posicionar el badge
+        messagesMenuItem.style.position = 'relative';
+        messagesMenuItem.appendChild(badge);
+        
+        // Añadir clase para efectos visuales
+        messagesMenuItem.classList.add('has-unread-messages');
+    } else {
+        messagesMenuItem.classList.remove('has-unread-messages');
+    }
+}
+
+/**
+ * Muestra notificación de nuevos mensajes
+ */
+function showNewMessageNotification(count) {
+    // Crear notificación visual
+    const notification = document.createElement('div');
+    notification.className = 'new-message-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-envelope"></i>
+            <span>Tienes ${count} mensaje${count !== 1 ? 's' : ''} nuevo${count !== 1 ? 's' : ''}</span>
+            <button onclick="this.parentElement.parentElement.remove(); switchToClientSection('messages');">
+                Ver
+            </button>
+        </div>
+    `;
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: var(--primary-color);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        animation: slideInRight 0.3s ease;
+        max-width: 300px;
+    `;
+    
+    notification.querySelector('.notification-content').style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    `;
+    
+    notification.querySelector('button').style.cssText = `
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+    
+    // Notificación del navegador si está permitida
+    if (typeof showBrowserNotification === 'function') {
+        showBrowserNotification('Nuevos mensajes', {
+            body: `Tienes ${count} mensaje${count !== 1 ? 's' : ''} nuevo${count !== 1 ? 's' : ''} de Crazy Studios`,
+            onclick: () => switchToClientSection('messages')
+        });
+    }
 }
 
 function openScheduleAppointmentModal() {
@@ -1095,54 +1329,167 @@ function openSendMessageModal() {
 }
 
 /**
- * Inicializa el dashboard del cliente
+ * Inicializa el dashboard del cliente - VERSIÓN ACTUALIZADA
  */
 function initClientDashboard() {
     console.log('🚀 Dashboard de cliente inicializado');
     
     // Configurar botones adicionales
     setupAdditionalButtons();
+    
+    // ✅ NUEVO: Configurar integración de mensajes
+    setupClientMessagesIntegration();
+    
+    // ✅ NUEVO: Configurar atajos de teclado
+    setupKeyboardShortcuts();
+    
+    // ✅ NUEVO: Configurar tooltips mejorados
+    setupEnhancedTooltips();
 }
 
 /**
- * Configura botones adicionales del dashboard
+ * Configura atajos de teclado para el dashboard
+ */
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Solo si no estamos escribiendo en un input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // Alt + M para mensajes
+        if (e.altKey && e.key === 'm') {
+            e.preventDefault();
+            switchToClientSection('messages');
+        }
+        
+        // Alt + P para proyectos
+        if (e.altKey && e.key === 'p') {
+            e.preventDefault();
+            switchToClientSection('projects');
+        }
+        
+        // Alt + C para citas
+        if (e.altKey && e.key === 'c') {
+            e.preventDefault();
+            switchToClientSection('appointments');
+        }
+        
+        // Alt + H para home/overview
+        if (e.altKey && e.key === 'h') {
+            e.preventDefault();
+            switchToClientSection('overview');
+        }
+    });
+}
+
+/**
+ * Configura tooltips mejorados
+ */
+function setupEnhancedTooltips() {
+    // Tooltips para las tarjetas de estadísticas
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        const icon = card.querySelector('.stat-icon');
+        if (icon) {
+            if (icon.classList.contains('messages-icon')) {
+                card.title = 'Ver mensajes (Alt+M)';
+            } else if (icon.classList.contains('projects-icon')) {
+                card.title = 'Ver proyectos (Alt+P)';
+            } else if (icon.classList.contains('appointments-icon')) {
+                card.title = 'Ver citas (Alt+C)';
+            }
+        }
+    });
+}
+
+/**
+ * Configura botones adicionales del dashboard - VERSIÓN ACTUALIZADA
  */
 function setupAdditionalButtons() {
+    // Botón de solicitar proyecto
+    const requestProjectBtn = document.getElementById('request-new-project-btn');
+    if (requestProjectBtn) {
+        requestProjectBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (typeof openProjectRequestModal === 'function') {
+                openProjectRequestModal();
+            } else {
+                showToast('Funcionalidad de solicitar proyecto próximamente', 'info');
+            }
+        });
+    }
     
     // Botón de agendar cita
     const scheduleAppointmentBtn = document.getElementById('schedule-new-appointment-btn');
     if (scheduleAppointmentBtn) {
         scheduleAppointmentBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            openScheduleAppointmentModal();
+            if (typeof openScheduleAppointmentModal === 'function') {
+                openScheduleAppointmentModal();
+            } else {
+                showToast('Funcionalidad de agendar cita próximamente', 'info');
+            }
         });
     }
     
-    // Botón de nuevo mensaje
+    // ✅ MODIFICADO: Botón de nuevo mensaje - usar función del módulo de mensajes
     const newMessageBtn = document.getElementById('client-new-message-btn');
     if (newMessageBtn) {
         newMessageBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            openSendMessageModal();
+            console.log('💬 Abriendo modal de nuevo mensaje desde dashboard');
+            
+            // Verificar si el módulo de mensajes está cargado
+            if (typeof openClientMessageModal === 'function') {
+                openClientMessageModal();
+            } else {
+                // Si no está cargado, ir a la sección de mensajes primero
+                switchToClientSection('messages');
+                setTimeout(() => {
+                    if (typeof openClientMessageModal === 'function') {
+                        openClientMessageModal();
+                    } else {
+                        showToast('Cargando módulo de mensajes...', 'info');
+                    }
+                }, 500);
+            }
         });
     }
     
-    // Botón de iniciar conversación
+    // ✅ MODIFICADO: Botón de iniciar conversación - usar función del módulo de mensajes
     const startConversationBtn = document.getElementById('start-client-conversation-btn');
     if (startConversationBtn) {
         startConversationBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            openSendMessageModal();
+            console.log('💬 Iniciando conversación desde dashboard');
+            
+            if (typeof openClientMessageModal === 'function') {
+                openClientMessageModal();
+            } else {
+                switchToClientSection('messages');
+                setTimeout(() => {
+                    if (typeof openClientMessageModal === 'function') {
+                        openClientMessageModal();
+                    }
+                }, 500);
+            }
         });
     }
     
-    // Botón de refrescar mensajes
+    // ✅ NUEVO: Botón de refrescar mensajes - usar función del módulo de mensajes
     const refreshMessagesBtn = document.getElementById('client-refresh-messages-btn');
     if (refreshMessagesBtn) {
         refreshMessagesBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            loadClientMessages();
-            showToast('Mensajes actualizados', 'success');
+            console.log('🔄 Refrescando mensajes desde dashboard');
+            
+            if (typeof refreshClientMessages === 'function') {
+                refreshClientMessages();
+            } else if (typeof loadClientConversation === 'function') {
+                loadClientConversation();
+                showToast('Mensajes actualizados', 'success');
+            } else {
+                showToast('Módulo de mensajes no disponible', 'warning');
+            }
         });
     }
 }
@@ -2139,5 +2486,10 @@ window.viewClientProject = viewClientProject;
 window.viewClientAppointment = viewClientAppointment;
 window.loadRecentProjects = loadRecentProjects;
 window.loadUpcomingAppointments = loadUpcomingAppointments;
+window.loadClientMessages = loadClientMessages;
+window.switchToClientSection = switchToClientSection;
+window.setupClientMessagesIntegration = setupClientMessagesIntegration;
+window.updateClientMessagesSidebar = updateClientMessagesSidebar;
+window.showNewMessageNotification = showNewMessageNotification;
 
 console.log('✅ Dashboard Cliente - JavaScript cargado completamente');

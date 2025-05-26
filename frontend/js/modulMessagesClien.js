@@ -1576,6 +1576,7 @@ function setupClientMessageModal() {
     }
 }
 
+
 /**
  * Maneja el envío del mensaje desde el modal
  */
@@ -1641,8 +1642,8 @@ async function handleSendClientModalMessage(closeModal) {
         await loadClientConversation();
         
         // Cambiar a la sección de mensajes si no está activa
-        if (typeof switchToSection === 'function') {
-            switchToSection('messages');
+        if (typeof switchToClientSection === 'function') {
+            switchToClientSection('messages');
         }
         
         closeModal();
@@ -1912,5 +1913,13 @@ function showNewMessageIndicator() {
 }
 
 // Exponer funciones globalmente para uso desde otros módulos
+// Exponer funciones globalmente
+window.loadClientConversation = loadClientConversation;
+window.loadClientMessages = loadClientMessages;
+window.sendClientMessage = sendClientMessage;
+window.clearClientMessageForm = clearClientMessageForm;
+window.openClientMessageModal = openClientMessageModal;
+window.applyClientMessageTemplate = applyClientMessageTemplate;
+window.saveClientDraft = saveClientDraft;
 window.updateMessagesCardState = updateMessagesCardState;
 window.showNewMessageIndicator = showNewMessageIndicator;
