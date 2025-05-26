@@ -786,7 +786,7 @@ function switchToClientSection(sectionId) {
                     initClientProjectsModule();
                     break;
                 case 'appointments':
-                    loadClientAppointments();
+                    initClientAppointmentsModule();
                     break;
                 case 'messages':
                     loadClientMessages();
