@@ -1270,20 +1270,23 @@ textarea {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
     opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    animation: modalFadeIn 0.4s ease forwards;
 }
 
 .modal.active {
+    display: flex;
     opacity: 1;
-    pointer-events: auto;
 }
+
 
 .modal-content {
     background-color: var(--dark-blue);
@@ -2190,23 +2193,27 @@ input:checked + .slider:before {
 
 /* ===== PROYECTOS RECIENTES EN DASHBOARD ===== */
 .recent-project-card {
-    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
-    border: 1px solid #333;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
+    background: linear-gradient(135deg, 
+        rgba(26, 26, 26, 0.95) 0%, 
+        rgba(45, 45, 45, 0.9) 50%, 
+        rgba(26, 26, 26, 0.95) 100%);
+    border: 1px solid rgba(90, 204, 201, 0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.recent-project-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(90, 204, 201, 0.15);
-    border-color: var(--primary-color);
-}
-
+/* Efecto de borde animado */
 .recent-project-card::before {
     content: '';
     position: absolute;
@@ -2214,119 +2221,295 @@ input:checked + .slider:before {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(90deg, 
+        var(--primary-color) 0%, 
+        var(--secondary-color) 50%, 
+        var(--primary-color) 100%);
+    background-size: 200% 100%;
+    animation: gradientSlide 3s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes gradientSlide {
+    0%, 100% { background-position: 200% 0; }
+    50% { background-position: -200% 0; }
+}
+
+/* Efecto de brillo sutil */
+.recent-project-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, 
+        rgba(90, 204, 201, 0.1) 0%, 
+        transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.recent-project-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(90, 204, 201, 0.3),
+        0 0 30px rgba(90, 204, 201, 0.2);
+    border-color: var(--primary-color);
+}
+
+.recent-project-card:hover::before {
+    opacity: 1;
+}
+
+.recent-project-card:hover::after {
+    opacity: 1;
+}
+
+.recent-project-card:active {
+    transform: translateY(-4px) scale(1.01);
+    transition: all 0.1s ease;
 }
 
 .project-card-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    position: relative;
+    gap: 16px;
 }
 
 .project-card-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    border-radius: 10px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--dark-blue);
-    font-size: 18px;
+    font-size: 22px;
     flex-shrink: 0;
+    box-shadow: 
+        0 8px 20px rgba(90, 204, 201, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.project-card-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, 
+        transparent 30%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        transparent 70%);
+    transform: rotate(-45deg);
+    transition: transform 0.6s ease;
+}
+
+.recent-project-card:hover .project-card-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 
+        0 12px 30px rgba(90, 204, 201, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.recent-project-card:hover .project-card-icon::before {
+    transform: translateX(100%) translateY(100%) rotate(-45deg);
 }
 
 .project-card-info h4 {
-    margin: 0 0 4px 0;
+    margin: 0 0 6px 0;
     color: #ffffff;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
 }
 
 .project-category {
-    color: #999;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    font-weight: 500;
+    background: rgba(90, 204, 201, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(90, 204, 201, 0.3);
+    display: inline-block;
+    backdrop-filter: blur(10px);
 }
 
 .project-status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
+    padding: 6px 14px;
+    border-radius: 25px;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    border: 1px solid transparent;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
+.project-status-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent);
+    transition: left 0.5s ease;
+}
+
+.recent-project-card:hover .project-status-badge::before {
+    left: 100%;
+}
+
+/* Estados específicos del proyecto */
 .project-status-badge[data-status="cotizacion"] {
-    background: rgba(255, 152, 0, 0.2);
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1));
     color: #FF9800;
-    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-color: rgba(255, 152, 0, 0.4);
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
 }
 
 .project-status-badge[data-status="pago procesado"] {
-    background: rgba(33, 150, 243, 0.2);
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.1));
     color: #2196F3;
-    border: 1px solid rgba(33, 150, 243, 0.3);
+    border-color: rgba(33, 150, 243, 0.4);
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
 }
 
 .project-status-badge[data-status="iniciado"],
 .project-status-badge[data-status="desarrollo inicial"],
 .project-status-badge[data-status="desarrollo medio"] {
-    background: rgba(76, 175, 80, 0.2);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
     color: #4CAF50;
-    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-color: rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
 }
 
 .project-status-badge[data-status="finalizado"] {
-    background: rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.2));
     color: #4CAF50;
-    border: 1px solid rgba(76, 175, 80, 0.5);
+    border-color: rgba(76, 175, 80, 0.5);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
 }
 
+/* Contenedor de progreso mejorado */
 .project-progress-container {
-    margin: 16px 0;
+    margin: 20px 0;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
 }
 
 .progress-info {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     font-size: 14px;
 }
 
 .progress-info span:first-child {
-    color: #ccc;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
 }
 
 .progress-info span:last-child {
     color: var(--primary-color);
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 16px;
+    text-shadow: 0 0 10px rgba(90, 204, 201, 0.5);
 }
 
 .progress-bar {
-    height: 6px;
-    background: #333;
-    border-radius: 3px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .progress {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    border-radius: 3px;
-    transition: width 0.5s ease;
+    background: linear-gradient(90deg, 
+        var(--primary-color) 0%, 
+        var(--secondary-color) 50%, 
+        var(--primary-color) 100%);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    box-shadow: 0 0 15px rgba(90, 204, 201, 0.6);
 }
 
+.progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
+/* Footer de la tarjeta mejorado */
 .project-card-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid #333;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.project-card-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(90, 204, 201, 0.3) 20%, 
+        rgba(64, 180, 251, 0.3) 80%, 
+        transparent);
 }
 
 .project-date,
@@ -2334,34 +2517,47 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
-    color: #999;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.3s ease;
+}
+
+.recent-project-card:hover .project-date,
+.recent-project-card:hover .project-cost {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .project-date i,
 .project-cost i {
     color: var(--primary-color);
+    font-size: 14px;
+    filter: drop-shadow(0 0 5px rgba(90, 204, 201, 0.5));
 }
+
 
 /* ===== CITAS PRÓXIMAS EN DASHBOARD ===== */
 .upcoming-appointment-card {
-    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
-    border: 1px solid #333;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
+    background: linear-gradient(135deg, 
+        rgba(26, 26, 26, 0.95) 0%, 
+        rgba(45, 45, 45, 0.9) 50%, 
+        rgba(26, 26, 26, 0.95) 100%);
+    border: 1px solid rgba(64, 180, 251, 0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.upcoming-appointment-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(64, 180, 251, 0.15);
-    border-color: var(--secondary-color);
-}
-
+/* Efecto de borde animado para citas */
 .upcoming-appointment-card::before {
     content: '';
     position: absolute;
@@ -2369,105 +2565,399 @@ input:checked + .slider:before {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+    background: linear-gradient(90deg, 
+        var(--secondary-color) 0%, 
+        var(--primary-color) 50%, 
+        var(--secondary-color) 100%);
+    background-size: 200% 100%;
+    animation: gradientSlide 3s ease-in-out infinite reverse;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
+/* Efecto de brillo para citas */
+.upcoming-appointment-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, 
+        rgba(64, 180, 251, 0.1) 0%, 
+        transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.upcoming-appointment-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(64, 180, 251, 0.3),
+        0 0 30px rgba(64, 180, 251, 0.2);
+    border-color: var(--secondary-color);
+}
+
+.upcoming-appointment-card:hover::before {
+    opacity: 1;
+}
+
+.upcoming-appointment-card:hover::after {
+    opacity: 1;
+}
+
+.upcoming-appointment-card:active {
+    transform: translateY(-4px) scale(1.01);
+    transition: all 0.1s ease;
+}
+
+/* Header de la tarjeta de cita */
 .appointment-card-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    gap: 16px;
 }
 
 .appointment-card-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-    border-radius: 10px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--dark-blue);
-    font-size: 18px;
+    font-size: 22px;
     flex-shrink: 0;
+    box-shadow: 
+        0 8px 20px rgba(64, 180, 251, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.appointment-card-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, 
+        transparent 30%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        transparent 70%);
+    transform: rotate(-45deg);
+    transition: transform 0.6s ease;
+}
+
+.upcoming-appointment-card:hover .appointment-card-icon {
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 
+        0 12px 30px rgba(64, 180, 251, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.upcoming-appointment-card:hover .appointment-card-icon::before {
+    transform: translateX(100%) translateY(100%) rotate(-45deg);
 }
 
 .appointment-card-info h4 {
-    margin: 0 0 4px 0;
+    margin: 0 0 6px 0;
     color: #ffffff;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
 }
 
 .appointment-date {
-    color: #999;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 13px;
     text-transform: capitalize;
+    font-weight: 500;
+    background: rgba(64, 180, 251, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(64, 180, 251, 0.3);
+    display: inline-block;
+    backdrop-filter: blur(10px);
 }
 
 .appointment-status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 10px;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: fit-content;
 }
 
+.appointment-status-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent);
+    transition: left 0.5s ease;
+}
+
+.upcoming-appointment-card:hover .appointment-status-badge::before {
+    left: 100%;
+}
+
+/* Estados específicos de citas */
 .appointment-status-badge[data-status="pendiente"] {
-    background: rgba(255, 152, 0, 0.2);
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1));
     color: #FF9800;
-    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-color: rgba(255, 152, 0, 0.4);
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
 }
 
 .appointment-status-badge[data-status="confirmada"] {
-    background: rgba(76, 175, 80, 0.2);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
     color: #4CAF50;
-    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-color: rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
 }
 
+/* Detalles de la cita mejorados */
 .appointment-details {
     display: flex;
-    gap: 24px;
-    margin: 12px 0;
+    gap: 28px;
+    margin: 18px 0;
+    flex-wrap: wrap;
 }
 
 .appointment-time,
 .appointment-countdown {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-size: 14px;
-    color: #ccc;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.upcoming-appointment-card:hover .appointment-time,
+.upcoming-appointment-card:hover .appointment-countdown {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(64, 180, 251, 0.3);
+    transform: translateY(-2px);
 }
 
 .appointment-time i,
 .appointment-countdown i {
     color: var(--secondary-color);
+    font-size: 16px;
+    filter: drop-shadow(0 0 5px rgba(64, 180, 251, 0.5));
 }
 
 .countdown-text {
     color: var(--primary-color);
-    font-weight: 600;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(90, 204, 201, 0.5);
+    position: relative;
 }
 
+.countdown-text::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 1px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scaleX(0.8); }
+    50% { opacity: 1; transform: scaleX(1); }
+}
+
+/* Información adicional de la cita */
 .appointment-project,
 .appointment-notes {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #333;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 13px;
-    color: #999;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    position: relative;
+}
+
+.appointment-project::before,
+.appointment-notes::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(64, 180, 251, 0.3) 20%, 
+        rgba(90, 204, 201, 0.3) 80%, 
+        transparent);
 }
 
 .appointment-project i,
 .appointment-notes i {
     color: var(--primary-color);
     flex-shrink: 0;
+    margin-top: 2px;
+    filter: drop-shadow(0 0 3px rgba(90, 204, 201, 0.4));
 }
+
+.upcoming-appointment-card:hover .appointment-project,
+.upcoming-appointment-card:hover .appointment-notes {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Efectos especiales para urgencia */
+.appointment-urgent {
+    animation: urgentPulse 2s infinite;
+}
+
+@keyframes urgentPulse {
+    0%, 100% { 
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    50% { 
+        box-shadow: 0 8px 32px rgba(255, 87, 34, 0.4);
+    }
+}
+
+/* Estados responsive mejorados */
+@media (max-width: 768px) {
+    .recent-project-card,
+    .upcoming-appointment-card {
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .project-card-header,
+    .appointment-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .project-card-icon,
+    .appointment-card-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+    
+    .appointment-details {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .appointment-time,
+    .appointment-countdown {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .project-card-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .recent-project-card,
+    .upcoming-appointment-card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+    
+    .project-card-info h4,
+    .appointment-card-info h4 {
+        font-size: 16px;
+    }
+    
+    .project-status-badge,
+    .appointment-status-badge {
+        font-size: 10px;
+        padding: 4px 10px;
+    }
+}
+
+/* Efectos adicionales para interactividad */
+.recent-project-card,
+.upcoming-appointment-card {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.recent-project-card:focus,
+.upcoming-appointment-card:focus {
+    outline: none;
+    transform: translateY(-4px);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.4),
+        0 0 0 2px var(--primary-color);
+}
+
+/* Animaciones de entrada */
+.recent-project-card,
+.upcoming-appointment-card {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Delays escalonados para múltiples tarjetas */
+.recent-project-card:nth-child(1) { animation-delay: 0.1s; }
+.recent-project-card:nth-child(2) { animation-delay: 0.2s; }
+.recent-project-card:nth-child(3) { animation-delay: 0.3s; }
+
+.upcoming-appointment-card:nth-child(1) { animation-delay: 0.1s; }
+.upcoming-appointment-card:nth-child(2) { animation-delay: 0.2s; }
+.upcoming-appointment-card:nth-child(3) { animation-delay: 0.3s; }
+
 
 /* ===== ESTADO VACÍO ===== */
 .empty-state {
