@@ -352,3 +352,83 @@ exports.validateChangePassword = (req, res, next) => {
     
     next();
 };
+
+/**
+ * Middleware para validar código de verificación
+ */
+exports.validateResetCode = (req, res, next) => {
+    // Validar correo electrónico (obligatorio)
+    if (!req.body.email) {
+        return res.status(400).json({
+            success: false,
+            message: 'Por favor, proporcione su correo electrónico'
+        });
+    }
+    
+    // Validar formato de correo electrónico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(req.body.email)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Por favor, proporcione un correo electrónico válido'
+        });
+    }
+    
+    // Validar código (obligatorio)
+    if (!req.body.code) {
+        return res.status(400).json({
+            success: false,
+            message: 'Por favor, proporcione el código de verificación'
+        });
+    }
+    
+    // Validar formato del código (6 dígitos)
+    const codeRegex = /^\d{6}$/;
+    if (!codeRegex.test(req.body.code)) {
+        return res.status(400).json({
+            success: false,
+            message: 'El código debe tener 6 dígitos'
+        });
+    }
+    
+    next();
+};
+
+/**
+ * Middleware para validar restablecimiento de contraseña con token
+ */
+exports.validateResetPasswordWithToken = (req, res, next) => {
+    // Validar token (obligatorio)
+    if (!req.body.resetToken) {
+        return res.status(400).json({
+            success: false,
+            message: 'Token de restablecimiento requerido'
+        });
+    }
+    
+    // Validar campos obligatorios
+    if (!req.body.password || !req.body.confirmPassword) {
+        return res.status(400).json({
+            success: false,
+            message: 'Por favor, proporcione una nueva contraseña y su confirmación'
+        });
+    }
+    
+    // Validar longitud de la contraseña
+    if (req.body.password.length < 6) {
+        return res.status(400).json({
+            success: false,
+            message: 'La contraseña debe tener al menos 6 caracteres'
+        });
+    }
+    
+    // Validar coincidencia de contraseñas
+    if (req.body.password !== req.body.confirmPassword) {
+        return res.status(400).json({
+            success: false,
+            message: 'Las contraseñas no coinciden'
+        });
+    }
+    
+    next();
+};

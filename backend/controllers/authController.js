@@ -245,10 +245,7 @@ exports.getCurrentUser = async (req, res) => {
 
 
 /**
- * Solicita restablecimiento de contraseña
- */
-/**
- * Solicita restablecimiento de contraseña
+ * Solicita restablecimiento de contraseña con código de 6 dígitos
  * @route POST /api/auth/forgot-password
  */
 exports.forgotPassword = async (req, res) => {
@@ -272,52 +269,55 @@ exports.forgotPassword = async (req, res) => {
             });
         }
         
-        // Generar token de restablecimiento
-        const resetToken = crypto.randomBytes(20).toString('hex');
+        // Generar código de 6 dígitos
+        const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // Establecer fecha de expiración (10 minutos)
-        const resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
+        // Establecer fecha de expiración (30 minutos)
+        const resetCodeExpire = new Date(Date.now() + 30 * 60 * 1000);
         
-        // Guardar token en la base de datos
+        // Guardar código en la base de datos
         await db.collection('users').updateOne(
             { _id: user._id },
             { 
                 $set: { 
-                    resetPasswordToken: resetToken,
-                    resetPasswordExpire: resetPasswordExpire
+                    resetPasswordCode: resetCode,
+                    resetPasswordCodeExpire: resetCodeExpire,
+                    resetPasswordCodeAttempts: 0 // Contador de intentos
                 } 
             }
         );
         
-        // Enviar correo con el token
+        // Enviar correo con el código
         try {
-            await emailService.sendPasswordResetEmail({
+            await emailService.sendPasswordResetCodeEmail({
                 nombre: user.nombre,
                 correo: user.correo,
-                resetToken: resetToken
+                resetCode: resetCode,
+                expirationTime: '30 minutos'
             });
             
             res.status(200).json({
                 success: true,
-                message: 'Se ha enviado un correo para restablecer la contraseña'
+                message: 'Se ha enviado un código de verificación a tu correo electrónico'
             });
         } catch (emailError) {
             console.error('Error al enviar correo de restablecimiento:', emailError);
             
-            // Si falla el envío, eliminar el token
+            // Si falla el envío, eliminar el código
             await db.collection('users').updateOne(
                 { _id: user._id },
                 { 
                     $unset: { 
-                        resetPasswordToken: "",
-                        resetPasswordExpire: ""
+                        resetPasswordCode: "",
+                        resetPasswordCodeExpire: "",
+                        resetPasswordCodeAttempts: ""
                     } 
                 }
             );
             
             return res.status(500).json({
                 success: false,
-                message: 'No se pudo enviar el correo de restablecimiento',
+                message: 'No se pudo enviar el código de verificación',
                 error: emailError.message
             });
         }
@@ -326,6 +326,193 @@ exports.forgotPassword = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error en el servidor al procesar la solicitud',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Verifica el código de restablecimiento de contraseña
+ * @route POST /api/auth/verify-reset-code
+ */
+exports.verifyResetCode = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const { email, code } = req.body;
+        
+        if (!email || !code) {
+            return res.status(400).json({
+                success: false,
+                message: 'Correo electrónico y código son requeridos'
+            });
+        }
+        
+        // Buscar usuario con código válido
+        const user = await db.collection('users').findOne({
+            correo: email,
+            resetPasswordCode: code,
+            resetPasswordCodeExpire: { $gt: new Date() }
+        });
+        
+        if (!user) {
+            // Verificar si el usuario existe pero el código es incorrecto o expirado
+            const userExists = await db.collection('users').findOne({ correo: email });
+            
+            if (userExists && userExists.resetPasswordCode) {
+                // Incrementar contador de intentos
+                await db.collection('users').updateOne(
+                    { _id: userExists._id },
+                    { $inc: { resetPasswordCodeAttempts: 1 } }
+                );
+                
+                // Si hay más de 3 intentos, invalidar el código
+                if ((userExists.resetPasswordCodeAttempts || 0) >= 2) {
+                    await db.collection('users').updateOne(
+                        { _id: userExists._id },
+                        { 
+                            $unset: { 
+                                resetPasswordCode: "",
+                                resetPasswordCodeExpire: "",
+                                resetPasswordCodeAttempts: ""
+                            } 
+                        }
+                    );
+                    
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Demasiados intentos fallidos. Solicita un nuevo código.'
+                    });
+                }
+                
+                return res.status(400).json({
+                    success: false,
+                    message: 'Código incorrecto o expirado'
+                });
+            }
+            
+            return res.status(400).json({
+                success: false,
+                message: 'Código de verificación inválido'
+            });
+        }
+        
+        // Generar token temporal para cambio de contraseña (válido por 10 minutos)
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpire = new Date(Date.now() + 10 * 60 * 1000);
+        
+        // Guardar token y limpiar código
+        await db.collection('users').updateOne(
+            { _id: user._id },
+            {
+                $set: {
+                    resetPasswordToken: resetToken,
+                    resetPasswordTokenExpire: resetTokenExpire
+                },
+                $unset: {
+                    resetPasswordCode: "",
+                    resetPasswordCodeExpire: "",
+                    resetPasswordCodeAttempts: ""
+                }
+            }
+        );
+        
+        res.status(200).json({
+            success: true,
+            message: 'Código verificado correctamente',
+            resetToken: resetToken
+        });
+        
+    } catch (error) {
+        console.error('Error al verificar código:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error en el servidor al verificar el código',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Restablece la contraseña usando el token temporal
+ * @route POST /api/auth/reset-password-with-token
+ */
+exports.resetPasswordWithToken = async (req, res) => {
+    try {
+        const db = getDatabase();
+        const { resetToken, password, confirmPassword } = req.body;
+        
+        if (!resetToken || !password || !confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token, contraseña y confirmación son requeridos'
+            });
+        }
+        
+        // Verificar que las contraseñas coincidan
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Las contraseñas no coinciden'
+            });
+        }
+        
+        // Validar longitud de contraseña
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'La contraseña debe tener al menos 6 caracteres'
+            });
+        }
+        
+        // Buscar usuario con token válido
+        const user = await db.collection('users').findOne({
+            resetPasswordToken: resetToken,
+            resetPasswordTokenExpire: { $gt: new Date() }
+        });
+        
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token de restablecimiento inválido o expirado'
+            });
+        }
+        
+        // Hashear la nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        
+        // Actualizar contraseña y eliminar token
+        await db.collection('users').updateOne(
+            { _id: user._id },
+            {
+                $set: { password: hashedPassword },
+                $unset: { 
+                    resetPasswordToken: "",
+                    resetPasswordTokenExpire: ""
+                }
+            }
+        );
+        
+        // Enviar notificación de cambio de contraseña
+        try {
+            await emailService.sendPasswordChangedEmail({
+                nombre: user.nombre,
+                correo: user.correo
+            });
+        } catch (emailError) {
+            console.error('Error al enviar correo de notificación:', emailError);
+            // No interrumpir el proceso si falla el correo
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Contraseña restablecida con éxito'
+        });
+    } catch (error) {
+        console.error('Error al restablecer contraseña:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error en el servidor al restablecer contraseña',
             error: error.message
         });
     }

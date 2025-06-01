@@ -1429,10 +1429,140 @@ exports.sendUnreadMessagesAlert = async (admin, alertData) => {
     }
 };
 
+/**
+ * Envía un email con código de verificación para restablecer contraseña
+ * @param {Object} user - Datos del usuario
+ */
+exports.sendPasswordResetCodeEmail = async (user) => {
+    try {
+        console.log(`📧 Enviando código de verificación a: ${user.correo}`);
+        
+        const emailContent = `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; color: white;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🔐</div>
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 700;">Código de Verificación</h1>
+                    <p style="margin: 12px 0 0 0; font-size: 16px; opacity: 0.9;">Para restablecer tu contraseña</p>
+                </div>
+                
+                <!-- Contenido Principal -->
+                <div style="padding: 40px 30px;">
+                    
+                    <!-- Saludo Personal -->
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="color: #333; font-size: 24px; margin: 0 0 15px 0;">¡Hola ${user.nombre}! 👋</h2>
+                        <p style="color: #666; font-size: 16px; line-height: 1.6; margin: 0;">
+                            Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en <strong>Crazy Studios</strong>.
+                        </p>
+                    </div>
+                    
+                    <!-- Código de Verificación -->
+                    <div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 30px; border-radius: 16px; margin-bottom: 30px; text-align: center; border: 2px solid #667eea20;">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">Tu código de verificación es:</h3>
+                        
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 36px; font-weight: 800; letter-spacing: 8px; padding: 20px; border-radius: 12px; margin: 20px 0; font-family: 'Courier New', monospace; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                            ${user.resetCode}
+                        </div>
+                        
+                        <p style="color: #666; font-size: 14px; margin: 20px 0 0 0;">
+                            Este código es válido por <strong style="color: #667eea;">${user.expirationTime}</strong>
+                        </p>
+                    </div>
+                    
+                    <!-- Instrucciones -->
+                    <div style="background-color: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 30px; border-left: 5px solid #4facfe;">
+                        <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px; display: flex; align-items: center; gap: 10px;">
+                            📝 Instrucciones
+                        </h3>
+                        <ol style="color: #666; line-height: 1.6; margin: 0; padding-left: 20px;">
+                            <li style="margin-bottom: 8px;">Regresa a la página de restablecimiento de contraseña</li>
+                            <li style="margin-bottom: 8px;">Ingresa el código de 6 dígitos mostrado arriba</li>
+                            <li style="margin-bottom: 8px;">Crea tu nueva contraseña segura</li>
+                            <li>¡Listo! Podrás acceder con tu nueva contraseña</li>
+                        </ol>
+                    </div>
+                    
+                    <!-- Advertencias de Seguridad -->
+                    <div style="background-color: #fff3cd; padding: 20px; border-radius: 12px; border-left: 5px solid #ffc107; margin-bottom: 30px;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                            <div style="font-size: 24px;">⚠️</div>
+                            <div>
+                                <div style="font-weight: 600; color: #856404; margin-bottom: 10px;">Importante para tu seguridad:</div>
+                                <ul style="margin: 0; padding-left: 20px; color: #856404;">
+                                    <li style="margin-bottom: 5px;">No compartas este código con nadie</li>
+                                    <li style="margin-bottom: 5px;">Solo tú solicitaste este cambio</li>
+                                    <li style="margin-bottom: 5px;">Si no fuiste tú, ignora este correo</li>
+                                    <li>El código expira automáticamente en ${user.expirationTime}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón de Acción -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/forgot-password.html" 
+                           style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                            🔐 Continuar con el Restablecimiento
+                        </a>
+                    </div>
+                    
+                    <!-- Información Adicional -->
+                    <div style="background-color: #e8f5e8; padding: 20px; border-radius: 10px; border-left: 4px solid #28a745; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: flex-start; gap: 15px;">
+                            <div style="font-size: 20px;">💡</div>
+                            <div>
+                                <div style="font-weight: 600; color: #155724; margin-bottom: 8px;">¿Necesitas ayuda?</div>
+                                <p style="margin: 0; color: #155724; font-size: 14px; line-height: 1.5;">
+                                    Si tienes problemas para restablecer tu contraseña o no solicitaste este cambio, 
+                                    contáctanos inmediatamente en <a href="mailto:soporte@crazystudios.com" style="color: #155724; font-weight: 600;">soporte@crazystudios.com</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información de Contacto -->
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; text-align: center;">
+                        <h3 style="margin: 0 0 15px 0; color: #495057; font-size: 16px;">📞 Soporte Técnico</h3>
+                        <div style="color: #6c757d; font-size: 14px;">
+                            <p style="margin: 5px 0;">📧 Email: <a href="mailto:soporte@crazystudios.com" style="color: #667eea;">soporte@crazystudios.com</a></p>
+                            <p style="margin: 5px 0;">🌐 Web: <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="color: #667eea;">www.crazystudios.com</a></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="background-color: #f8f9fa; padding: 25px 30px; text-align: center; border-top: 1px solid #e9ecef;">
+                    <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 14px;">
+                        © ${new Date().getFullYear()} Crazy Studios. Tu seguridad es nuestra prioridad.
+                    </p>
+                    <p style="margin: 0; color: #6c757d; font-size: 12px;">
+                        Este es un correo automático de seguridad. Por favor, no respondas a este mensaje.
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        await sendEmail({
+            to: user.correo,
+            subject: `🔐 Código de Verificación: ${user.resetCode} - Crazy Studios`,
+            html: emailContent
+        });
+        
+        console.log(`✅ Código de verificación enviado exitosamente a: ${user.correo}`);
+        
+    } catch (error) {
+        console.error(`❌ Error al enviar código de verificación a ${user.correo}:`, error);
+        throw error;
+    }
+};
+
 module.exports = {
     sendEmail,
     sendWelcomeEmail: exports.sendWelcomeEmail,
     sendPasswordResetEmail: exports.sendPasswordResetEmail,
+    sendPasswordResetCodeEmail: exports.sendPasswordResetCodeEmail,
     sendPasswordChangedEmail: exports.sendPasswordChangedEmail,
     sendProjectCreationEmail: exports.sendProjectCreationEmail,
     sendProjectAssignmentEmail: exports.sendProjectAssignmentEmail,
