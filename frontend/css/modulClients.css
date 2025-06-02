@@ -783,3 +783,584 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+/* ===================================
+   MEJORAS PARA TABLA RESPONSIVE CON SCROLL HORIZONTAL
+   Agregar al archivo modulClients.css
+   =================================== */
+
+/* Contenedor de tabla responsive mejorado */
+.table-responsive {
+    overflow-x: auto;
+    overflow-y: visible;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    
+    /* Estilos para la scroll bar horizontal */
+    scrollbar-width: thin;
+    scrollbar-color: #666 #2a2a2a;
+}
+
+/* Estilos para scroll bar en navegadores webkit (Chrome, Safari, Edge) */
+.table-responsive::-webkit-scrollbar {
+    height: 10px;
+    background-color: #1e1e1e;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background-color: #2a2a2a;
+    border-radius: 5px;
+    margin: 0 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #666, #888);
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #888, #aaa);
+}
+
+.table-responsive::-webkit-scrollbar-corner {
+    background-color: #1e1e1e;
+}
+
+/* Tabla principal con ancho mínimo para forzar scroll */
+.data-table {
+    width: 100%;
+    min-width: 900px; /* Ancho mínimo para activar scroll horizontal */
+    border-collapse: collapse;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Header de la tabla mejorado */
+.data-table thead {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
+    position: relative;
+}
+
+.data-table th {
+    padding: 16px 12px;
+    text-align: left;
+    border-bottom: 2px solid #333;
+    color: var(--primary-color, #007bff);
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap; /* Evita que el texto del header se rompa */
+    background: inherit;
+}
+
+/* Celdas del cuerpo con control de overflow */
+.data-table td {
+    padding: 14px 12px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+    color: #ffffff;
+    font-size: 14px;
+    white-space: nowrap; /* Evita que el contenido se rompa en múltiples líneas */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Muestra "..." cuando el texto es muy largo */
+}
+
+/* Anchos específicos para cada columna */
+.data-table th:nth-child(1), /* Nombre */
+.data-table td:nth-child(1) {
+    min-width: 200px;
+    max-width: 200px;
+    font-weight: 500;
+}
+
+.data-table th:nth-child(2), /* Correo */
+.data-table td:nth-child(2) {
+    min-width: 250px;
+    max-width: 250px;
+}
+
+.data-table th:nth-child(3), /* Teléfono */
+.data-table td:nth-child(3) {
+    min-width: 150px;
+    max-width: 150px;
+}
+
+.data-table th:nth-child(4), /* Empresa */
+.data-table td:nth-child(4) {
+    min-width: 180px;
+    max-width: 180px;
+}
+
+.data-table th:nth-child(5), /* Documento */
+.data-table td:nth-child(5) {
+    min-width: 160px;
+    max-width: 160px;
+}
+
+.data-table th:nth-child(6), /* Proyectos */
+.data-table td:nth-child(6) {
+    min-width: 100px;
+    max-width: 100px;
+    text-align: center;
+}
+
+.data-table th:nth-child(7), /* Fecha Registro */
+.data-table td:nth-child(7) {
+    min-width: 140px;
+    max-width: 140px;
+}
+
+.data-table th:nth-child(8), /* Acciones */
+.data-table td:nth-child(8) {
+    min-width: 150px;
+    max-width: 150px;
+    text-align: center;
+    position: sticky;
+    right: 0;
+    background-color: #1e1e1e;
+    border-left: 2px solid #333;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+/* Hover effect para toda la fila incluyendo columna sticky */
+.data-table tbody tr:hover {
+    background-color: #2a2a2a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.data-table tbody tr:hover td:nth-child(8) {
+    background-color: #2a2a2a;
+}
+
+/* Indicador de scroll para móviles */
+.scroll-indicator {
+    display: none;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    animation: pulseScroll 2s ease-in-out infinite;
+    z-index: 100;
+    user-select: none;
+}
+
+@keyframes pulseScroll {
+    0%, 100% { opacity: 0.7; transform: translateY(-50%) scale(1); }
+    50% { opacity: 1; transform: translateY(-50%) scale(1.05); }
+}
+
+/* Tooltips para celdas con contenido truncado */
+.data-table td[title] {
+    cursor: help;
+    position: relative;
+}
+
+.data-table td[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: normal;
+    max-width: 300px;
+    word-wrap: break-word;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: fadeInTooltip 0.3s ease;
+}
+
+.data-table td[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 92%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    z-index: 1001;
+}
+
+@keyframes fadeInTooltip {
+    from { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Badge mejorado para número de proyectos */
+.badge {
+    background: linear-gradient(135deg, var(--primary-color, #007bff), #0056b3);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.badge:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.badge.zero {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    box-shadow: 0 2px 6px rgba(108, 117, 125, 0.3);
+}
+
+/* Botones de acción mejorados */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.action-btn {
+    padding: 8px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover::before {
+    width: 100px;
+    height: 100px;
+}
+
+.view-btn {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+    box-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
+}
+
+.view-btn:hover {
+    background: linear-gradient(135deg, #138496, #117a8b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.4);
+}
+
+.edit-btn {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.edit-btn:hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4);
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.delete-btn:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+}
+
+/* Estados especiales de filas */
+.data-table tbody tr.loading {
+    background-color: #2a2a2a;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.data-table tbody tr.loading td {
+    color: #999;
+}
+
+.data-table tbody tr.new-row {
+    background: linear-gradient(90deg, rgba(0, 123, 255, 0.1), transparent);
+    animation: highlightNewRow 3s ease-out;
+}
+
+@keyframes highlightNewRow {
+    0% {
+        background: linear-gradient(90deg, rgba(0, 123, 255, 0.3), transparent);
+        transform: translateX(-10px);
+    }
+    50% {
+        background: linear-gradient(90deg, rgba(0, 123, 255, 0.2), transparent);
+        transform: translateX(0);
+    }
+    100% {
+        background: transparent;
+        transform: translateX(0);
+    }
+}
+
+/* Estado vacío mejorado */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+    border-radius: 8px;
+    border: 2px dashed #333;
+}
+
+.empty-state i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #333;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+}
+
+.empty-state h3 {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.empty-state p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Skeleton loading para tabla */
+.table-skeleton {
+    overflow: hidden;
+    position: relative;
+}
+
+.table-skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 123, 255, 0.1),
+        transparent
+    );
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Responsive específico para la tabla */
+@media (max-width: 1200px) {
+    .data-table {
+        min-width: 800px;
+        font-size: 13px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 12px 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .scroll-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+    
+    .table-responsive {
+        margin: 15px 0;
+        border-radius: 6px;
+    }
+    
+    .data-table {
+        min-width: 700px;
+        font-size: 12px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 10px 8px;
+    }
+    
+    .action-btn {
+        min-width: 28px;
+        height: 28px;
+        padding: 6px 8px;
+    }
+    
+    .badge {
+        padding: 4px 8px;
+        font-size: 11px;
+        min-width: 24px;
+        height: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .data-table {
+        min-width: 600px;
+        font-size: 11px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px 6px;
+    }
+    
+    .action-buttons {
+        gap: 4px;
+    }
+    
+    .action-btn {
+        min-width: 24px;
+        height: 24px;
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+}
+
+/* Mejoras para accesibilidad */
+.data-table th {
+    user-select: none;
+}
+
+.data-table th:focus,
+.action-btn:focus {
+    outline: 2px solid var(--primary-color, #007bff);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.action-btn:focus {
+    z-index: 10;
+}
+
+/* Estilo para filas seleccionadas (para uso futuro) */
+.data-table tbody tr.selected {
+    background-color: rgba(0, 123, 255, 0.15);
+    border-left: 4px solid var(--primary-color, #007bff);
+}
+
+.data-table tbody tr.selected td:nth-child(8) {
+    background-color: rgba(0, 123, 255, 0.15);
+}
+
+/* Contenedor adicional para tabla con indicadores */
+.table-container {
+    position: relative;
+}
+
+/* Sombras adicionales para mejor definición */
+.table-responsive {
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.data-table th:nth-child(8) {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
+    border-left: 2px solid #333;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    right: 0;
+    z-index: 10;
+}
+
+/* Transiciones suaves para cambios de estado */
+.data-table tbody tr {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.data-table td {
+    transition: all 0.2s ease;
+}
+
+/* Estilo para columnas ordenables (futuro) */
+.data-table th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+.data-table th.sortable:hover {
+    background-color: #333;
+}
+
+.data-table th.sortable::after {
+    content: '↕';
+    position: absolute;
+    right: 8px;
+    opacity: 0.5;
+    font-size: 12px;
+}
+
+.data-table th.sortable.asc::after {
+    content: '↑';
+    opacity: 1;
+}
+
+.data-table th.sortable.desc::after {
+    content: '↓';
+    opacity: 1;
+}

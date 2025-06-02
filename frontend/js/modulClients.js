@@ -1448,3 +1448,495 @@ loadClientsData = async function() {
     await originalLoadClientsData();
     updateClientsStatistics();
 };
+
+function setupTableScrollFeatures() {
+    console.log('🔄 Configurando funcionalidades de scroll horizontal...');
+    
+    const tableContainer = document.querySelector('#clients .table-responsive');
+    if (!tableContainer) {
+        console.warn('Contenedor de tabla no encontrado');
+        return;
+    }
+    
+    // Crear y configurar indicador de scroll
+    createScrollIndicator(tableContainer);
+    
+    // Configurar detección de scroll
+    setupScrollDetection(tableContainer);
+    
+    // Configurar tooltips para celdas truncadas
+    setupCellTooltips();
+    
+    // Configurar navegación con teclado
+    setupKeyboardNavigation(tableContainer);
+    
+    // Configurar resize observer para responsividad
+    setupResizeObserver(tableContainer);
+    
+    console.log('✅ Funcionalidades de scroll configuradas correctamente');
+}
+
+/**
+ * Crea el indicador de scroll para móviles
+ */
+function createScrollIndicator(tableContainer) {
+    // Verificar si ya existe
+    let indicator = tableContainer.parentElement.querySelector('.scroll-indicator');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'scroll-indicator';
+        indicator.innerHTML = '<i class="fas fa-arrows-alt-h"></i> Desliza horizontalmente';
+        
+        // Crear contenedor padre si no existe
+        let container = tableContainer.parentElement;
+        if (!container.classList.contains('table-container')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-container';
+            tableContainer.parentElement.insertBefore(wrapper, tableContainer);
+            wrapper.appendChild(tableContainer);
+            container = wrapper;
+        }
+        
+        container.style.position = 'relative';
+        container.appendChild(indicator);
+    }
+    
+    // Mostrar/ocultar indicador según necesidad
+    updateScrollIndicatorVisibility(tableContainer, indicator);
+}
+
+/**
+ * Actualiza la visibilidad del indicador de scroll
+ */
+function updateScrollIndicatorVisibility(tableContainer, indicator) {
+    const needsScroll = tableContainer.scrollWidth > tableContainer.clientWidth;
+    const isMobile = window.innerWidth <= 768;
+    
+    if (needsScroll && isMobile) {
+        indicator.style.display = 'flex';
+        
+        // Auto-ocultar después del primer scroll
+        const hideOnScroll = () => {
+            indicator.style.opacity = '0';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 300);
+            tableContainer.removeEventListener('scroll', hideOnScroll);
+        };
+        
+        tableContainer.addEventListener('scroll', hideOnScroll);
+        
+        // Auto-ocultar después de 5 segundos
+        setTimeout(() => {
+            if (indicator.style.display !== 'none') {
+                hideOnScroll();
+            }
+        }, 5000);
+    } else {
+        indicator.style.display = 'none';
+    }
+}
+
+/**
+ * Configura la detección de eventos de scroll
+ */
+function setupScrollDetection(tableContainer) {
+    let scrollTimeout;
+    
+    tableContainer.addEventListener('scroll', function() {
+        // Agregar clase durante el scroll
+        this.classList.add('scrolling');
+        
+        // Limpiar timeout anterior
+        clearTimeout(scrollTimeout);
+        
+        // Remover clase después de que termine el scroll
+        scrollTimeout = setTimeout(() => {
+            this.classList.remove('scrolling');
+        }, 150);
+        
+        // Actualizar estilos de columna sticky
+        updateStickyColumnShadow(this);
+    });
+    
+    // CSS para estado de scroll
+    const scrollStyles = document.createElement('style');
+    scrollStyles.textContent = `
+        .table-responsive.scrolling {
+            scroll-behavior: smooth;
+        }
+        
+        .table-responsive.has-scroll .data-table td:nth-child(8) {
+            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
+        }
+    `;
+    document.head.appendChild(scrollStyles);
+}
+
+/**
+ * Actualiza la sombra de la columna sticky según el scroll
+ */
+function updateStickyColumnShadow(tableContainer) {
+    const isScrolled = tableContainer.scrollLeft > 0;
+    
+    if (isScrolled) {
+        tableContainer.classList.add('has-scroll');
+    } else {
+        tableContainer.classList.remove('has-scroll');
+    }
+}
+
+/**
+ * Configura tooltips automáticos para celdas con contenido truncado
+ */
+function setupCellTooltips() {
+    const tableCells = document.querySelectorAll('#clients .data-table td');
+    
+    tableCells.forEach(cell => {
+        // Solo para celdas que no son de acciones
+        if (!cell.querySelector('.action-buttons')) {
+            checkAndAddTooltip(cell);
+        }
+    });
+}
+
+/**
+ * Verifica si una celda necesita tooltip y lo agrega
+ */
+function checkAndAddTooltip(cell) {
+    // Verificar si el contenido está truncado
+    if (cell.scrollWidth > cell.clientWidth || cell.textContent.length > 30) {
+        cell.setAttribute('title', cell.textContent.trim());
+        cell.style.cursor = 'help';
+    }
+}
+
+/**
+ * Configura navegación con teclado para la tabla
+ */
+function setupKeyboardNavigation(tableContainer) {
+    tableContainer.addEventListener('keydown', function(e) {
+        const scrollAmount = 50;
+        
+        switch(e.key) {
+            case 'ArrowLeft':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.scrollLeft = Math.max(0, this.scrollLeft - scrollAmount);
+                }
+                break;
+                
+            case 'ArrowRight':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.scrollLeft = Math.min(
+                        this.scrollWidth - this.clientWidth,
+                        this.scrollLeft + scrollAmount
+                    );
+                }
+                break;
+                
+            case 'Home':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.scrollLeft = 0;
+                }
+                break;
+                
+            case 'End':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.scrollLeft = this.scrollWidth - this.clientWidth;
+                }
+                break;
+        }
+    });
+    
+    // Hacer el contenedor focusable
+    tableContainer.setAttribute('tabindex', '0');
+    
+    // Agregar instrucciones de teclado (opcional)
+    addKeyboardInstructions(tableContainer);
+}
+
+/**
+ * Agrega instrucciones de navegación con teclado
+ */
+function addKeyboardInstructions(tableContainer) {
+    // Solo agregar si no existe
+    if (!document.querySelector('.keyboard-instructions')) {
+        const instructions = document.createElement('div');
+        instructions.className = 'keyboard-instructions';
+        instructions.innerHTML = `
+            <small style="color: #666; font-size: 12px; display: block; margin-top: 10px;">
+                <i class="fas fa-keyboard"></i> 
+                <strong>Navegación:</strong> Ctrl + ← → para scroll horizontal, Ctrl + Home/End para inicio/fin
+            </small>
+        `;
+        
+        tableContainer.parentElement.appendChild(instructions);
+    }
+}
+
+/**
+ * Configura un ResizeObserver para manejar cambios de tamaño
+ */
+function setupResizeObserver(tableContainer) {
+    if ('ResizeObserver' in window) {
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const indicator = entry.target.parentElement.querySelector('.scroll-indicator');
+                if (indicator) {
+                    updateScrollIndicatorVisibility(entry.target, indicator);
+                }
+                
+                // Reconfigurar tooltips después de resize
+                setTimeout(() => {
+                    setupCellTooltips();
+                }, 100);
+            }
+        });
+        
+        resizeObserver.observe(tableContainer);
+        
+        // Guardar referencia para cleanup
+        tableContainer._resizeObserver = resizeObserver;
+    } else {
+        // Fallback para navegadores que no soportan ResizeObserver
+        window.addEventListener('resize', debounce(() => {
+            const indicator = tableContainer.parentElement.querySelector('.scroll-indicator');
+            if (indicator) {
+                updateScrollIndicatorVisibility(tableContainer, indicator);
+            }
+            setupCellTooltips();
+        }, 250));
+    }
+}
+
+/**
+ * Función debounce para optimizar eventos de resize
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Mejora la función renderClientsTable existente para incluir scroll features
+ */
+function enhanceClientsTableRendering() {
+    // Guardar la función original
+    const originalRenderClientsTable = window.renderClientsTable;
+    
+    // Sobrescribir con versión mejorada
+    window.renderClientsTable = function() {
+        // Llamar a la función original
+        if (originalRenderClientsTable) {
+            originalRenderClientsTable();
+        }
+        
+        // Configurar features de scroll después del renderizado
+        setTimeout(() => {
+            setupTableScrollFeatures();
+        }, 100);
+    };
+}
+
+/**
+ * Agrega funcionalidad de scroll suave para navegación programática
+ */
+function scrollToColumn(columnIndex, behavior = 'smooth') {
+    const tableContainer = document.querySelector('#clients .table-responsive');
+    if (!tableContainer) return;
+    
+    const table = tableContainer.querySelector('.data-table');
+    if (!table) return;
+    
+    const cells = table.querySelectorAll(`td:nth-child(${columnIndex + 1})`);
+    if (cells.length === 0) return;
+    
+    const targetCell = cells[0];
+    const cellRect = targetCell.getBoundingClientRect();
+    const containerRect = tableContainer.getBoundingClientRect();
+    
+    const scrollLeft = tableContainer.scrollLeft + 
+                      (cellRect.left - containerRect.left) - 
+                      (containerRect.width / 2) + 
+                      (cellRect.width / 2);
+    
+    tableContainer.scrollTo({
+        left: Math.max(0, scrollLeft),
+        behavior: behavior
+    });
+}
+
+/**
+ * Funciones de utilidad para exportación con scroll
+ */
+function exportTableWithScrollPositions() {
+    const tableContainer = document.querySelector('#clients .table-responsive');
+    if (!tableContainer) return null;
+    
+    return {
+        scrollLeft: tableContainer.scrollLeft,
+        scrollTop: tableContainer.scrollTop,
+        clientWidth: tableContainer.clientWidth,
+        scrollWidth: tableContainer.scrollWidth,
+        needsHorizontalScroll: tableContainer.scrollWidth > tableContainer.clientWidth
+    };
+}
+
+/**
+ * Restaura la posición de scroll de la tabla
+ */
+function restoreTableScrollPosition(scrollData) {
+    if (!scrollData) return;
+    
+    const tableContainer = document.querySelector('#clients .table-responsive');
+    if (!tableContainer) return;
+    
+    tableContainer.scrollLeft = scrollData.scrollLeft;
+    tableContainer.scrollTop = scrollData.scrollTop;
+}
+
+/**
+ * Agrega botones de navegación rápida para la tabla
+ */
+function addQuickNavigationButtons() {
+    const tableContainer = document.querySelector('#clients .table-responsive');
+    if (!tableContainer || tableContainer.querySelector('.table-nav-buttons')) return;
+    
+    const navButtons = document.createElement('div');
+    navButtons.className = 'table-nav-buttons';
+    navButtons.innerHTML = `
+        <div class="table-nav-buttons-container" style="
+            position: absolute;
+            top: -40px;
+            right: 60px;
+            display: flex;
+            gap: 5px;
+            z-index: 20;
+        ">
+            <button class="nav-btn nav-start" title="Ir al inicio" style="
+                background: rgba(0, 123, 255, 0.8);
+                border: none;
+                color: white;
+                padding: 6px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                transition: all 0.2s ease;
+            ">
+                <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button class="nav-btn nav-end" title="Ir al final" style="
+                background: rgba(0, 123, 255, 0.8);
+                border: none;
+                color: white;
+                padding: 6px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                transition: all 0.2s ease;
+            ">
+                <i class="fas fa-angle-double-right"></i>
+            </button>
+        </div>
+    `;
+    
+    tableContainer.parentElement.style.position = 'relative';
+    tableContainer.parentElement.appendChild(navButtons);
+    
+    // Configurar eventos
+    navButtons.querySelector('.nav-start').addEventListener('click', () => {
+        tableContainer.scrollTo({ left: 0, behavior: 'smooth' });
+    });
+    
+    navButtons.querySelector('.nav-end').addEventListener('click', () => {
+        tableContainer.scrollTo({ 
+            left: tableContainer.scrollWidth - tableContainer.clientWidth, 
+            behavior: 'smooth' 
+        });
+    });
+    
+    // Mostrar/ocultar botones según necesidad
+    const updateNavButtons = () => {
+        const needsScroll = tableContainer.scrollWidth > tableContainer.clientWidth;
+        navButtons.style.display = needsScroll ? 'block' : 'none';
+    };
+    
+    updateNavButtons();
+    window.addEventListener('resize', debounce(updateNavButtons, 250));
+}
+
+/**
+ * Inicialización mejorada del módulo de clientes con scroll
+ */
+function initClientsModuleWithScroll() {
+    console.log('🚀 Inicializando módulo de clientes con scroll horizontal...');
+    
+    // Configurar enhancement del renderizado
+    enhanceClientsTableRendering();
+    
+    // Configurar features iniciales si la tabla ya existe
+    const tableContainer = document.querySelector('#clients .table-responsive');
+    if (tableContainer) {
+        setupTableScrollFeatures();
+        addQuickNavigationButtons();
+    }
+    
+    // Observar cuando se active la sección de clientes
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const clientsSection = document.getElementById('clients');
+                if (clientsSection && clientsSection.classList.contains('active')) {
+                    setTimeout(() => {
+                        setupTableScrollFeatures();
+                        addQuickNavigationButtons();
+                    }, 150);
+                }
+            }
+        });
+    });
+    
+    const clientsSection = document.getElementById('clients');
+    if (clientsSection) {
+        observer.observe(clientsSection, { attributes: true });
+    }
+}
+
+/**
+ * Cleanup function para remover observers
+ */
+function cleanupTableScrollFeatures() {
+    const tableContainer = document.querySelector('#clients .table-responsive');
+    if (tableContainer && tableContainer._resizeObserver) {
+        tableContainer._resizeObserver.disconnect();
+        delete tableContainer._resizeObserver;
+    }
+}
+
+// Funciones globales
+window.scrollToColumn = scrollToColumn;
+window.exportTableWithScrollPositions = exportTableWithScrollPositions;
+window.restoreTableScrollPosition = restoreTableScrollPosition;
+window.setupTableScrollFeatures = setupTableScrollFeatures;
+
+// Auto-inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    initClientsModuleWithScroll();
+});
+
+// Cleanup al salir de la página
+window.addEventListener('beforeunload', cleanupTableScrollFeatures);
+
+console.log('✅ Módulo de scroll horizontal para tabla de clientes cargado correctamente');
