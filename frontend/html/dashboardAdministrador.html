@@ -1013,12 +1013,12 @@
                 </div>
             </div>
         </section>  
-    <!-- Modales Adicionales -->
+        <!-- Modales Adicionales -->
         <div class="modal" id="new-message-modal">
             <div class="modal-content modal-lg">
                 <div class="modal-header">
                     <h2>Nuevo Mensaje</h2>
-                    <button class="close-btn" id="close-message-modal">&times;</button>
+                    <button class="close-btn" id="close-new-message-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form id="new-message-form">
@@ -1026,24 +1026,17 @@
                             <label for="message-to">Para:</label>
                             <select id="message-to" required>
                                 <option value="">Seleccionar destinatario</option>
-                                <option value="all">Todos los clientes</option>
-                                <option value="with-projects">Clientes con proyectos activos</option>
-                                <option value="without-projects">Clientes sin proyectos</option>
-                                <!-- Opciones de clientes individuales se cargarán dinámicamente -->
-                                <option value="client-1">Juan Pérez - Empresa ABC</option>
-                                <option value="client-2">María López - Empresa XYZ</option>
-                                <option value="client-3">Carlos Rodríguez - Tech Innovate</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
                             <label for="message-subject">Asunto:</label>
-                            <input type="text" id="message-subject" required>
+                            <input type="text" id="message-subject" placeholder="Asunto del mensaje" required>
                         </div>
                         
                         <div class="form-group">
                             <label for="message-content">Mensaje:</label>
-                            <textarea id="message-content" rows="8" required></textarea>
+                            <textarea id="message-content" rows="8" placeholder="Escribe tu mensaje aquí..." required></textarea>
                         </div>
                         
                         <div class="form-group">
@@ -1052,8 +1045,10 @@
                         </div>
                         
                         <div class="form-actions">
-                            <button type="button" class="secondary-btn" id="save-draft-btn">Guardar Borrador</button>
-                            <button type="submit" class="primary-btn">Enviar Mensaje</button>
+                            <button type="button" class="secondary-btn" id="cancel-new-message-btn">Cancelar</button>
+                            <button type="submit" class="primary-btn" id="send-new-message-btn">
+                                <i class="fas fa-paper-plane"></i> Enviar Mensaje
+                            </button>
                         </div>
                     </form>
                 </div>

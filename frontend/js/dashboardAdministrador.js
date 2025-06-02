@@ -3,30 +3,51 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar autenticación y cargar datos del usuario
-    checkAuthentication();
+    console.log('🚀 Inicializando dashboard con soporte completo para mensajes...');
     
-    // Inicializar componentes del dashboard
-    initAdminDashboard();
+    // Verificar autenticación
+    checkAuthentication();
     
     // Configurar menú de usuario
     setupUserMenu();
     
-    // Configurar navegación de secciones
+    // Configurar navegación de secciones (incluyendo mensajes)
     setupSectionNavigation();
     
-    // Configurar quick actions (CORREGIDO)
+    // Configurar quick actions (incluyendo mensajes)
     setupQuickActions();
     
-    // Configurar clicks en estadísticas (NUEVO)
+    // Configurar clicks en estadísticas (incluyendo mensajes)
     setupStatisticsClicks();
     
-    // Formatear fecha actual
+    // Mostrar fecha actual
     displayCurrentDate();
     
-    // Cargar estadísticas dinámicas (CORREGIDO)
+    // Cargar estadísticas dinámicas (incluyendo mensajes)
     loadDynamicStatistics();
+    
+    // Configurar observador para gráficos
+    const overviewSection = document.getElementById('overview');
+    if (overviewSection) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.target.classList.contains('active')) {
+                    console.log('📊 Sección overview visible, inicializando gráficos...');
+                    setTimeout(() => {
+                        if (typeof initDashboardCharts === 'function') {
+                            initDashboardCharts();
+                        }
+                    }, 500);
+                }
+            });
+        });
+        
+        observer.observe(overviewSection);
+    }
+    
+    console.log('✅ Dashboard inicializado completamente');
 });
+
 
 /**
  * Configura las quick actions del dropdown - VERSIÓN CORREGIDA
@@ -68,23 +89,41 @@ function setupQuickActions() {
 /**
  * Configura los botones específicos de quick actions
  */
-// 4. CORREGIR la función setupQuickActionButtons (línea ~65 aprox)
 function setupQuickActionButtons() {
     const createClientBtn = document.getElementById('create-client');
     const createProjectBtn = document.getElementById('create-project');
     const createAppointmentBtn = document.getElementById('create-appointment');
     
-    console.log('🔧 Configurando botones de quick actions:', {
-        createClientBtn: !!createClientBtn,
-        createProjectBtn: !!createProjectBtn,
-        createAppointmentBtn: !!createAppointmentBtn
-    });
+    // Agregar botón para crear mensaje (si no existe)
+    const dropdown = document.querySelector('.quick-actions .dropdown-menu');
+    if (dropdown && !dropdown.querySelector('#create-message')) {
+        const messageOption = document.createElement('a');
+        messageOption.href = '#';
+        messageOption.id = 'create-message';
+        messageOption.innerHTML = '<i class="fas fa-envelope"></i> Mensaje';
+        dropdown.appendChild(messageOption);
+        
+        messageOption.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Click en crear mensaje desde quick actions');
+            
+            dropdown.closest('.dropdown').classList.remove('active');
+            
+            switchToSection('messages');
+            setTimeout(() => {
+                if (typeof openNewMessageModal === 'function') {
+                    openNewMessageModal();
+                } else {
+                    console.error('Función openNewMessageModal no disponible');
+                }
+            }, 300);
+        });
+    }
     
+    // Configurar otros botones...
     if (createClientBtn) {
         createClientBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Click en crear cliente desde quick actions');
-            
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
@@ -92,8 +131,6 @@ function setupQuickActionButtons() {
             setTimeout(() => {
                 if (typeof openCreateClientModal === 'function') {
                     openCreateClientModal();
-                } else {
-                    console.error('Función openCreateClientModal no disponible');
                 }
             }, 300);
         });
@@ -102,8 +139,6 @@ function setupQuickActionButtons() {
     if (createProjectBtn) {
         createProjectBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Click en crear proyecto desde quick actions');
-            
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
@@ -111,8 +146,6 @@ function setupQuickActionButtons() {
             setTimeout(() => {
                 if (typeof openCreateProjectModal === 'function') {
                     openCreateProjectModal();
-                } else {
-                    console.error('Función openCreateProjectModal no disponible');
                 }
             }, 300);
         });
@@ -121,85 +154,56 @@ function setupQuickActionButtons() {
     if (createAppointmentBtn) {
         createAppointmentBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('🎯 Click en crear cita desde quick actions');
-            
             const dropdown = document.querySelector('.quick-actions .dropdown');
             if (dropdown) dropdown.classList.remove('active');
             
-            // ⚠️ CORRECCIÓN CRÍTICA: Mejor manejo de carga de citas
             switchToSection('appointments');
-            
             setTimeout(() => {
-                // Intentar con la función principal
                 if (typeof openCreateAppointmentModal === 'function') {
-                    console.log('✅ Abriendo modal de crear cita...');
                     openCreateAppointmentModal();
-                } else {
-                    console.log('⚠️ Función openCreateAppointmentModal no disponible, cargando módulo...');
-                    
-                    // Cargar módulo y luego intentar abrir modal
-                    loadAppointmentsModule();
-                    
-                    // Esperar más tiempo para que se cargue el módulo
-                    setTimeout(() => {
-                        if (typeof openCreateAppointmentModal === 'function') {
-                            console.log('✅ Módulo cargado, abriendo modal...');
-                            openCreateAppointmentModal();
-                        } else {
-                            console.error('❌ No se puede abrir modal de citas');
-                            showToast('No se puede abrir el formulario de citas. Intenta recargar la página.', 'error');
-                        }
-                    }, 2000);
                 }
             }, 400);
         });
     }
 }
 
+
 /**
  * Configura clicks en las tarjetas de estadísticas - NUEVO
  */
 function setupStatisticsClicks() {
     // Click en tarjeta de clientes
-    const clientsCard = document.querySelector('.stat-card .clients-icon').closest('.stat-card');
+    const clientsCard = document.querySelector('.stat-card .clients-icon')?.closest('.stat-card');
     if (clientsCard) {
         clientsCard.style.cursor = 'pointer';
-        clientsCard.addEventListener('click', function() {
-            console.log('Click en tarjeta de clientes');
-            switchToSection('clients');
-        });
+        clientsCard.addEventListener('click', () => switchToSection('clients'));
     }
     
     // Click en tarjeta de proyectos
-    const projectsCard = document.querySelector('.stat-card .projects-icon').closest('.stat-card');
+    const projectsCard = document.querySelector('.stat-card .projects-icon')?.closest('.stat-card');
     if (projectsCard) {
         projectsCard.style.cursor = 'pointer';
-        projectsCard.addEventListener('click', function() {
-            console.log('Click en tarjeta de proyectos');
-            switchToSection('projects');
-        });
+        projectsCard.addEventListener('click', () => switchToSection('projects'));
     }
     
     // Click en tarjeta de citas
-    const appointmentsCard = document.querySelector('.stat-card .appointments-icon').closest('.stat-card');
+    const appointmentsCard = document.querySelector('.stat-card .appointments-icon')?.closest('.stat-card');
     if (appointmentsCard) {
         appointmentsCard.style.cursor = 'pointer';
-        appointmentsCard.addEventListener('click', function() {
-            console.log('Click en tarjeta de citas');
-            switchToSection('appointments');
-        });
+        appointmentsCard.addEventListener('click', () => switchToSection('appointments'));
     }
     
     // Click en tarjeta de mensajes
-    const messagesCard = document.querySelector('.stat-card .messages-icon').closest('.stat-card');
+    const messagesCard = document.querySelector('.stat-card .messages-icon')?.closest('.stat-card');
     if (messagesCard) {
         messagesCard.style.cursor = 'pointer';
-        messagesCard.addEventListener('click', function() {
-            console.log('Click en tarjeta de mensajes');
+        messagesCard.addEventListener('click', () => {
+            console.log('🎯 Click en tarjeta de mensajes');
             switchToSection('messages');
         });
     }
 }
+
 
 /**
  * Cambia a una sección específica - VERSIÓN MEJORADA
@@ -226,54 +230,42 @@ function switchToSection(sectionId) {
     if (targetSection) {
         targetSection.classList.add('active');
         
-        // ⚠️ CORRECCIÓN CRÍTICA: Inicializar módulo específico con mejor timing
+        // Inicializar módulo específico
         setTimeout(() => {
             switch(sectionId) {
                 case 'clients':
                     if (typeof initClientsModule === 'function') {
                         initClientsModule();
-                    } else {
-                        console.error('Función initClientsModule no disponible');
                     }
                     break;
                     
                 case 'projects':
                     if (typeof initProjectsModule === 'function') {
                         initProjectsModule();
-                    } else {
-                        console.error('Función initProjectsModule no disponible');
                     }
                     break;
                     
                 case 'appointments':
-                    console.log('🎯 Iniciando carga de módulo de citas...');
-                    
-                    // Verificar si las funciones están disponibles
-                    if (typeof initAppointmentsModuleComplete === 'function') {
-                        console.log('✅ Función initAppointmentsModuleComplete encontrada');
-                        initAppointmentsModuleComplete();
-                    } else if (typeof initAppointmentsModule === 'function') {
-                        console.log('✅ Función initAppointmentsModule encontrada');
+                    if (typeof initAppointmentsModule === 'function') {
                         initAppointmentsModule();
                     } else {
-                        console.log('⚠️ Funciones de citas no disponibles, cargando módulo...');
                         loadAppointmentsModule();
                     }
                     break;
                     
                 case 'messages':
-                    console.log('Módulo de mensajes - próximamente');
+                    console.log('🎯 Inicializando módulo de mensajes...');
+                    if (typeof initMessagesModule === 'function') {
+                        initMessagesModule();
+                    } else {
+                        loadMessagesModule();
+                    }
                     break;
-                
-                case 'reports':
-                    console.log('🎯 Iniciando carga de módulo de reportes...');
                     
-                    // Verificar si las funciones están disponibles
+                case 'reports':
                     if (typeof initReportsModule === 'function') {
-                        console.log('✅ Función initReportsModule encontrada');
                         initReportsModule();
                     } else {
-                        console.log('⚠️ Función de reportes no disponible, cargando módulo...');
                         loadReportsModule();
                     }
                     break;
@@ -281,9 +273,7 @@ function switchToSection(sectionId) {
                 default:
                     console.log(`Sección ${sectionId} cargada`);
             }
-        }, 150); // Aumentar el delay para asegurar que el DOM esté listo
-    } else {
-        console.error(`❌ Sección ${sectionId} no encontrada en el DOM`);
+        }, 150);
     }
 }
 
@@ -298,23 +288,17 @@ function setupSectionNavigation() {
     
     sidebarLinks.forEach(link => {
         link.addEventListener('click', function() {
-            console.log('Click en sidebar link:', this.getAttribute('data-section'));
-            
-            // Quitar clase activa de todos los links
-            sidebarLinks.forEach(l => l.classList.remove('active'));
-            
-            // Agregar clase activa al link clickeado
-            this.classList.add('active');
-            
-            // Obtener la sección a mostrar
             const section = this.getAttribute('data-section');
             
             if (section) {
-                // Ocultar todas las secciones
+                // Cambiar sección activa
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Mostrar sección correspondiente
                 const dashboardSections = document.querySelectorAll('.dashboard-section');
                 dashboardSections.forEach(s => s.classList.remove('active'));
                 
-                // Mostrar la sección seleccionada
                 const targetSection = document.getElementById(section);
                 if (targetSection) {
                     targetSection.classList.add('active');
@@ -324,51 +308,47 @@ function setupSectionNavigation() {
                         switch(section) {
                             case 'clients':
                                 if (typeof initClientsModule === 'function') {
-                                    console.log('Inicializando módulo de clientes...');
                                     initClientsModule();
-                                } else {
-                                    console.error('Función initClientsModule no disponible');
                                 }
                                 break;
                                 
                             case 'projects':
                                 if (typeof initProjectsModule === 'function') {
-                                    console.log('Inicializando módulo de proyectos...');
                                     initProjectsModule();
-                                } else {
-                                    console.error('Función initProjectsModule no disponible');
                                 }
                                 break;
                                 
                             case 'appointments':
                                 if (typeof initAppointmentsModule === 'function') {
-                                    console.log('✅ Inicializando módulo de citas...');
                                     initAppointmentsModule();
                                 } else {
-                                    console.error('❌ Función initAppointmentsModule no disponible');
-                                    console.log('Verificando disponibilidad del módulo...');
-                                    // Intentar cargar el módulo si no está disponible
                                     loadAppointmentsModule();
                                 }
                                 break;
                                 
                             case 'messages':
-                                console.log('Módulo de mensajes - próximamente');
+                                console.log('🎯 Iniciando carga de módulo de mensajes...');
+                                if (typeof initMessagesModule === 'function') {
+                                    console.log('✅ Función initMessagesModule encontrada');
+                                    initMessagesModule();
+                                } else {
+                                    console.log('⚠️ Función de mensajes no disponible, cargando módulo...');
+                                    loadMessagesModule();
+                                }
                                 break;
+                                
                             case 'reports':
                                 if (typeof initReportsModule === 'function') {
-                                    console.log('Inicializando módulo de reportes...');
                                     initReportsModule();
                                 } else {
-                                    console.error('Función initReportsModule no disponible');
-                                    console.log('Verificando disponibilidad del módulo...');
                                     loadReportsModule();
                                 }
                                 break;
+                                
                             default:
                                 console.log(`Sección ${section} cargada`);
                         }
-                    }, 100);
+                    }, 150);
                 }
             }
         });
@@ -460,23 +440,21 @@ async function loadDynamicStatistics() {
             ? 'http://localhost:3000' 
             : '';
         
-        // Cargar estadísticas de clientes
-        await loadClientsStatistics(API_BASE, token);
+        // Cargar estadísticas en paralelo
+        await Promise.all([
+            loadClientsStatistics(API_BASE, token),
+            loadProjectsStatistics(API_BASE, token),
+            loadAppointmentsStatistics(API_BASE, token),
+            loadMessagesStatistics() // Usar la función mejorada
+        ]);
         
-        // Cargar estadísticas de proyectos
-        await loadProjectsStatistics(API_BASE, token);
-        
-        // Cargar estadísticas de citas
-        await loadAppointmentsStatistics(API_BASE, token);
-        
-        // Cargar estadísticas de mensajes
-        await loadMessagesStatistics();
-        
-        // 🎯 NUEVO: Inicializar gráficos después de cargar estadísticas
+        // Inicializar gráficos después de cargar estadísticas
         setTimeout(() => {
             if (document.getElementById('overview')?.classList.contains('active')) {
                 console.log('📊 Inicializando gráficos del dashboard...');
-                initDashboardCharts();
+                if (typeof initDashboardCharts === 'function') {
+                    initDashboardCharts();
+                }
             }
         }, 1000);
         
@@ -486,6 +464,30 @@ async function loadDynamicStatistics() {
     }
 }
 
+// Función para configurar actualización periódica de estadísticas
+function setupPeriodicStatsUpdate() {
+    // Actualizar estadísticas cada 2 minutos
+    setInterval(async () => {
+        try {
+            console.log('🔄 Actualizando estadísticas periódicamente...');
+            await loadMessagesStatistics();
+            
+            // También actualizar otras estadísticas si es necesario
+            const messagesSection = document.getElementById('messages');
+            if (messagesSection && messagesSection.classList.contains('active')) {
+                // Si estamos en la sección de mensajes, refrescar datos
+                if (typeof refreshMessagesStatistics === 'function') {
+                    refreshMessagesStatistics();
+                }
+            }
+        } catch (error) {
+            console.error('Error en actualización periódica:', error);
+        }
+    }, 120000); // 2 minutos
+}
+
+// Inicializar actualización periódica
+setupPeriodicStatsUpdate();
 
 /**
  * Carga estadísticas de clientes desde la API - SOLO CLIENTES
@@ -749,39 +751,91 @@ async function loadMessagesStatistics() {
                 messagesDescription.textContent = `${mensajesHoy} mensajes hoy`;
             }
             
-            // Opcional: Obtener conversaciones para estadísticas adicionales
-            await loadConversationsStatistics(API_BASE, token, stats);
-            
             console.log('✅ Estadísticas de mensajes cargadas:', {
                 totalConversaciones: stats.totalConversaciones || 0,
                 totalMensajes: stats.totalMensajes || 0,
                 noLeidos: stats.totalNoLeidos || 0,
-                mensajesHoy: stats.mensajesHoy || 0,
-                mensajesClientesHoy: stats.mensajesClientesHoy || 0,
-                mensajesAdminsHoy: stats.mensajesAdminsHoy || 0
+                mensajesHoy: stats.mensajesHoy || 0
             });
             
         } else {
             console.warn('⚠️ No se pudieron cargar las estadísticas de mensajes');
-            
             // Fallback: intentar cargar conversaciones directamente
-            await loadConversationsStatistics(API_BASE, token, {});
+            await loadConversationsStatistics();
         }
         
     } catch (error) {
         console.error('❌ Error al cargar estadísticas de mensajes:', error);
-        
-        // Fallback: mostrar estadísticas por defecto
         loadFallbackMessagesStatistics();
     }
+}
+
+function loadMessagesModule() {
+    console.log('🔄 Cargando módulo de mensajes...');
+    
+    // Verificar si ya existe el script
+    const existingScript = document.querySelector('script[src*="modulMessages"]');
+    if (existingScript) {
+        console.log('⚠️ Script de mensajes ya existe');
+        
+        // Esperar y reintentar inicialización
+        setTimeout(() => {
+            if (typeof initMessagesModule === 'function') {
+                console.log('✅ Reintentando inicialización de mensajes...');
+                initMessagesModule();
+                showToast('Módulo de mensajes inicializado', 'success');
+            } else {
+                console.log('❌ Función aún no disponible, recargando script...');
+                existingScript.remove();
+                loadMessagesModuleScript();
+            }
+        }, 1000);
+        return;
+    }
+    
+    loadMessagesModuleScript();
+}
+
+// Función para cargar el script del módulo
+function loadMessagesModuleScript() {
+    console.log('📜 Cargando script modulMessages.js...');
+    
+    const script = document.createElement('script');
+    script.src = '../js/modulMessages.js?v=' + Date.now();
+    script.type = 'text/javascript';
+    
+    script.onload = function() {
+        console.log('✅ Script modulMessages.js cargado exitosamente');
+        
+        setTimeout(() => {
+            if (typeof initMessagesModule === 'function') {
+                console.log('🎯 Inicializando módulo de mensajes...');
+                initMessagesModule();
+                showToast('Módulo de mensajes cargado correctamente', 'success');
+            } else {
+                console.error('❌ Funciones de mensajes aún no disponibles después de cargar');
+                showToast('Error: Funciones del módulo no disponibles', 'error');
+            }
+        }, 500);
+    };
+    
+    script.onerror = function() {
+        console.error('❌ Error al cargar el módulo de mensajes');
+        showToast('Error al cargar módulo de mensajes. Verifica que el archivo modulMessages.js exista.', 'error');
+    };
+    
+    document.head.appendChild(script);
 }
 
 /**
  * Carga estadísticas adicionales desde las conversaciones
  */
-async function loadConversationsStatistics(API_BASE, token, existingStats = {}) {
+async function loadConversationsStatistics() {
     try {
-        console.log('💬 Obteniendo conversaciones para estadísticas adicionales...');
+        const token = localStorage.getItem('authToken');
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000' 
+            : '';
         
         const conversationsResponse = await fetch(`${API_BASE}/api/messages/conversations`, {
             method: 'GET',
@@ -795,47 +849,26 @@ async function loadConversationsStatistics(API_BASE, token, existingStats = {}) 
             const conversationsData = await conversationsResponse.json();
             const conversations = conversationsData.data || [];
             
-            console.log('📝 Conversaciones obtenidas:', conversations.length);
-            
-            // Calcular estadísticas de conversaciones
             let totalMensajesNoLeidos = 0;
             let conversacionesActivas = 0;
-            let ultimoMensajeHoy = false;
-            
-            const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
             
             conversations.forEach(conversation => {
-                // Contar mensajes no leídos
                 if (conversation.mensajesNoLeidos) {
                     totalMensajesNoLeidos += conversation.mensajesNoLeidos;
                 }
-                
-                // Contar conversaciones activas (con mensajes no leídos)
                 if (conversation.mensajesNoLeidos > 0) {
                     conversacionesActivas++;
                 }
-                
-                // Verificar si hay mensajes de hoy
-                if (conversation.ultimoMensaje && conversation.ultimoMensaje.fechaCreacion) {
-                    const fechaUltimoMensaje = new Date(conversation.ultimoMensaje.fechaCreacion);
-                    if (fechaUltimoMensaje >= hoy) {
-                        ultimoMensajeHoy = true;
-                    }
-                }
             });
             
-            // Usar estadísticas de conversaciones si no las tenemos de la API de stats
-            if (!existingStats.totalNoLeidos) {
-                const messagesCount = document.getElementById('messages-count');
-                if (messagesCount) {
-                    messagesCount.textContent = totalMensajesNoLeidos;
-                }
+            // Actualizar contadores
+            const messagesCount = document.getElementById('messages-count');
+            if (messagesCount) {
+                messagesCount.textContent = totalMensajesNoLeidos;
             }
             
-            // Actualizar descripción si no se ha hecho
             const messagesDescription = document.querySelector('.messages-icon')?.closest('.stat-card')?.querySelector('.stat-description');
-            if (messagesDescription && !existingStats.mensajesHoy) {
+            if (messagesDescription) {
                 messagesDescription.textContent = conversacionesActivas > 0 
                     ? `${conversacionesActivas} conversaciones activas`
                     : 'Sin mensajes pendientes';
@@ -844,35 +877,22 @@ async function loadConversationsStatistics(API_BASE, token, existingStats = {}) 
             console.log('📊 Estadísticas de conversaciones calculadas:', {
                 totalConversaciones: conversations.length,
                 mensajesNoLeidos: totalMensajesNoLeidos,
-                conversacionesActivas: conversacionesActivas,
-                ultimoMensajeHoy: ultimoMensajeHoy
+                conversacionesActivas: conversacionesActivas
             });
             
-            // Guardar estadísticas globalmente para uso posterior
-            window.messagesStatistics = {
-                totalConversaciones: conversations.length,
-                mensajesNoLeidos: totalMensajesNoLeidos,
-                conversacionesActivas: conversacionesActivas,
-                conversations: conversations,
-                lastUpdated: new Date()
-            };
-            
-        } else {
-            console.warn('⚠️ No se pudieron cargar las conversaciones');
         }
         
     } catch (error) {
         console.error('❌ Error al cargar conversaciones:', error);
+        loadFallbackMessagesStatistics();
     }
 }
-
 /**
  * Carga estadísticas de mensajes por defecto cuando no se puede conectar a la API
  */
 function loadFallbackMessagesStatistics() {
     console.log('📊 Cargando estadísticas de mensajes por defecto...');
     
-    // Mostrar valores por defecto
     const messagesCount = document.getElementById('messages-count');
     if (messagesCount) {
         messagesCount.textContent = '0';
@@ -882,12 +902,8 @@ function loadFallbackMessagesStatistics() {
     if (messagesDescription) {
         messagesDescription.textContent = 'Sin conexión';
     }
-    
-    // Mostrar mensaje informativo si estamos en el módulo de mensajes
-    if (document.getElementById('messages')?.classList.contains('active')) {
-        showToast('No se pudieron cargar las estadísticas de mensajes. Verifica tu conexión.', 'warning');
-    }
 }
+
 
 /**
  * Actualiza las estadísticas de mensajes en tiempo real
@@ -895,34 +911,21 @@ function loadFallbackMessagesStatistics() {
  */
 function updateMessagesStatistics(newMessageData) {
     try {
-        console.log('🔄 Actualizando estadísticas de mensajes en tiempo real...');
+        console.log('🔄 Actualizando estadísticas de mensajes...');
         
-        if (!window.messagesStatistics) {
-            console.log('No hay estadísticas previas, cargando completas...');
-            loadMessagesStatistics();
-            return;
-        }
-        
-        const stats = window.messagesStatistics;
-        
-        // Si es un mensaje de cliente (no de admin), incrementar no leídos
         if (newMessageData && !newMessageData.esDeAdmin) {
-            stats.mensajesNoLeidos++;
-            
-            // Actualizar contador en la interfaz
+            // Incrementar contador si es mensaje de cliente
             const messagesCount = document.getElementById('messages-count');
             if (messagesCount) {
-                messagesCount.textContent = stats.mensajesNoLeidos;
+                const currentCount = parseInt(messagesCount.textContent) || 0;
+                messagesCount.textContent = currentCount + 1;
             }
             
             // Mostrar notificación
-            showToast(`Nuevo mensaje de ${newMessageData.clientName || 'cliente'}`, 'info');
+            if (typeof showToast === 'function') {
+                showToast(`Nuevo mensaje de ${newMessageData.clientName || 'cliente'}`, 'info');
+            }
         }
-        
-        // Actualizar timestamp
-        stats.lastUpdated = new Date();
-        
-        console.log('✅ Estadísticas actualizadas:', stats);
         
     } catch (error) {
         console.error('❌ Error al actualizar estadísticas de mensajes:', error);
@@ -934,18 +937,14 @@ function updateMessagesStatistics(newMessageData) {
  */
 function markMessagesAsReadAndUpdateStats(clienteId, messagesMarked = 1) {
     try {
-        if (!window.messagesStatistics) return;
-        
-        const stats = window.messagesStatistics;
-        stats.mensajesNoLeidos = Math.max(0, stats.mensajesNoLeidos - messagesMarked);
-        
-        // Actualizar contador en la interfaz
         const messagesCount = document.getElementById('messages-count');
         if (messagesCount) {
-            messagesCount.textContent = stats.mensajesNoLeidos;
+            const currentCount = parseInt(messagesCount.textContent) || 0;
+            const newCount = Math.max(0, currentCount - messagesMarked);
+            messagesCount.textContent = newCount;
         }
         
-        console.log(`✅ ${messagesMarked} mensajes marcados como leídos. Total no leídos: ${stats.mensajesNoLeidos}`);
+        console.log(`✅ ${messagesMarked} mensajes marcados como leídos`);
         
     } catch (error) {
         console.error('❌ Error al actualizar estadísticas después de marcar como leído:', error);
@@ -965,6 +964,8 @@ async function refreshMessagesStatistics() {
 window.updateMessagesStatistics = updateMessagesStatistics;
 window.markMessagesAsReadAndUpdateStats = markMessagesAsReadAndUpdateStats;
 window.refreshMessagesStatistics = refreshMessagesStatistics;
+window.loadMessagesModule = loadMessagesModule;
+window.loadMessagesStatistics = loadMessagesStatistics;
 
 /**
  * Verifica si el usuario está autenticado y es administrador
@@ -2015,4 +2016,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 document.head.appendChild(additionalStyles);
 
-console.log('Dashboard integrado con módulo de citas - Versión completa cargada');
+console.log('✅ Correcciones del dashboard cargadas - Soporte completo para módulo de mensajes');
