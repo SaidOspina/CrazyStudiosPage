@@ -41,6 +41,25 @@ const CLIENT_APPOINTMENT_COLORS = {
 };
 
 /**
+ * Convierte una fecha del servidor a fecha local sin problemas de zona horaria
+ */
+function parseServerDate(dateString) {
+    if (!dateString) return null;
+    
+    // Si ya es un objeto Date, extraer la fecha
+    if (dateString instanceof Date) {
+        dateString = dateString.toISOString();
+    }
+    
+    // Extraer solo la parte de fecha (YYYY-MM-DD) para evitar problemas de zona horaria
+    const datePart = dateString.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    
+    // Crear fecha local sin conversión de zona horaria
+    return new Date(year, month - 1, day);
+}
+
+/**
  * FUNCIÓN PRINCIPAL: Inicialización del módulo de citas cliente
  */
 function initClientAppointmentsModule() {
@@ -149,7 +168,7 @@ function setupClientAppointmentsEvents() {
 }
 
 /**
- * Cargar datos de citas del cliente desde la API
+ * Cargar datos de citas del cliente - VERSIÓN CORREGIDA
  */
 async function loadClientAppointmentsData() {
     console.log('📅 Cargando citas del cliente...');
@@ -166,7 +185,6 @@ async function loadClientAppointmentsData() {
             ? 'http://localhost:3000' 
             : '';
         
-        // Cargar solo las citas del cliente actual
         const response = await fetch(`${API_BASE}/api/appointments?usuario=${user._id}&limit=1000`, {
             method: 'GET',
             headers: {
@@ -182,16 +200,19 @@ async function loadClientAppointmentsData() {
         console.log('📊 Citas del cliente cargadas:', data);
         
         clientAppointmentsData = data.data || [];
-        filteredClientAppointmentsData = [...clientAppointmentsData];
         
-        // Procesar las fechas
+        // ✅ CORRECCIÓN: Procesar las fechas correctamente
         clientAppointmentsData.forEach(appointment => {
             if (appointment.fecha) {
-                appointment.fecha = new Date(appointment.fecha);
+                // Usar la función corregida para parsear fechas del servidor
+                appointment.fecha = parseServerDate(appointment.fecha);
+                console.log(`📅 Fecha procesada: ${appointment.fecha.toLocaleDateString()}`);
             }
         });
         
-        console.log(`✅ ${clientAppointmentsData.length} citas del cliente cargadas`);
+        filteredClientAppointmentsData = [...clientAppointmentsData];
+        
+        console.log(`✅ ${clientAppointmentsData.length} citas del cliente cargadas y fechas corregidas`);
         
         // Renderizar vista actual
         if (currentClientViewMode === 'calendar') {
@@ -200,7 +221,6 @@ async function loadClientAppointmentsData() {
             renderClientAppointmentsList();
         }
         
-        // Actualizar estadísticas
         updateClientAppointmentsStatistics();
         
     } catch (error) {
@@ -208,11 +228,10 @@ async function loadClientAppointmentsData() {
         if (typeof showToast === 'function') {
             showToast('Error al cargar citas', 'error');
         }
-        
-        // Mostrar estado vacío
         showEmptyClientAppointments();
     }
 }
+
 
 /**
  * Abrir modal para agendar nueva cita (cliente)
@@ -230,7 +249,6 @@ function openClientAppointmentModal(appointmentData = null) {
         existingModal.remove();
     }
     
-    // Obtener proyectos del cliente para seguimiento
     const user = window.currentUser;
     
     // Generar opciones de horarios
@@ -242,10 +260,14 @@ function openClientAppointmentModal(appointmentData = null) {
         timeOptionsHTML += `<option value="${time}" ${isSelected}>${timeFormatted}</option>`;
     });
     
-    // Fecha por defecto (hoy + 1 día mínimo)
+    // ✅ CORRECCIÓN: Fecha por defecto correcta
     const defaultDate = appointmentData?.fecha 
         ? formatClientDateForInput(appointmentData.fecha)
         : formatClientDateForInput(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    
+    // ✅ CORRECCIÓN: Fecha mínima correcta
+    const minDate = formatClientDateForInput(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    
     
     // HTML del modal
     const modalHTML = `
@@ -548,7 +570,7 @@ async function loadClientProjectsForAppointment() {
 }
 
 /**
- * Manejar creación de nueva cita (cliente)
+ * Manejar creación de nueva cita - VERSIÓN CORREGIDA
  */
 async function handleClientAppointmentCreate(e) {
     console.log('📝 Creando nueva cita cliente...');
@@ -566,14 +588,17 @@ async function handleClientAppointmentCreate(e) {
             throw new Error('No hay datos de usuario');
         }
         
+        // ✅ CORRECCIÓN: Manejar fecha correctamente
+        const fechaInput = document.getElementById('client-appointment-date')?.value || '';
+        
         // Recopilar datos
         const appointmentData = {
             usuario: user._id,
             tipo: document.getElementById('client-appointment-type')?.value || '',
-            fecha: document.getElementById('client-appointment-date')?.value || '',
+            fecha: fechaInput, // Enviar como string YYYY-MM-DD
             hora: document.getElementById('client-appointment-time')?.value || '',
             notas: document.getElementById('client-appointment-notes')?.value?.trim() || '',
-            estado: 'pendiente' // Los clientes solo pueden crear citas pendientes
+            estado: 'pendiente'
         };
         
         // Agregar proyecto si es necesario
@@ -643,12 +668,11 @@ async function handleClientAppointmentCreate(e) {
 }
 
 /**
- * Manejar actualización de cita existente (cliente)
+ * Manejar actualización de cita - VERSIÓN CORREGIDA
  */
 async function handleClientAppointmentUpdate(e, appointmentData) {
     console.log('📝 Actualizando cita cliente...');
     
-    // Similar a crear pero con PUT y validaciones adicionales
     const form = e.target;
     const submitBtn = form.querySelector('#save-client-appointment-btn');
     const originalText = submitBtn.innerHTML;
@@ -663,7 +687,7 @@ async function handleClientAppointmentUpdate(e, appointmentData) {
         }
         
         const now = new Date();
-        const appointmentDate = new Date(appointmentData.fecha);
+        const appointmentDate = parseServerDate(appointmentData.fecha);
         const timeDiff = appointmentDate - now;
         const hoursUntilAppointment = timeDiff / (1000 * 60 * 60);
         
@@ -671,10 +695,13 @@ async function handleClientAppointmentUpdate(e, appointmentData) {
             throw new Error('No puedes modificar una cita con menos de 24 horas de anticipación');
         }
         
+        // ✅ CORRECCIÓN: Manejar fecha correctamente
+        const fechaInput = document.getElementById('client-appointment-date')?.value || '';
+        
         // Recopilar datos actualizados
         const updatedData = {
             tipo: document.getElementById('client-appointment-type')?.value || '',
-            fecha: document.getElementById('client-appointment-date')?.value || '',
+            fecha: fechaInput, // Enviar como string YYYY-MM-DD
             hora: document.getElementById('client-appointment-time')?.value || '',
             notas: document.getElementById('client-appointment-notes')?.value?.trim() || ''
         };
@@ -827,7 +854,7 @@ function renderClientCalendarView() {
 }
 
 /**
- * Generar HTML del calendario del cliente
+ * Generar HTML del calendario - VERSIÓN CORREGIDA
  */
 function generateClientCalendarHTML() {
     const year = currentClientCalendarDate.getFullYear();
@@ -856,6 +883,7 @@ function generateClientCalendarHTML() {
                 calendarHTML += `<td class="calendar-day other-month">${dayNum}</td>`;
                 
             } else if (dayCount <= daysInMonth) {
+                // ✅ CORRECCIÓN: Crear fecha local correctamente
                 const currentDate = new Date(year, month, dayCount);
                 const isToday = isClientDateToday(currentDate);
                 const dayAppointments = getClientAppointmentsByDate(currentDate);
@@ -946,7 +974,7 @@ function setupClientListView() {
 }
 
 /**
- * Renderizar lista de citas del cliente
+ * Renderizar lista de citas - VERSIÓN CORREGIDA
  */
 function renderClientAppointmentsList() {
     console.log('🎨 Renderizando lista de citas cliente...');
@@ -976,8 +1004,9 @@ function renderClientAppointmentsList() {
     }
     
     const rows = filteredClientAppointmentsData.map(appointment => {
+        // ✅ CORRECCIÓN: Formatear fecha correctamente
         const appointmentDate = appointment.fecha 
-            ? new Date(appointment.fecha).toLocaleDateString('es-ES')
+            ? parseServerDate(appointment.fecha).toLocaleDateString('es-ES')
             : 'N/A';
         
         const statusClass = appointment.estado.toLowerCase().replace(' ', '-');
@@ -987,10 +1016,10 @@ function renderClientAppointmentsList() {
         
         // Determinar acciones disponibles
         const now = new Date();
-        const appointmentDateTime = appointment.fecha ? new Date(appointment.fecha) : null;
+        const appointmentDateTime = appointment.fecha ? parseServerDate(appointment.fecha) : null;
         const canModify = appointmentDateTime && 
                          appointmentDateTime > now && 
-                         (appointmentDateTime - now) > (24 * 60 * 60 * 1000) && // 24 horas antes
+                         (appointmentDateTime - now) > (24 * 60 * 60 * 1000) && 
                          appointment.estado !== 'completada' && 
                          appointment.estado !== 'cancelada';
         
@@ -1044,7 +1073,7 @@ function renderClientAppointmentsList() {
     
     tableBody.innerHTML = rows;
     
-    console.log(`✅ ${filteredClientAppointmentsData.length} citas cliente renderizadas`);
+    console.log(`✅ ${filteredClientAppointmentsData.length} citas cliente renderizadas con fechas corregidas`);
 }
 
 /**
@@ -1490,28 +1519,78 @@ function formatClientTime(time24) {
     return `${hour12}:${minutes} ${ampm}`;
 }
 
+/**
+ * Formatea una fecha para input HTML (YYYY-MM-DD) de forma local
+ */
 function formatClientDateForInput(date) {
-    const d = new Date(date);
+    if (!date) return '';
+    
+    // Asegurar que trabajamos con un objeto Date
+    const d = parseServerDate(date) || new Date(date);
+    
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
+    
     return `${year}-${month}-${day}`;
 }
 
-function isClientDateToday(date) {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+/**
+ * Compara dos fechas ignorando la hora y zona horaria
+ */
+function isSameDate(date1, date2) {
+    if (!date1 || !date2) return false;
+    
+    const d1 = parseServerDate(date1);
+    const d2 = parseServerDate(date2);
+    
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
 }
 
-function getClientAppointmentsByDate(date) {
-    const targetDate = new Date(date);
+/**
+ * Verifica si una fecha es hoy (fecha local)
+ */
+function isClientDateToday(date) {
+    if (!date) return false;
+    
+    const today = new Date();
+    const targetDate = parseServerDate(date);
+    
+    return isSameDate(today, targetDate);
+}
+
+/**
+ * Obtiene citas por fecha específica (corregido)
+ */
+function getClientAppointmentsByDate(targetDate) {
+    if (!targetDate) return [];
+    
+    const target = parseServerDate(targetDate);
     
     return clientAppointmentsData.filter(appointment => {
         if (!appointment.fecha) return false;
         
-        const appointmentDate = new Date(appointment.fecha);
-        return appointmentDate.toDateString() === targetDate.toDateString();
+        const appointmentDate = parseServerDate(appointment.fecha);
+        return isSameDate(target, appointmentDate);
     });
+}
+
+/**
+ * Convierte fecha a string para almacenamiento (mantiene fecha local)
+ */
+function formatDateForStorage(date) {
+    if (!date) return null;
+    
+    const d = new Date(date);
+    
+    // Para enviar al servidor, usar formato ISO pero mantener fecha local
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
 }
 
 /**

@@ -159,15 +159,33 @@ function formatTime(time24) {
 }
 
 function formatDateForInput(date) {
-    // ⚠️ CORRECCIÓN CRÍTICA: Evitar problemas de zona horaria
-    const d = new Date(date);
+    console.log('🕐 Formateando fecha para input:', date);
     
-    // Usar getFullYear, getMonth y getDate en lugar de toISOString para evitar cambios de zona horaria
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    // Si la fecha viene como string, crear Date object correctamente
+    let dateObj;
+    if (typeof date === 'string') {
+        // Si ya tiene formato YYYY-MM-DD, usarlo directamente
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return date;
+        }
+        dateObj = new Date(date);
+    } else {
+        dateObj = new Date(date);
+    }
     
-    return `${year}-${month}-${day}`;
+    // ⚠️ CORRECCIÓN CRÍTICA: Usar métodos locales en lugar de UTC para evitar cambios de zona horaria
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    
+    const formatted = `${year}-${month}-${day}`;
+    console.log('✅ Fecha formateada:', {
+        original: date,
+        dateObj: dateObj,
+        formatted: formatted
+    });
+    
+    return formatted;
 }
 
 
@@ -316,7 +334,7 @@ console.log('📅 Módulo de citas - Parte 1 cargada: Variables y configuración
  */
 
 /**
- * Carga los datos de citas desde la API
+ * FUNCIÓN CORREGIDA: loadAppointmentsData - Procesamiento correcto de fechas del servidor
  */
 async function loadAppointmentsData() {
     console.log('📅 Cargando datos de citas...');
@@ -344,19 +362,33 @@ async function loadAppointmentsData() {
         }
         
         const data = await response.json();
-        console.log('📊 Citas cargadas:', data);
+        console.log('📊 Citas recibidas del servidor:', data);
         
-        appointmentsData = data.data || [];
-        filteredAppointmentsData = [...appointmentsData];
-        
-        // Procesar las fechas para el manejo correcto
-        appointmentsData.forEach(appointment => {
-            if (appointment.fecha) {
-                appointment.fecha = new Date(appointment.fecha);
+        // ⚠️ CORRECCIÓN CRÍTICA: Procesar fechas correctamente
+        const rawAppointments = data.data || [];
+        appointmentsData = rawAppointments.map(appointment => {
+            if (appointment.fecha && typeof appointment.fecha === 'string') {
+                // Conservar la fecha original como string para los filtros
+                appointment.originalFecha = appointment.fecha;
+                
+                // Procesar fecha para uso local
+                const isoDate = appointment.fecha.split('T')[0];
+                const parts = isoDate.split('-');
+                if (parts.length === 3) {
+                    appointment.fecha = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                }
+                
+                console.log('📅 Fecha procesada:', {
+                    original: appointment.originalFecha,
+                    processed: appointment.fecha.toDateString()
+                });
             }
+            return appointment;
         });
         
-        console.log(`✅ ${appointmentsData.length} citas cargadas correctamente`);
+        filteredAppointmentsData = [...appointmentsData];
+        
+        console.log(`✅ ${appointmentsData.length} citas cargadas y procesadas correctamente`);
         
         // Renderizar la vista actual
         if (currentViewMode === 'calendar') {
@@ -371,11 +403,11 @@ async function loadAppointmentsData() {
     } catch (error) {
         console.error('❌ Error al cargar citas:', error);
         showToast('Error al cargar citas', 'error');
-        
-        // Mostrar datos de ejemplo en caso de error
         showSampleAppointmentsData();
     }
 }
+
+console.log('🕐 Correcciones de zona horaria aplicadas al módulo de citas');
 
 /**
  * Carga las opciones de clientes para los selectores de citas
@@ -637,57 +669,118 @@ function getAppointmentsByDateRange(startDate, endDate) {
 }
 
 /**
- * Obtener citas de un día específico
+ * FUNCIÓN CORREGIDA: getAppointmentsByDate - Comparación correcta de fechas
  */
 function getAppointmentsByDate(date) {
-    // ⚠️ CORRECCIÓN CRÍTICA: Manejar la fecha target correctamente
-    const targetDate = new Date(date);
+    console.log('📅 Obteniendo citas para fecha:', date);
     
-    // Si la fecha viene como string, procesarla correctamente
+    // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha objetivo sin problemas de zona horaria
+    let targetDate;
+    
     if (typeof date === 'string') {
+        // Si viene como string YYYY-MM-DD, crear fecha local
         const parts = date.split('-');
         if (parts.length === 3) {
-            // Crear fecha sin cambios de zona horaria
-            targetDate.setFullYear(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            // Crear fecha usando el constructor local (año, mes-1, día)
+            targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        } else {
+            targetDate = new Date(date);
         }
+    } else {
+        targetDate = new Date(date);
     }
     
-    return appointmentsData.filter(appointment => {
+    console.log('🎯 Fecha objetivo procesada:', {
+        original: date,
+        targetDate: targetDate,
+        targetString: targetDate.toDateString()
+    });
+    
+    const matchingAppointments = appointmentsData.filter(appointment => {
         if (!appointment.fecha) return false;
         
-        const appointmentDate = new Date(appointment.fecha);
+        // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha de cita correctamente
+        let appointmentDate;
         
-        // Comparar solo año, mes y día (ignorar horas)
-        return (
+        if (typeof appointment.fecha === 'string') {
+            // Si viene del servidor como string ISO, procesarla correctamente
+            const isoDate = appointment.fecha.split('T')[0]; // Tomar solo la parte de fecha
+            const dateParts = isoDate.split('-');
+            appointmentDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+        } else {
+            appointmentDate = new Date(appointment.fecha);
+        }
+        
+        // Comparar usando solo año, mes y día (ignorando horas)
+        const isMatch = (
             appointmentDate.getFullYear() === targetDate.getFullYear() &&
             appointmentDate.getMonth() === targetDate.getMonth() &&
             appointmentDate.getDate() === targetDate.getDate()
         );
+        
+        if (isMatch) {
+            console.log('✅ Cita coincidente encontrada:', {
+                appointmentId: appointment._id,
+                appointmentDate: appointmentDate.toDateString(),
+                targetDate: targetDate.toDateString()
+            });
+        }
+        
+        return isMatch;
     });
+    
+    console.log(`📊 Encontradas ${matchingAppointments.length} citas para ${targetDate.toDateString()}`);
+    return matchingAppointments;
 }
 
 /**
- * Verificar disponibilidad de horario
+ * FUNCIÓN CORREGIDA: isTimeSlotAvailable - Verificación correcta de disponibilidad
  */
 function isTimeSlotAvailable(date, time, excludeAppointmentId = null) {
     if (!appointmentsData || appointmentsData.length === 0) {
-        return true; // Si no hay datos, el horario está disponible
+        return true;
     }
     
-    const targetDate = new Date(date);
+    // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha objetivo correctamente
+    let targetDate;
+    if (typeof date === 'string') {
+        const parts = date.split('-');
+        if (parts.length === 3) {
+            targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        } else {
+            targetDate = new Date(date);
+        }
+    } else {
+        targetDate = new Date(date);
+    }
     
     const conflictingAppointments = appointmentsData.filter(appointment => {
         if (excludeAppointmentId && appointment._id === excludeAppointmentId) {
-            return false; // Excluir la cita que se está editando
+            return false;
         }
         
         if (!appointment.fecha || appointment.estado === 'cancelada') {
             return false;
         }
         
-        const appointmentDate = new Date(appointment.fecha);
-        return appointmentDate.toDateString() === targetDate.toDateString() && 
-               appointment.hora === time;
+        // ⚠️ CORRECCIÓN CRÍTICA: Comparar fechas correctamente
+        let appointmentDate;
+        if (typeof appointment.fecha === 'string') {
+            const isoDate = appointment.fecha.split('T')[0];
+            const dateParts = isoDate.split('-');
+            appointmentDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+        } else {
+            appointmentDate = new Date(appointment.fecha);
+        }
+        
+        // Comparar fecha y hora
+        const sameDate = (
+            appointmentDate.getFullYear() === targetDate.getFullYear() &&
+            appointmentDate.getMonth() === targetDate.getMonth() &&
+            appointmentDate.getDate() === targetDate.getDate()
+        );
+        
+        return sameDate && appointment.hora === time;
     });
     
     return conflictingAppointments.length === 0;
@@ -1702,11 +1795,13 @@ function renderCalendarView() {
 }
 
 /**
- * Genera el HTML del calendario
+ * FUNCIÓN CORREGIDA: generateCalendarHTML - Fechas correctas en el calendario
  */
 function generateCalendarHTML() {
     const year = currentCalendarDate.getFullYear();
     const month = currentCalendarDate.getMonth();
+    
+    console.log('📅 Generando calendario para:', { year, month: month + 1 });
     
     // Primer día del mes
     const firstDay = new Date(year, month, 1);
@@ -1738,17 +1833,28 @@ function generateCalendarHTML() {
                 calendarHTML += `<td class="calendar-day other-month">${dayNum}</td>`;
                 
             } else if (dayCount <= daysInMonth) {
-                // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha correctamente sin cambios de zona horaria
+                // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha del día actual correctamente
                 const currentDate = new Date(year, month, dayCount);
                 const isToday = isDateToday(currentDate);
+                
+                // ⚠️ CORRECCIÓN CRÍTICA: Crear string de fecha consistente
+                const dateString = formatDateForInput(currentDate);
+                
+                console.log('📅 Procesando día del calendario:', {
+                    dayCount,
+                    currentDate: currentDate.toDateString(),
+                    dateString,
+                    year,
+                    month,
+                    day: dayCount
+                });
+                
+                // Obtener citas para este día
                 const dayAppointments = getAppointmentsByDate(currentDate);
                 
                 let dayClass = 'calendar-day';
                 if (isToday) dayClass += ' current-day';
                 if (dayAppointments.length > 0) dayClass += ' has-appointments';
-                
-                // ⚠️ CORRECCIÓN CRÍTICA: Usar formatDateForInput corregido
-                const dateString = formatDateForInput(currentDate);
                 
                 calendarHTML += `<td class="${dayClass}" data-date="${dateString}">
                     <div class="day-number">${dayCount}</div>
@@ -1774,7 +1880,6 @@ function generateCalendarHTML() {
     
     return calendarHTML;
 }
-
 /**
  * Genera las citas para un día específico en el calendario
  */
@@ -1858,21 +1963,32 @@ function navigateCalendar(direction) {
 }
 
 /**
- * Maneja el click en un día del calendario
+ * FUNCIÓN CORREGIDA: handleCalendarDayClick - Manejo correcto de clicks en días
  */
 function handleCalendarDayClick(dateString) {
     console.log('📅 Click en día del calendario:', dateString);
     
-    // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha sin cambios de zona horaria
-    const selectedDate = new Date(dateString + 'T00:00:00'); // Agregar tiempo para evitar problemas de zona horaria
+    // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha desde string sin problemas de zona horaria
+    let selectedDate;
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+        // Crear fecha usando constructor local
+        selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    } else {
+        selectedDate = new Date(dateString);
+    }
+    
+    console.log('🎯 Fecha seleccionada:', {
+        dateString,
+        selectedDate: selectedDate.toDateString(),
+        year: selectedDate.getFullYear(),
+        month: selectedDate.getMonth(),
+        day: selectedDate.getDate()
+    });
+    
     const dayAppointments = getAppointmentsByDate(selectedDate);
     
-    console.log('📊 Fecha seleccionada procesada:', {
-        original: dateString,
-        processed: selectedDate,
-        formatted: selectedDate.toLocaleDateString('es-ES'),
-        appointmentsFound: dayAppointments.length
-    });
+    console.log('📊 Citas encontradas para el día:', dayAppointments.length);
     
     if (dayAppointments.length > 0) {
         // Si hay citas, mostrar detalles del día
@@ -1884,6 +2000,7 @@ function handleCalendarDayClick(dateString) {
         }
     }
 }
+
 
 /**
  * Abre el modal de crear cita con una fecha pre-seleccionada
@@ -1935,16 +2052,25 @@ function showDayAppointments(dateString) {
  * Muestra modal con las citas de un día específico
  */
 function showDayAppointmentsModal(dateString, appointments) {
-    const date = new Date(dateString + 'T00:00:00'); // ⚠️ CORRECCIÓN: Agregar tiempo específico
+    console.log('📅 Mostrando modal para:', dateString);
+    
+    // ⚠️ CORRECCIÓN CRÍTICA: Crear fecha correctamente para mostrar
+    let date;
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+        date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    } else {
+        date = new Date(dateString);
+    }
+    
     const formattedDate = formatDateForDisplay(date);
     
-    console.log('📅 Mostrando modal para:', {
+    console.log('✅ Fecha formateada para modal:', {
         dateString,
-        dateObj: date,
-        formattedDate,
-        appointmentsCount: appointments.length
+        date: date.toDateString(),
+        formattedDate
     });
-    
+
     const modalHTML = `
         <div class="modal active" id="day-appointments-modal">
             <div class="modal-content">
@@ -2059,12 +2185,43 @@ function isDateToday(date) {
     return date.toDateString() === today.toDateString();
 }
 
+/**
+ * FUNCIÓN AUXILIAR CORREGIDA: formatDateForDisplay
+ */
 function formatDateForDisplay(date) {
-    return date.toLocaleDateString('es-ES', { 
+    // Crear nueva fecha para evitar mutar la original
+    let displayDate;
+    if (typeof date === 'string') {
+        const parts = date.split('-');
+        if (parts.length === 3) {
+            displayDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        } else {
+            displayDate = new Date(date);
+        }
+    } else {
+        displayDate = new Date(date);
+    }
+    
+    return displayDate.toLocaleDateString('es-ES', { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
+    });
+}
+
+/**
+ * FUNCIÓN ADICIONAL: Procesar fechas desde el servidor
+ */
+function processAppointmentDatesFromServer(appointments) {
+    return appointments.map(appointment => {
+        if (appointment.fecha && typeof appointment.fecha === 'string') {
+            // Si viene como string ISO del servidor, convertir a Date object local
+            const isoDate = appointment.fecha.split('T')[0]; // Tomar solo la parte de fecha
+            const parts = isoDate.split('-');
+            appointment.fecha = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+        return appointment;
     });
 }
 
