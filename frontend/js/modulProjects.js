@@ -176,7 +176,7 @@ function createProjectModal(projectData = null) {
             <div class="modal-content modal-lg">
                 <div class="modal-header">
                     <h2>${modalTitle}</h2>
-                    <button class="close-btn" id="close-project-modal">&times;</button>
+                    <button class="close-btn" onclick="closeProjectModal()" id="close-project-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form id="project-form">
@@ -295,7 +295,7 @@ function createProjectModal(projectData = null) {
                         </div>
                         
                         <div class="form-actions" style="margin-top: 20px;">
-                            <button type="button" class="secondary-btn" id="cancel-project-btn">Cancelar</button>
+                            <button type="button" class="secondary-btn" onclick="closeProjectModal()" id="cancel-project-btn">Cancelar</button>
                             <button type="submit" class="primary-btn" id="save-project-btn">${submitButtonText}</button>
                         </div>
                     </form>
@@ -1349,18 +1349,17 @@ function showProjectDetailsModal(project) {
                         <button type="button" class="secondary-btn" onclick="editProject('${project._id}')">
                             <i class="fas fa-edit"></i> Editar Proyecto
                         </button>
-                        ${project.clienteDetalles ? `<button type="button" class="secondary-btn" onclick="contactClient('${project.cliente}')">
-                            <i class="fas fa-envelope"></i> Contactar Cliente
-                        </button>` : ''}
-                        <button type="button" class="secondary-btn" onclick="createAppointmentForProject('${project._id}')">
-                            <i class="far fa-calendar-plus"></i> Agendar Cita
-                        </button>
+                        
                         <button type="button" class="primary-btn" id="close-project-details-btn">Cerrar</button>
                     </div>
                 </div>
             </div>
         </div>
     `;
+
+    /**<button type="button" class="secondary-btn" onclick="createAppointmentForProject('${project._id}')">
+        <i class="far fa-calendar-plus"></i> Agendar Cita
+    </button>*/
     
     // Verificar si ya existe un modal y eliminarlo
     const existingModal = document.getElementById('project-details-modal');
@@ -1402,14 +1401,6 @@ function showProjectDetailsModal(project) {
 }
 
 /**
- * Contactar cliente del proyecto
- */
-function contactClient(clientId) {
-    console.log('Contactar cliente:', clientId);
-    showToast('Funcionalidad de contacto próximamente', 'info');
-}
-
-/**
  * Crear cita para proyecto
  */
 function createAppointmentForProject(projectId) {
@@ -1447,8 +1438,8 @@ function updateProjectsStatistics() {
 window.viewProject = viewProject;
 window.editProject = editProject;
 window.deleteProject = deleteProject;
-window.contactClient = contactClient;
 window.createAppointmentForProject = createAppointmentForProject;
+window.closeProjectModal = closeProjectModal;
 
 // Hacer disponible la función de inicialización globalmente
 window.initProjectsModule = initProjectsModule;
