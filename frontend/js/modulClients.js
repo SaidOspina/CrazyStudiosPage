@@ -211,6 +211,11 @@ function setupClientModalEvents(isEditing, clientData) {
         console.error('Modal de cliente no encontrado');
         return;
     }
+
+    if (!form) {
+        console.error('Formulario de cliente no encontrado');
+        return;
+    }
     
     // Función para cerrar modal
     function closeModal() {
