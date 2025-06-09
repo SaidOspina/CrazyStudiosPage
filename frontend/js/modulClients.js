@@ -119,7 +119,7 @@ function createClientModal(clientData = null) {
                             </div>
                             <div class="form-group">
                                 <label for="client-phone">Teléfono</label>
-                                <input type="tel" id="client-phone" value="${clientData?.telefono || ''}">
+                                <input type="tel" id="client-phone" value="${clientData?.telefono || ''}" required>
                             </div>
                         </div>
                         
@@ -131,7 +131,7 @@ function createClientModal(clientData = null) {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="client-document-type">Tipo de Documento</label>
-                                <select id="client-document-type">
+                                <select id="client-document-type" required>
                                     <option value="CC" ${clientData?.tipoDocumento === 'CC' ? 'selected' : ''}>Cédula de Ciudadanía</option>
                                     <option value="CE" ${clientData?.tipoDocumento === 'CE' ? 'selected' : ''}>Cédula de Extranjería</option>
                                     <option value="TI" ${clientData?.tipoDocumento === 'TI' ? 'selected' : ''}>Tarjeta de Identidad</option>
@@ -141,7 +141,7 @@ function createClientModal(clientData = null) {
                             </div>
                             <div class="form-group">
                                 <label for="client-document">Número de Documento</label>
-                                <input type="text" id="client-document" value="${clientData?.documento || ''}">
+                                <input type="text" id="client-document" value="${clientData?.documento || ''}" required>
                             </div>
                         </div>
                         
@@ -170,7 +170,7 @@ function createClientModal(clientData = null) {
                         
                         <div class="form-group checkbox-group">
                             <label class="checkbox-container">
-                                <input type="checkbox" id="send-welcome-email" ${isEditing ? '' : 'checked'}>
+                                <input type="checkbox" id="send-welcome-email" ${isEditing ? '' : 'checked'} >
                                 <span class="checkmark"></span>
                                 ${isEditing ? 'Enviar notificación de actualización' : 'Enviar correo de bienvenida'}
                             </label>
@@ -954,9 +954,6 @@ function showClientDetailsModal(client) {
                     <div class="form-actions" style="margin-top: 30px;">
                         <button type="button" class="secondary-btn" onclick="editClient('${client._id}')">
                             <i class="fas fa-edit"></i> Editar Cliente
-                        </button>
-                        <button type="button" class="secondary-btn" onclick="sendEmailToClient('${client._id}')">
-                            <i class="fas fa-envelope"></i> Enviar Email
                         </button>
                         <button type="button" class="primary-btn" id="close-details-btn">Cerrar</button>
                     </div>
