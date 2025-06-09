@@ -80,12 +80,6 @@ router.put('/restore/:clienteId', protect, authorize('admin', 'superadmin'), mes
 router.delete('/message/:messageId', protect, authorize('admin', 'superadmin'), messageController.deleteMessage);
 
 /**
- * DELETE /api/messages/conversation/:clienteId
- * Elimina una conversación completa (solo admins)
- */
-router.delete('/conversation/:clienteId', protect, authorize('admin', 'superadmin'), messageController.deleteConversation);
-
-/**
  * GET /api/messages/export/:clienteId
  * Exporta mensajes de una conversación (solo admins)
  * Query params: format=json|csv

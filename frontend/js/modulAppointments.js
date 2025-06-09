@@ -159,34 +159,57 @@ function formatTime(time24) {
 }
 
 function formatDateForInput(date) {
-    console.log('🕐 Formateando fecha para input:', date);
+    console.log('🕐 Formateando fecha para input:', date, typeof date);
     
-    // Si la fecha viene como string, crear Date object correctamente
     let dateObj;
-    if (typeof date === 'string') {
-        // Si ya tiene formato YYYY-MM-DD, usarlo directamente
-        if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    
+    // Manejar diferentes tipos de entrada
+    if (date instanceof Date) {
+        dateObj = date;
+    } else if (typeof date === 'string') {
+        // Si ya tiene formato YYYY-MM-DD, devolverlo directamente
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (dateRegex.test(date)) {
+            console.log('✅ Fecha ya en formato correcto:', date);
             return date;
         }
+        
+        // Si tiene formato ISO, extraer solo la fecha
+        if (date.includes('T')) {
+            const datePart = date.split('T')[0];
+            if (dateRegex.test(datePart)) {
+                console.log('✅ Fecha ISO convertida:', datePart);
+                return datePart;
+            }
+        }
+        
+        // Intentar crear Date desde string
         dateObj = new Date(date);
     } else {
-        dateObj = new Date(date);
+        throw new Error('Tipo de fecha no soportado');
     }
     
-    // ⚠️ CORRECCIÓN CRÍTICA: Usar métodos locales en lugar de UTC para evitar cambios de zona horaria
+    // Verificar que la fecha sea válida
+    if (isNaN(dateObj.getTime())) {
+        throw new Error('Fecha inválida');
+    }
+    
+    // ⚠️ CORRECCIÓN CRÍTICA: Usar métodos locales para evitar problemas de zona horaria
     const year = dateObj.getFullYear();
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const day = String(dateObj.getDate()).padStart(2, '0');
     
     const formatted = `${year}-${month}-${day}`;
+    
     console.log('✅ Fecha formateada:', {
         original: date,
-        dateObj: dateObj,
+        dateObj: dateObj.toDateString(),
         formatted: formatted
     });
     
     return formatted;
 }
+
 
 
 
@@ -326,6 +349,8 @@ function switchAppointmentView(view) {
 window.initAppointmentsModule = initAppointmentsModule;
 window.initAppointmentsModuleComplete = initAppointmentsModuleComplete;
 window.openCreateAppointmentModal = openCreateAppointmentModal;
+window.formatDateForInput = formatDateForInput;
+
 
 console.log('📅 Módulo de citas - Parte 1 cargada: Variables y configuración inicial');
 
@@ -364,26 +389,61 @@ async function loadAppointmentsData() {
         const data = await response.json();
         console.log('📊 Citas recibidas del servidor:', data);
         
-        // ⚠️ CORRECCIÓN CRÍTICA: Procesar fechas correctamente
+        // ⚠️ CORRECCIÓN CRÍTICA: Preservar TODOS los datos necesarios
         const rawAppointments = data.data || [];
         appointmentsData = rawAppointments.map(appointment => {
+            // Crear copia del objeto original
+            const processedAppointment = { ...appointment };
+            
             if (appointment.fecha && typeof appointment.fecha === 'string') {
-                // Conservar la fecha original como string para los filtros
-                appointment.originalFecha = appointment.fecha;
+                // ⚠️ IMPORTANTE: Conservar la fecha original del servidor
+                processedAppointment.originalFecha = appointment.fecha;
                 
-                // Procesar fecha para uso local
+                // Procesar fecha para uso local (calendario)
                 const isoDate = appointment.fecha.split('T')[0];
                 const parts = isoDate.split('-');
                 if (parts.length === 3) {
-                    appointment.fecha = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                    processedAppointment.fecha = new Date(
+                        parseInt(parts[0]), 
+                        parseInt(parts[1]) - 1, 
+                        parseInt(parts[2])
+                    );
                 }
                 
                 console.log('📅 Fecha procesada:', {
-                    original: appointment.originalFecha,
-                    processed: appointment.fecha.toDateString()
+                    original: processedAppointment.originalFecha,
+                    processed: processedAppointment.fecha?.toDateString()
                 });
             }
-            return appointment;
+            
+            // ⚠️ CRÍTICO: Preservar IDs de usuario y proyecto para actualizaciones
+            if (appointment.usuarioDetalles && appointment.usuarioDetalles._id) {
+                processedAppointment.usuario = appointment.usuarioDetalles._id;
+            }
+            
+            if (appointment.proyectoDetalles && appointment.proyectoDetalles._id) {
+                processedAppointment.proyecto = appointment.proyectoDetalles._id;
+            }
+            
+            // Asegurar que todos los campos obligatorios existen
+            processedAppointment.tipo = processedAppointment.tipo || 'consulta-general';
+            processedAppointment.estado = processedAppointment.estado || 'pendiente';
+            processedAppointment.hora = processedAppointment.hora || '09:00';
+            processedAppointment.notas = processedAppointment.notas || '';
+            
+            // Debug para verificar datos completos
+            console.log('🔍 Cita procesada:', {
+                id: processedAppointment._id,
+                usuario: processedAppointment.usuario,
+                tipo: processedAppointment.tipo,
+                estado: processedAppointment.estado,
+                fecha: processedAppointment.originalFecha,
+                hora: processedAppointment.hora,
+                proyecto: processedAppointment.proyecto,
+                nombreContacto: processedAppointment.nombreContacto
+            });
+            
+            return processedAppointment;
         });
         
         filteredAppointmentsData = [...appointmentsData];
@@ -406,6 +466,7 @@ async function loadAppointmentsData() {
         showSampleAppointmentsData();
     }
 }
+
 
 console.log('🕐 Correcciones de zona horaria aplicadas al módulo de citas');
 
@@ -1681,6 +1742,14 @@ async function changeAppointmentStatus(appointmentId, newStatus) {
             throw new Error('Cita no encontrada');
         }
         
+        // Debug: mostrar datos de la cita encontrada
+        console.log('🔍 Datos de cita encontrada:', {
+            id: appointment._id,
+            originalFecha: appointment.originalFecha,
+            fecha: appointment.fecha,
+            fechaType: typeof appointment.fecha
+        });
+        
         const token = localStorage.getItem('authToken');
         if (!token) {
             throw new Error('Token de autenticación no encontrado');
@@ -1690,19 +1759,85 @@ async function changeAppointmentStatus(appointmentId, newStatus) {
             ? 'http://localhost:3000' 
             : '';
         
+        // ⚠️ CORRECCIÓN CRÍTICA: Procesar fecha correctamente
+        let fechaFormateada;
+        
+        if (appointment.originalFecha) {
+            // Si tenemos la fecha original del servidor, usarla
+            fechaFormateada = appointment.originalFecha.split('T')[0]; // Tomar solo YYYY-MM-DD
+        } else if (appointment.fecha) {
+            // Si solo tenemos el objeto Date, convertirlo correctamente
+            if (appointment.fecha instanceof Date) {
+                fechaFormateada = formatDateForInput(appointment.fecha);
+            } else if (typeof appointment.fecha === 'string') {
+                // Si es string, asegurar formato correcto
+                fechaFormateada = appointment.fecha.split('T')[0];
+            } else {
+                throw new Error('Formato de fecha no reconocido');
+            }
+        } else {
+            throw new Error('No se encontró fecha válida en la cita');
+        }
+        
+        // Validar que el formato sea correcto (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(fechaFormateada)) {
+            console.error('❌ Formato de fecha inválido:', fechaFormateada);
+            throw new Error(`Formato de fecha inválido: ${fechaFormateada}. Se esperaba YYYY-MM-DD`);
+        }
+        
+        console.log('✅ Fecha formateada correctamente:', fechaFormateada);
+        
+        // Preparar datos para actualización
+        const updateData = {
+            // Mantener todos los datos existentes
+            usuario: appointment.usuario || appointment.usuarioDetalles?._id || null,
+            tipo: appointment.tipo,
+            fecha: fechaFormateada, // ← Fecha en formato correcto
+            hora: appointment.hora,
+            estado: newStatus, // ← Solo cambiar el estado
+            notas: appointment.notas || ''
+        };
+        
+        // Si tiene proyecto asociado, incluirlo
+        if (appointment.proyecto || appointment.proyectoDetalles?._id) {
+            updateData.proyecto = appointment.proyecto || appointment.proyectoDetalles._id;
+        }
+        
+        // Si no tiene usuario pero tiene datos de contacto, incluirlos
+        if (!updateData.usuario && appointment.nombreContacto) {
+            updateData.nombreContacto = appointment.nombreContacto;
+            updateData.correoContacto = appointment.correoContacto;
+            updateData.telefonoContacto = appointment.telefonoContacto || '';
+        }
+        
+        console.log('📊 Datos para actualización de estado:', updateData);
+        
         const response = await fetch(`${API_BASE}/api/appointments/${appointmentId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ estado: newStatus })
+            body: JSON.stringify(updateData)
         });
         
+        console.log('📡 Respuesta del servidor:', response.status);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al cambiar estado');
+            let errorMessage = `Error ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+                console.log('📡 Error del servidor:', errorData);
+            } catch (e) {
+                console.warn('No se pudo parsear error del servidor');
+            }
+            throw new Error(errorMessage);
         }
+        
+        const responseData = await response.json();
+        console.log('✅ Estado cambiado exitosamente:', responseData);
         
         showToast(`Estado cambiado a ${APPOINTMENT_STATUSES[newStatus]}`, 'success');
         await loadAppointmentsData();
@@ -1713,28 +1848,109 @@ async function changeAppointmentStatus(appointmentId, newStatus) {
     }
 }
 
-/**
- * Confirmar una cita
- */
-function confirmAppointment(appointmentId) {
-    changeAppointmentStatus(appointmentId, 'confirmada');
-}
-
-/**
- * Cancelar una cita
- */
-function cancelAppointment(appointmentId) {
-    if (confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
-        changeAppointmentStatus(appointmentId, 'cancelada');
+async function quickChangeAppointmentStatus(appointmentId, newStatus) {
+    console.log('⚡ Cambio rápido de estado:', appointmentId, 'a', newStatus);
+    
+    try {
+        const appointment = appointmentsData.find(a => a._id === appointmentId);
+        if (!appointment) {
+            throw new Error('Cita no encontrada');
+        }
+        
+        // Actualizar el estado localmente primero para feedback inmediato
+        const originalStatus = appointment.estado;
+        appointment.estado = newStatus;
+        
+        // Actualizar la UI inmediatamente
+        if (currentViewMode === 'list') {
+            renderAppointmentsList();
+        } else {
+            renderCalendarView();
+        }
+        
+        // Mostrar feedback inmediato
+        showToast(`Cambiando estado a ${APPOINTMENT_STATUSES[newStatus]}...`, 'info');
+        
+        // Intentar actualizar en el servidor
+        try {
+            await changeAppointmentStatus(appointmentId, newStatus);
+            console.log('✅ Estado actualizado en servidor');
+        } catch (error) {
+            // Si falla, revertir el cambio local
+            appointment.estado = originalStatus;
+            if (currentViewMode === 'list') {
+                renderAppointmentsList();
+            } else {
+                renderCalendarView();
+            }
+            throw error;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error en cambio rápido de estado:', error);
+        showToast(error.message || 'Error al cambiar estado', 'error');
     }
 }
 
 /**
- * Marcar cita como completada
+ * FUNCIONES CORREGIDAS: Confirmar, cancelar y completar citas
  */
-function completeAppointment(appointmentId) {
-    changeAppointmentStatus(appointmentId, 'completada');
+function confirmAppointment(appointmentId) {
+    console.log('✅ Confirmando cita:', appointmentId);
+    quickChangeAppointmentStatus(appointmentId, 'confirmada');
 }
+
+function cancelAppointment(appointmentId) {
+    console.log('❌ Cancelando cita:', appointmentId);
+    if (confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
+        quickChangeAppointmentStatus(appointmentId, 'cancelada');
+    }
+}
+
+function completeAppointment(appointmentId) {
+    console.log('✅ Completando cita:', appointmentId);
+    quickChangeAppointmentStatus(appointmentId, 'completada');
+}
+
+/**
+ * FUNCIÓN ADICIONAL: Validar datos de cita antes de enviar
+ */
+function validateAppointmentData(appointmentData) {
+    const errors = [];
+    
+    // Validaciones básicas
+    if (!appointmentData.tipo) {
+        errors.push('El tipo de cita es obligatorio');
+    }
+    
+    if (!appointmentData.fecha) {
+        errors.push('La fecha es obligatoria');
+    }
+    
+    if (!appointmentData.hora) {
+        errors.push('La hora es obligatoria');
+    }
+    
+    if (!appointmentData.estado) {
+        errors.push('El estado es obligatorio');
+    }
+    
+    // Validar usuario o datos de contacto
+    if (!appointmentData.usuario && !appointmentData.nombreContacto) {
+        errors.push('Se requiere un usuario registrado o datos de contacto');
+    }
+    
+    // Validar proyecto para seguimiento
+    if (appointmentData.tipo === 'seguimiento-proyecto' && !appointmentData.proyecto) {
+        errors.push('Se requiere un proyecto para citas de seguimiento');
+    }
+    
+    return {
+        isValid: errors.length === 0,
+        errors: errors
+    };
+}
+
 
 /**
  * Reprogramar una cita (abre el modal de edición)
@@ -2683,12 +2899,11 @@ function refreshCurrentView() {
 }
 
 // Exponer funciones globalmente
-window.showTodayAppointments = showTodayAppointments;
 window.showThisWeekAppointments = showThisWeekAppointments;
 window.showPendingAppointments = showPendingAppointments;
-window.clearAppointmentsFilters = clearAppointmentsFilters;
 window.exportAppointmentsData = exportAppointmentsData;
 window.showAppointmentsStats = showAppointmentsStats;
+window.loadAppointmentsData = loadAppointmentsData;
 
 console.log('📅 Módulo de citas - Parte 6 cargada: Vista de lista y filtros');
 
@@ -3028,15 +3243,18 @@ function cleanupAppointmentsModule() {
 
 // Funciones globales para uso externo
 window.viewAppointment = viewAppointment;
-window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 window.confirmAppointment = confirmAppointment;
 window.cancelAppointment = cancelAppointment;
 window.completeAppointment = completeAppointment;
 window.rescheduleAppointment = rescheduleAppointment;
 window.contactAppointmentClient = contactAppointmentClient;
-window.refreshAppointmentsData = refreshAppointmentsData;
-window.cleanupAppointmentsModule = cleanupAppointmentsModule;
+window.changeAppointmentStatus = changeAppointmentStatus;
+window.quickChangeAppointmentStatus = quickChangeAppointmentStatus;
+window.confirmAppointment = confirmAppointment;
+window.cancelAppointment = cancelAppointment;
+window.completeAppointment = completeAppointment;
+window.validateAppointmentData = validateAppointmentData;
 
 // Auto-inicialización de recordatorios cuando se carga el módulo completo
 document.addEventListener('DOMContentLoaded', function() {
@@ -3050,6 +3268,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log('📅 Módulo de citas - Parte 7 cargada: Modal de detalles y funciones finales');
 console.log('🎉 MÓDULO DE CITAS COMPLETADO - Tdas las partes cargadas correctamente');
+
+
 
 
 // Exportar configuración final del módulo

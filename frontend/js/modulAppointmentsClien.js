@@ -1219,8 +1219,27 @@ async function cancelClientAppointment(appointmentId) {
         return;
     }
     
+    // Verificar si se puede cancelar
+    if (appointment.estado === 'completada') {
+        if (typeof showToast === 'function') {
+            showToast('No puedes cancelar una cita ya completada', 'warning');
+        }
+        return;
+    }
+    
+    if (appointment.estado === 'cancelada') {
+        if (typeof showToast === 'function') {
+            showToast('Esta cita ya está cancelada', 'warning');
+        }
+        return;
+    }
+    
     // Confirmar cancelación
-    if (!confirm(`¿Estás seguro de que deseas cancelar tu cita del ${new Date(appointment.fecha).toLocaleDateString('es-ES')} a las ${appointment.hora}?`)) {
+    const appointmentDate = appointment.fecha 
+        ? parseServerDate(appointment.fecha).toLocaleDateString('es-ES')
+        : 'fecha no disponible';
+    
+    if (!confirm(`¿Estás seguro de que deseas cancelar tu cita del ${appointmentDate} a las ${appointment.hora}?\n\nEsta acción no se puede deshacer.`)) {
         return;
     }
     
@@ -1230,19 +1249,40 @@ async function cancelClientAppointment(appointmentId) {
             ? 'http://localhost:3000' 
             : '';
         
+        // ✅ CORRECCIÓN: Enviar todos los datos necesarios, no solo el estado
+        const updateData = {
+            estado: 'cancelada',
+            // Mantener los datos originales para evitar errores de validación
+            tipo: appointment.tipo,
+            fecha: appointment.fecha ? formatClientDateForInput(parseServerDate(appointment.fecha)) : '',
+            hora: appointment.hora,
+            notas: appointment.notas || ''
+        };
+        
+        // Agregar proyecto si existe
+        if (appointment.proyecto) {
+            updateData.proyecto = appointment.proyecto;
+        }
+        
+        console.log('📊 Datos para cancelación:', updateData);
+        
         const response = await fetch(`${API_BASE}/api/appointments/${appointmentId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ estado: 'cancelada' })
+            body: JSON.stringify(updateData)
         });
         
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('❌ Error del servidor:', errorData);
             throw new Error(errorData.message || 'Error al cancelar cita');
         }
+        
+        const responseData = await response.json();
+        console.log('✅ Cita cancelada exitosamente:', responseData);
         
         if (typeof showToast === 'function') {
             showToast('Cita cancelada correctamente', 'success');
@@ -1250,6 +1290,18 @@ async function cancelClientAppointment(appointmentId) {
         
         // Recargar datos
         await loadClientAppointmentsData();
+        
+        // Cerrar modal de detalles si está abierto
+        const detailsModal = document.getElementById('client-appointment-details-modal');
+        if (detailsModal) {
+            detailsModal.classList.remove('active');
+            setTimeout(() => {
+                if (detailsModal && detailsModal.parentNode) {
+                    detailsModal.remove();
+                }
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
         
     } catch (error) {
         console.error('❌ Error al cancelar cita:', error);

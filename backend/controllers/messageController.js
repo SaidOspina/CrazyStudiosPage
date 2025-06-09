@@ -880,61 +880,6 @@ exports.deleteMessage = async (req, res) => {
     }
 };
 
-/**
- * Elimina una conversación completa (solo admins)
- */
-exports.deleteConversation = async (req, res) => {
-    try {
-        const db = getDatabase();
-        const { clienteId } = req.params;
-        const userRole = req.user.rol;
-        
-        // Verificar permisos
-        if (userRole !== 'admin' && userRole !== 'superadmin') {
-            return res.status(403).json({
-                success: false,
-                message: 'No tienes permisos para eliminar conversaciones'
-            });
-        }
-        
-        // Verificar que el cliente existe
-        const cliente = await db.collection('users').findOne({ 
-            _id: toObjectId(clienteId),
-            rol: 'cliente'
-        });
-        
-        if (!cliente) {
-            return res.status(404).json({
-                success: false,
-                message: 'Cliente no encontrado'
-            });
-        }
-        
-        // Contar mensajes a eliminar
-        const messageCount = await db.collection('messages').countDocuments({
-            cliente: toObjectId(clienteId)
-        });
-        
-        // Eliminar todos los mensajes de la conversación
-        const result = await db.collection('messages').deleteMany({
-            cliente: toObjectId(clienteId)
-        });
-        
-        res.status(200).json({
-            success: true,
-            message: `Conversación eliminada correctamente. ${result.deletedCount} mensajes eliminados.`,
-            deletedCount: result.deletedCount
-        });
-        
-    } catch (error) {
-        console.error('Error al eliminar conversación:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al eliminar conversación',
-            error: error.message
-        });
-    }
-};
 
 /**
  * Exporta mensajes de una conversación (solo admins)

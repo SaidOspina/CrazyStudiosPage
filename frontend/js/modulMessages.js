@@ -537,9 +537,6 @@ function renderConversationMessages(messages, conversationId) {
                 <button class="action-btn" title="Archivar conversación" onclick="archiveConversation('${conversationId}')">
                     <i class="fas fa-archive"></i>
                 </button>
-                <button class="action-btn delete-btn" title="Eliminar conversación" onclick="deleteConversation('${conversationId}')">
-                    <i class="fas fa-trash"></i>
-                </button>
             </div>
         </div>
     `;
@@ -1614,44 +1611,6 @@ async function updateArchivedCounter() {
 }
 
 /**
- * Elimina una conversación
- */
-async function deleteConversation(conversationId) {
-    console.log('🗑️  Eliminando conversación:', conversationId);
-    
-    if (!confirm('¿Estás seguro de que deseas eliminar esta conversación? Esta acción no se puede deshacer.')) {
-        return;
-    }
-    
-    try {
-        // TODO: Implementar eliminación en el backend
-        if (typeof showToast === 'function') {
-            showToast('Conversación eliminada', 'success');
-        }
-        
-        // Recargar conversaciones
-        await loadConversations();
-        
-        // Limpiar vista de mensaje actual
-        const messageContent = document.querySelector('.message-content');
-        if (messageContent) {
-            messageContent.innerHTML = `
-                <div class="no-conversation">
-                    <i class="fas fa-trash" style="font-size: 48px; color: #666; margin-bottom: 16px;"></i>
-                    <p>Conversación eliminada</p>
-                </div>
-            `;
-        }
-        
-    } catch (error) {
-        console.error('❌ Error al eliminar conversación:', error);
-        if (typeof showToast === 'function') {
-            showToast('Error al eliminar conversación', 'error');
-        }
-    }
-}
-
-/**
  * Busca mensajes
  */
 function searchMessages() {
@@ -2151,7 +2110,6 @@ window.updateArchivedCounter = updateArchivedCounter;
 window.selectConversation = selectConversation;
 window.markConversationAsRead = markConversationAsRead;
 window.archiveConversation = archiveConversation;
-window.deleteConversation = deleteConversation;
 window.sendReply = sendReply;
 window.clearReply = clearReply;
 window.showSampleConversation = showSampleConversation;
