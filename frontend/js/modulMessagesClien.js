@@ -528,16 +528,6 @@ function renderClientConversation(messages) {
                     ></textarea>
                 </div>
                 
-                <div class="attachment-section">
-                    <input type="file" id="client-message-attachment" multiple style="display: none;">
-                    <button type="button" class="attachment-btn" onclick="document.getElementById('client-message-attachment').click()">
-                        <i class="fas fa-paperclip"></i> Adjuntar archivo
-                    </button>
-                    <div class="attachment-info">
-                        <small><i class="fas fa-info-circle"></i> Máximo 5MB por archivo</small>
-                    </div>
-                </div>
-                
                 <div class="reply-actions">
                     <button type="button" class="secondary-btn" id="client-clear-message-btn">
                         <i class="fas fa-times"></i> Limpiar

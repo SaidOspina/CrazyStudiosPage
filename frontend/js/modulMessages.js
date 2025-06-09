@@ -581,12 +581,6 @@ function renderConversationMessages(messages, conversationId) {
             </div>
             <div class="reply-body">
                 <textarea placeholder="Escribe tu respuesta aquí..." id="reply-textarea"></textarea>
-                <div class="attachment-input">
-                    <input type="file" id="message-attachment" multiple style="display: none;">
-                    <button type="button" class="attachment-btn" onclick="document.getElementById('message-attachment').click()">
-                        <i class="fas fa-paperclip"></i> Adjuntar archivo
-                    </button>
-                </div>
                 <div class="reply-actions">
                     <button class="secondary-btn" onclick="clearReply()">Descartar</button>
                     <button class="primary-btn" onclick="sendReply('${conversationId}')">
@@ -2334,23 +2328,6 @@ messagesStyles.textContent = `
         gap: 10px;
         justify-content: flex-end;
         margin-top: 15px;
-    }
-    
-    .attachment-btn {
-        background: none;
-        border: 1px solid #555;
-        color: #999;
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-        transition: all 0.2s ease;
-        margin-bottom: 10px;
-    }
-    
-    .attachment-btn:hover {
-        border-color: var(--primary-color, #007bff);
-        color: var(--primary-color, #007bff);
     }
     
     /* Responsive */
